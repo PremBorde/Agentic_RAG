@@ -6,11 +6,15 @@ from fastapi.responses import FileResponse
 
 from backend.routes.documents import router as documents_router
 from backend.routes.chat import router as chat_router
+from backend.routes.auth import router as auth_router
+from backend.routes.tasks import router as tasks_router
+from backend.routes.memory import router as memory_router
+from backend.routes.actions import router as actions_router
 
 app = FastAPI(
-    title="Agentic Studio — LangGraph RAG API",
-    description="Production-grade Agentic RAG backend with private ONNX vector embeddings and web search",
-    version="2.0.0"
+    title="Personal AI Agent Studio",
+    description="Agentic Assistant with RAG, Gmail, Google Calendar, Task Management, and Human-in-the-Loop Approvals",
+    version="3.0.0"
 )
 
 app.add_middleware(
@@ -24,6 +28,10 @@ app.add_middleware(
 # Register API Routers
 app.include_router(documents_router)
 app.include_router(chat_router)
+app.include_router(auth_router)
+app.include_router(tasks_router)
+app.include_router(memory_router)
+app.include_router(actions_router)
 
 # Mount Frontend Single Page Application (SPA)
 frontend_dist = os.path.join(os.path.dirname(__file__), "frontend", "dist")
