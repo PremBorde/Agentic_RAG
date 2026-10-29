@@ -1,4 +1,5 @@
 import re
+from typing import Optional, Tuple, Dict, Any
 from langchain_community.tools import DuckDuckGoSearchRun
 
 web_search_tool = DuckDuckGoSearchRun()
@@ -18,7 +19,6 @@ def is_conversational_query(text: str) -> bool:
     if not text:
         return True
     
-    # Strip non-alphanumeric punctuation to handle "Hello! What can you do?", "Hi...", "Hey!!"
     cleaned = re.sub(r'[^a-zA-Z0-9\s]', ' ', text).lower().strip()
     words = cleaned.split()
     if not words:
@@ -69,3 +69,134 @@ def is_followup_query(text: str) -> bool:
     ]
     words = t.split()
     return len(words) <= 7 or any(t.startswith(s) for s in followup_starters)
+
+def detect_gmail_intent(text: str) -> Optional[Tuple[str, Dict[str, Any]]]:
+    """Detects if query targets Gmail: search, read, draft, or send."""
+    t = text.lower().strip()
+    
+    # 1. Send Email proposal (sensitive action -> proposal)
+    if "send an email" in t or "send email" in t or "shoot an email" in t or "send a mail" in t:
+        # Extract basic parameters
+        to_match = re.search(r"to\s+([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)", text, re.IGNORECASE)
+        to_email = to_match.group(1) if to_match else "recipient@example.com"
+        
+        subj_match = re.search(r"subject\s+['\"]?([^'\"\n]+)['\"]?", text, re.IGNORECASE)
+        subj = subj_match.group(1).strip() if subj_match else "Project Update"
+        
+        # Body extraction or placeholder
+        return ("send_email", {"to": to_email, "subject": subj, "prompt": text})
+        
+    # 2. Draft Email
+    if "draft an email" in t or "draft email" in t or "create a draft" in t or "write a draft" in t:
+        to_match = re.search(r"to\s+([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)", text, re.IGNORECASE)
+        to_email = to_match.group(1) if to_match else "team@example.com"
+        return ("create_draft", {"to": to_email, "prompt": text})
+        
+    # 3. Read or Summarize Thread
+    if "summarize email thread" in t or "summarize this thread" in t:
+        return ("summarize_thread", {"query": text})
+        
+    # 4. Search Emails
+    email_search_triggers = [
+        "search email", "search emails", "find email", "find emails", "check email",
+        "check emails", "unread emails", "inbox", "emails from", "emails about",
+        "latest email", "read email"
+    ]
+    if any(k in t for k in email_search_triggers):
+        # Extract search query
+        q = text
+        for prefix in ["search email for", "search emails for", "find email from", "find emails about", "check emails for", "search email about"]:
+            if prefix in t:
+                idx = t.find(prefix) + len(prefix)
+                q = text[idx:].strip()
+                break
+        return ("search_emails", {"query": q})
+        
+    return None
+
+def detect_calendar_intent(text: str) -> Optional[Tuple[str, Dict[str, Any]]]:
+    """Detects if query targets Google Calendar: list, availability, schedule, or delete."""
+    t = text.lower().strip()
+    
+    # 1. Schedule Event (sensitive action -> proposal)
+    schedule_triggers = [
+        "schedule a meeting", "schedule meeting", "schedule event", "create calendar event",
+        "add to my calendar", "book a meeting", "schedule a call", "set up a meeting"
+    ]
+    if any(k in t for k in schedule_triggers):
+        return ("create_event", {"prompt": text})
+        
+    # 2. Delete / Cancel Event (sensitive action -> proposal)
+    if "cancel meeting" in t or "delete event" in t or "delete calendar event" in t or "remove meeting" in t:
+        return ("delete_event", {"prompt": text})
+        
+    # 3. Check Availability / Free slots
+    avail_triggers = [
+        "free slot", "free slots", "check availability", "am i free", "find a slot",
+        "find 30-minute slot", "free time", "available slot", "available time"
+    ]
+    if any(k in t for k in avail_triggers):
+        return ("check_availability", {"prompt": text})
+        
+    # 4. List Calendar Events
+    list_triggers = [
+        "meetings do i have", "my meetings", "calendar for today", "calendar tomorrow",
+        "what's on my calendar", "whats on my calendar", "upcoming meetings", "upcoming events",
+        "schedule for tomorrow", "schedule for today", "my schedule"
+    ]
+    if any(k in t for k in list_triggers):
+        return ("list_events", {"prompt": text})
+        
+    return None
+
+def detect_task_intent(text: str) -> Optional[Tuple[str, Dict[str, Any]]]:
+    """Detects if query targets Task & Reminder Manager."""
+    t = text.lower().strip()
+    
+    # 1. Complete Task
+    if "complete task" in t or "finish task" in t or "mark task done" in t or "done with task" in t:
+        return ("complete_task", {"prompt": text})
+        
+    # 2. List Tasks / Overdue
+    if "overdue task" in t or "overdue tasks" in t:
+        return ("list_overdue", {})
+        
+    list_triggers = [
+        "my tasks", "list tasks", "show tasks", "what are my tasks", "view tasks",
+        "todo list", "to-do list", "my to-dos", "pending tasks"
+    ]
+    if any(k in t for k in list_triggers):
+        return ("list_tasks", {})
+        
+    # 3. Create Task
+    create_triggers = [
+        "create a task", "create task", "add a task", "add task", "new task",
+        "remind me to", "add to my to-do", "add to-do", "todo:"
+    ]
+    if any(k in t for k in create_triggers):
+        # Extract title
+        title = text
+        for prefix in ["create a task to", "create task to", "add a task to", "remind me to", "add task"]:
+            if prefix in t:
+                idx = t.find(prefix) + len(prefix)
+                title = text[idx:].strip()
+                break
+        return ("create_task", {"title": title})
+        
+    return None
+
+def detect_memory_intent(text: str) -> Optional[Tuple[str, Dict[str, Any]]]:
+    """Detects if user wants to save or view persistent preferences/memories."""
+    t = text.lower().strip()
+    
+    if "remember that" in t or "save to memory that" in t or "keep in mind that" in t:
+        for prefix in ["remember that", "save to memory that", "keep in mind that"]:
+            if prefix in t:
+                idx = t.find(prefix) + len(prefix)
+                content = text[idx:].strip()
+                return ("add_memory", {"content": content})
+                
+    if "what do you remember" in t or "my saved preferences" in t or "list memories" in t or "show memories" in t:
+        return ("list_memories", {})
+        
+    return None
