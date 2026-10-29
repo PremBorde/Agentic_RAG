@@ -28,6 +28,11 @@ build/
 *.log
 *.sqlite
 *.sqlite3
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/google_tokens.json
+data/client_secret.json
 
 # Node / Frontend
 node_modules/

@@ -1,18 +1,19 @@
-# 🧠 Agentic RAG Studio
+# 🧠 Personal AI Agent Studio
 
 <div align="center">
 
-![Agentic Studio Companion Logo](./Futuristic%20AI%20Knowledge%20Assistant%20Logo.png)
+![Personal AI Agent Studio Logo](./Futuristic%20AI%20Knowledge%20Assistant%20Logo.png)
 
-### Intelligent Autonomous Retrieval-Augmented Generation with LangGraph, FAISS & Gemini
+### Production-Grade Personal AI Assistant with LangGraph, Gmail, Google Calendar, FAISS RAG, and Human-in-the-Loop Approvals
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![LangChain](https://img.shields.io/badge/LangGraph-Agentic_Workflow-FF9900?style=for-the-badge&logo=chainlink&logoColor=white)](https://github.com/langchain-ai/langgraph)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agentic_Workflow-FF9900?style=for-the-badge&logo=chainlink&logoColor=white)](https://github.com/langchain-ai/langgraph)
 [![React](https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![FAISS](https://img.shields.io/badge/Vector_Store-FAISS-00599C?style=for-the-badge&logo=meta&logoColor=white)](https://github.com/facebookresearch/faiss)
 [![Gemini](https://img.shields.io/badge/LLM-Google_Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Gmail & Calendar](https://img.shields.io/badge/Integrations-Gmail_%26_Calendar-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](https://developers.google.com/workspace)
 
 </div>
 
@@ -20,229 +21,192 @@
 
 ## 📌 Overview
 
-**Agentic RAG Studio** is a full-stack, enterprise-grade **Agentic Retrieval-Augmented Generation (RAG)** platform designed to feel as fluid, capable, and responsive as modern AI interfaces like ChatGPT and Claude.
+**Personal AI Agent Studio** is a full-stack, enterprise-grade personal AI assistant built with **React**, **FastAPI**, **LangGraph**, **FAISS**, and **Google Gemini**. 
 
-Unlike traditional static RAG pipelines that blindly retrieve documents for every prompt, Agentic Studio utilizes a **LangGraph state machine** to dynamically classify query intent. It routes greetings and capability questions directly to conversational synthesis, extracts semantic answers from indexed private documents using **FAISS**, and autonomously falls back to **DuckDuckGo Web Search** when external real-world knowledge is required.
+It goes far beyond basic retrieval-augmented chatbots by combining:
+1. **Private Document RAG**: On-device vector embeddings and semantic search across PDFs, DOCX, CSV, TXT, MD, JSON, and YouTube video transcripts.
+2. **Official Gmail Integration**: Search inbox, read emails, summarize long conversation threads, compose drafts, and securely send emails.
+3. **Google Calendar Integration**: Check schedule, find free 30/60-minute meeting slots, detect agenda conflicts, and schedule calendar events.
+4. **Task & Reminder Manager**: Persistent to-do tracking with priorities (`low`, `medium`, `high`), due dates, and overdue alerts.
+5. **Human-in-the-Loop Action Approvals**: Strict security guardrails where any sensitive write action (sending an email, creating/deleting a calendar event) produces an interactive proposal card with explicit **Approve** and **Cancel** controls.
+6. **Long-Term Memory**: Persistent store for personal preferences and project context.
+7. **Autonomous Web Search**: Fallback to DuckDuckGo when live web knowledge is required.
 
 ---
 
-## 🚀 Key Highlights & Capabilities
+## 🚀 Key Capabilities
 
-### 1. 🤖 Agentic Multi-Stage Orchestration (LangGraph)
-* **Intelligent Query Classification**: Differentiates between conversational greetings, document questions, coding tasks, and explicit web queries without polluting answers with irrelevant search snippets.
-* **Grounded Synthesis**: Eliminates robotic boilerplate phrases like *"Based on the retrieved context..."* in favor of clear, direct, and authoritative markdown explanations.
-* **Autonomous Fallback**: Queries DuckDuckGo for live internet search when requested or when internal knowledge is absent.
+### 1. ✉️ Gmail Integration
+- `search_emails`: Search messages using sender, subject, keywords, date, or unread filters.
+- `read_email`: Safely inspect message body, sender, and recipient metadata.
+- `summarize_email_thread`: Condense long multi-message conversations and extract key action items.
+- `create_email_draft`: Prepare draft messages directly in your Gmail drafts folder.
+- `send_email`: **Zero unauthorized sends**. The assistant prepares a structured action card previewing recipient, subject, and body; the email is transmitted only after you click **Approve & Execute**.
 
-### 2. 📂 Multi-Source Document Ingestion
-* **File Ingestion**: Upload `.pdf`, `.txt`, `.docx`, `.csv`, `.md`, or `.json` files with real-time animated indexing progress chips.
-* **YouTube Transcript Pipeline**: Provide any YouTube video URL or ID to automatically download, clean, chunk, and embed video transcripts via `youtube-transcript-api`.
-* **Raw Text / Custom Notes**: Direct markdown and text note ingestion with instant chunk previewing.
-* **Local Fast Embeddings**: High-throughput on-device embeddings (`fastembed`) coupled with FAISS vector similarity retrieval.
+### 2. 📅 Google Calendar Integration
+- `list_events`: Retrieve upcoming schedule and meeting times.
+- `check_availability`: Detect conflicts on your primary calendar for any target timeframe.
+- `find_meeting_slots`: Automatically scan business hours over the next 3–5 days to locate open slots.
+- `create_event`: Propose meeting invitations with title, agenda, and times; scheduled only upon explicit user approval.
+- `delete_event`: Safely cancel or delete events with human confirmation.
 
-### 3. 🎨 ChatGPT & Claude-Grade UI / UX
-* **True SSE Streaming**: Progressive real-time token rendering with a subtle streaming cursor and animated thinking states.
-* **Interactive Citations `[1]`**: Clickable inline source citations that smoothly scroll and flash-highlight the exact source chunk in the collapsible context viewer.
-* **Procedural Companion Avatar**: Integrated `@bible-strong/avatar-react` displaying expressive animations for *idle*, *thinking*, *searching*, *generating*, and *sleeping* states.
-* **Rich Markdown Rendering**: Full GitHub Flavored Markdown (GFM) with syntax-highlighted code blocks, copy-to-clipboard buttons, formatted tables, and math formatting.
-* **Dynamic Follow-Up Prompts**: Contextually relevant follow-up question chips generated beneath completed answers.
-* **Conversation Management**: Multi-thread history sidebar, auto-generated titles from the first prompt, inline thread renaming, search filtering, and deletion.
+### 3. 📋 Persistent Task & Reminder Manager
+- Lightweight persistent SQLite store (`data/agent_studio.db`).
+- Create, filter, prioritize, and complete tasks directly via chat commands (e.g., *"Create a task to finish the RAG report by Friday"*) or via the dedicated **Tasks** modal in the top bar.
+- Automatic overdue task detection and status tracking.
+
+### 4. 🛡️ Security & Human-in-the-Loop Governance
+- **Backend-Only OAuth Tokens**: Google tokens (`data/google_tokens.json`) are stored strictly on the server and never sent to the browser.
+- **Single-Use Action Bindings**: Every proposed action receives a cryptographic ID bound to exact parameters. Retries or stale tokens cannot trigger duplicate actions.
+- **Untrusted Input Protection**: Content retrieved from emails, web pages, or documents is treated as untrusted data; embedded prompt injections are ignored.
+
+### 5. 📂 Document Ingestion & Local FAISS RAG
+- Supports `.pdf`, `.docx`, `.txt`, `.csv`, `.md`, `.json`, and YouTube URLs.
+- Local vector retrieval via `FAISS` and `fastembed` (high-throughput on-device embeddings).
+- Interactive inline citations `[1]` that highlight the exact source chunk in an expandable retrieved context accordion.
 
 ---
 
 ## 🏗️ Architecture & Workflow
 
 ```
-                                  [USER QUERY]
-                                        │
-                                        ▼
-                         [LangGraph Intent Router]
-                               /        │        \
-         (Conversational / QA)/         │         \(Explicit Web Search)
-                             /    (Has Documents)  \
-                            /           │           \
-                           ▼            ▼            ▼
-             [Assistant LLM]   [FAISS Retriever]   [DuckDuckGo Search]
-                    │                   │                    │
-                    │                   ▼                    │
-                    │         [Relevance Grader]             │
-                    │          /               \             │
-                    │ (Relevant)     (Out-of-Corpus Fallback)│
-                    │        │                   │           │
-                    │        ▼                   └───────────┤
-                    │  [RAG Generation]                      │
-                    │        ▲                               │
-                    │        └───────────────────────────────┘
-                    ▼
-          [Server-Sent Events (SSE) Stream Engine]
-                    │
-                    ▼
-          [Interactive React Studio UI]
+                                      [USER REQUEST]
+                                             │
+                                             ▼
+                             [LangGraph Tool-Aware Router]
+                   ┌──────────┬──────────┬──────────┬──────────┐
+                   ▼          ▼          ▼          ▼          ▼
+             [Conversation] [RAG FAISS] [Gmail]  [Calendar] [Tasks/Memory]
+                                         │          │
+                              (Sensitive Action Required?)
+                                      ├── Yes ──► [Action Proposal Card]
+                                      │                  │
+                                      │             (User Clicks)
+                                      │            ┌─────┴─────┐
+                                      │            ▼           ▼
+                                      │       [Approve]     [Cancel]
+                                      │            │           │
+                                      │            ▼           ▼
+                                      │       [Execute API] [Abort]
+                                      │
+                                      └── No ──► [Tool Query & Output]
+                                                        │
+                                                        ▼
+                                            [Final Grounded Answer]
 ```
 
 ---
 
-## 📂 Project Structure
+## 🔑 Google OAuth 2.0 Setup Guide
 
+To enable Gmail and Google Calendar features:
+
+### Step 1: Create a Google Cloud Project
+1. Visit the [Google Cloud Console](https://console.cloud.google.com/).
+2. Click **Select a project** > **New Project** and name it `Personal AI Agent`.
+
+### Step 2: Enable APIs
+1. Navigate to **APIs & Services** > **Library**.
+2. Search and click **Enable** for:
+   - **Gmail API**
+   - **Google Calendar API**
+
+### Step 3: Configure OAuth Consent Screen
+1. Go to **APIs & Services** > **OAuth consent screen**.
+2. Select **External** and click **Create**.
+3. Fill in App Name (`Personal AI Agent`) and your email address.
+4. Under **Scopes**, add:
+   - `https://www.googleapis.com/auth/gmail.readonly`
+   - `https://www.googleapis.com/auth/gmail.compose`
+   - `https://www.googleapis.com/auth/gmail.send`
+   - `https://www.googleapis.com/auth/calendar.events`
+   - `https://www.googleapis.com/auth/userinfo.email`
+5. Under **Test Users**, add your personal Gmail address.
+
+### Step 4: Create Credentials
+1. Go to **APIs & Services** > **Credentials** > **Create Credentials** > **OAuth client ID**.
+2. Select Application type: **Web application**.
+3. Under **Authorized redirect URIs**, add:
+   ```
+   http://localhost:8000/api/auth/google/callback
+   ```
+4. Click **Create** and copy your **Client ID** and **Client Secret**.
+
+### Step 5: Configure `.env`
+Add your keys to your local `.env`:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
 ```
-Agentic_RAG/
-├── server.py                                 # FastAPI application entrypoint (~50 lines)
-│
-├── backend/                                  # Modular Python backend package
-│   ├── __init__.py
-│   ├── config.py                             # Model registry, environment loader & cached LLMs
-│   ├── embeddings.py                         # Text normalizers, LocalFastEmbeddings & recursive splitter
-│   ├── vector_store.py                       # FAISS vector store registry & document retriever
-│   ├── memory.py                             # Session thread turn history & conversation memory
-│   ├── tools.py                              # DuckDuckGo search tool & query intent classifiers
-│   ├── prompts.py                            # Context-grounded generation & assistant prompts
-│   ├── graph.py                              # LangGraph StateGraph nodes, router & compiled workflow
-│   ├── services/
-│   │   ├── document_service.py               # File (PDF/DOCX/TXT), text & YouTube ingestion pipelines
-│   │   └── chat_service.py                   # SSE streaming chat generator with dynamic stage signals
-│   └── routes/
-│       ├── documents.py                      # REST endpoints for uploading, listing, and clearing docs
-│       └── chat.py                           # REST endpoints for chat streams and available models
-│
-└── frontend/                                 # Modern React + Vite + TypeScript Single Page App
-    ├── index.html
-    ├── vite.config.ts
-    ├── tsconfig.json
-    ├── package.json
-    ├── public/                               # Favicons, vector crests, and mascot assets
-    └── src/
-        ├── App.tsx                           # Main chat application coordinator
-        ├── avatar.avatar.json                # Procedural avatar geometry, colors & animation keys
-        ├── index.css                         # Tailored styles, focus rings & animations
-        ├── types/                            # Shared TypeScript interfaces
-        ├── constants/                        # Burgundy/Beige color palette tokens & model catalogs
-        └── components/
-            ├── avatar/                       # Procedural animated avatar components
-            ├── chat/                         # ChatMessage, MarkdownContent, RetrievedContext, ThinkingIndicator
-            ├── composer/                     # Rounded composer dock, model selector, upload chip
-            ├── layout/                       # Collapsible Sidebar with search, TopBar header
-            ├── modals/                       # Custom text and YouTube transcript ingestion modals
-            └── welcome/                      # Hero welcome screen with starter prompt cards
-```
 
 ---
 
-## ⚡ Getting Started
+## ⚡ Quickstart & Local Setup
 
-### Prerequisites
-
-* **Python 3.10+** (Python 3.11 recommended)
-* **Node.js 18+** & **npm**
-* A free **Google Gemini API Key** from [Google AI Studio](https://aistudio.google.com/)
-
----
-
-### Installation & Setup
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/PremBorde/Agentic_RAG.git
-   cd Agentic_RAG
-   ```
-
-2. **Configure Environment Variables**:
-   Create a `.env` file in the project root:
-   ```bash
-   cp .env.example .env
-   ```
-   Add your Gemini API key:
-   ```env
-   GEMINI_API_KEY="your_actual_gemini_api_key_here"
-   GOOGLE_API_KEY="your_actual_gemini_api_key_here"
-   ```
-
-3. **Install Backend Dependencies**:
-   ```bash
-   # Create and activate virtual environment
-   python -m venv venv
-   
-   # Windows PowerShell:
-   .\venv\Scripts\Activate.ps1
-   
-   # Linux/macOS:
-   source venv/bin/activate
-
-   # Install requirements
-   pip install fastapi uvicorn langchain langchain-google-genai langchain-community langgraph faiss-cpu fastembed pypdf youtube-transcript-api python-dotenv
-   ```
-
-4. **Install Frontend Dependencies & Build**:
-   ```bash
-   cd frontend
-   npm install
-   npm run build
-   cd ..
-   ```
-
----
-
-## 💻 Running the Application
-
-### Option A: Unified Production Mode (FastAPI serves both API & React UI)
-
-Run the single unified server:
-```powershell
-.\venv\Scripts\python.exe server.py
-```
-Open your browser and navigate to:
-👉 **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
-
----
-
-### Option B: Frontend Development Mode (Hot-Reloading)
-
-For frontend UI development with instant hot module replacement:
-
+### 1. Clone & Set Up Backend
 ```bash
-# Terminal 1: Start Backend API
-.\venv\Scripts\python.exe server.py
+# Clone the repository
+git clone https://github.com/PremBorde/Agentic_RAG.git
+cd Agentic_RAG
 
-# Terminal 2: Start Vite Dev Server
-cd frontend
-npm run dev
+# Activate virtual environment
+.\venv\Scripts\Activate.ps1
+
+# Install dependencies
+pip install -r requirements.txt
+pip install google-api-python-client google-auth-oauthlib google-auth-httplib2
 ```
-Open your browser at:
-👉 **[http://localhost:3000](http://localhost:3000)** *(Vite proxies `/api` calls directly to port 8000)*.
+
+### 2. Configure Environment
+```bash
+cp .env.example .env
+# Fill in GEMINI_API_KEY and GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET
+```
+
+### 3. Build Frontend
+```bash
+cd frontend
+npm install
+npm run build
+cd ..
+```
+
+### 4. Run the Studio Server
+```bash
+python server.py
+```
+Open **[http://localhost:8000](http://localhost:8000)** in your browser!
 
 ---
 
-## 📡 API Reference
+## 💬 Example Queries to Try
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/models` | List all available Gemini models and active default. |
-| `POST` | `/api/chat/stream` | Stream real-time SSE events (`stage`, `meta`, `token`, `done`, `error`). |
-| `GET` | `/api/documents` | Retrieve list of all indexed documents and total chunk count. |
-| `POST` | `/api/documents/upload` | Upload `.pdf`, `.txt`, `.docx`, `.csv`, `.md` for FAISS indexing. |
-| `POST` | `/api/documents/add` | Ingest raw text or private notes into the vector store. |
-| `POST` | `/api/documents/youtube` | Extract and index transcript from a YouTube video URL or ID. |
-| `POST` | `/api/documents/clear` | Clear the FAISS vector database and indexed document registry. |
-| `DELETE`| `/api/threads/{thread_id}` | Delete a conversation thread and its history from memory. |
-
----
-
-## 🛠️ Tech Stack
-
-* **Orchestration**: [LangGraph](https://github.com/langchain-ai/langgraph), [LangChain Core](https://github.com/langchain-ai/langchain)
-* **LLM Engine**: Google Gemini (`gemini-3.5-flash-lite`, `gemini-3.8-flash`, `gemini-3.1-pro`)
-* **Vector Store**: Meta [FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search)
-* **Embeddings**: [FastEmbed](https://github.com/qdrant/fastembed) (On-device lightweight embedding generation)
-* **Backend Framework**: [FastAPI](https://fastapi.tiangolo.com/), [Uvicorn](https://www.uvicorn.org/)
-* **Frontend Framework**: [React 18](https://react.dev/), [Vite](https://vitejs.dev/), [TypeScript](https://www.typescriptlang.org/)
-* **UI Components & Icons**: [Lucide React](https://lucide.dev/), `@bible-strong/avatar-react`, `react-markdown`, `remark-gfm`
+| Category | Example Query |
+| :--- | :--- |
+| **Gmail** | *"Search my unread emails about internships"* |
+| **Gmail** | *"Find the latest email from my professor and summarize it"* |
+| **Gmail (Approval)** | *"Send an email to team@example.com with subject 'Sprint Update' explaining today's progress"* |
+| **Calendar** | *"What meetings do I have tomorrow?"* |
+| **Calendar** | *"Find a free 30-minute slot this Friday afternoon"* |
+| **Calendar (Approval)**| *"Schedule a Project Planning meeting tomorrow at 2 PM"* |
+| **Tasks** | *"Create a task to finish my RAG project by Friday with high priority"* |
+| **Tasks** | *"Show my overdue tasks"* |
+| **Memory** | *"Remember that I prefer meeting agendas sent 24 hours in advance"* |
+| **Document RAG** | *"Upload your PDF / video transcript and query specific details"* |
+| **Web Research** | *"Search the web for the latest Python 3.13 release notes"* |
 
 ---
 
-## 📄 License
+## 🔒 Security Summary
 
-This project is open-source and available under the [MIT License](LICENSE).
+- **Human-in-the-Loop Approvals**: Sensitive write actions require clicking "Approve" on UI cards.
+- **Backend Token Storage**: OAuth access and refresh tokens are isolated in `data/google_tokens.json` (gitignored).
+- **Prompt Injection Defense**: Text extracted from third-party emails or uploaded PDFs cannot hijack tool routing.
+- **Zero API Quota Leaks**: Direct conversational and small talk requests bypass external tool calls.
 
 ---
 
-<div align="center">
-Developed with ❤️ by <a href="https://github.com/PremBorde">Prem Borde</a>
-</div>
+## 📜 License
+MIT License. Built with passion using LangChain, LangGraph, FastAPI, and React.
