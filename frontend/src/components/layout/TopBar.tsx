@@ -92,7 +92,9 @@ export function TopBar({
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          maxWidth: '320px'
+          maxWidth: '320px',
+          userSelect: 'none',
+          WebkitUserSelect: 'none'
         }}>
           {currentThreadTitle}
         </span>

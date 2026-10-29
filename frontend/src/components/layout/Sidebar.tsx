@@ -218,6 +218,7 @@ export function Sidebar({
                 return (
                   <div
                     key={s.thread_id}
+                    className="sidebar-chat-item ui-no-select"
                     onClick={() => {
                       if (!isEditing) onSelectThread(s.thread_id);
                     }}
@@ -228,6 +229,8 @@ export function Sidebar({
                       padding: '7px 10px',
                       borderRadius: '10px',
                       cursor: 'pointer',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
                       backgroundColor: isActive ? THEME.burgundySubtle : 'transparent',
                       color: isActive ? THEME.burgundy : THEME.slateDark,
                       border: isActive ? `1px solid ${THEME.burgundyBorder}` : '1px solid transparent',
@@ -242,7 +245,7 @@ export function Sidebar({
                       if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, userSelect: 'none' }}>
                       <MessageSquare size={13} style={{ flexShrink: 0, opacity: isActive ? 1 : 0.6 }} />
                       
                       {isEditing ? (
@@ -275,7 +278,10 @@ export function Sidebar({
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          flex: 1
+                          flex: 1,
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
+                          pointerEvents: 'none'
                         }}>
                           {s.title}
                         </span>

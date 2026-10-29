@@ -51,7 +51,7 @@ export default function App() {
   const idleTimerRef = useRef<any>(null);
 
   // Model & Documents State
-  const [selectedModel, setSelectedModel] = useState('gemini-3.5-flash-lite');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [docsPanelOpen, setDocsPanelOpen] = useState(false);
 
@@ -254,7 +254,9 @@ export default function App() {
     if (sess) {
       setCurrentThreadId(sess.thread_id);
       setMessages(sess.messages || []);
-      if (sess.model) setSelectedModel(sess.model);
+      if (sess.model) {
+        setSelectedModel(sess.model === 'gemini-3.5-flash-lite' ? 'gemini-2.5-flash' : sess.model);
+      }
     }
     setPlusMenuOpen(false);
     setActiveModal(null);

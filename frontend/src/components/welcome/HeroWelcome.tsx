@@ -25,6 +25,53 @@ export function HeroWelcome({
   docsCount = 0,
   children
 }: HeroWelcomeProps) {
+  const [pokeCount, setPokeCount] = useState<number>(0);
+  const [actionClass, setActionClass] = useState<string>('');
+  const [speechText, setSpeechText] = useState<string | null>(null);
+  const speechTimeoutRef = React.useRef<any>(null);
+
+  const FUNNY_QUOTES = [
+    "Hey! Ready to explore or query some docs? 😄",
+    "Boing! Hey, that tickles! 😆",
+    "Who's the AI agent here, you or me? 🤖",
+    "Careful! Click me again and I might launch autonomous mode! 🚀",
+    "Achievement Unlocked: Master Mascot Poker! 🏆",
+    "Wheee! Look at me go! 🌀",
+    "Beep boop! My neural nets are buzzing with joy! ⚡",
+    "Psst... ask me about LangGraph or check your Gmail! 📨",
+    "Ready whenever you are! Just type below! 💬"
+  ];
+
+  const ANIMATION_CLASSES = [
+    'mascot-action-bounce',
+    'mascot-action-wiggle',
+    'mascot-action-spin',
+    'mascot-action-boing'
+  ];
+
+  const handleMascotClick = () => {
+    const newCount = pokeCount + 1;
+    setPokeCount(newCount);
+
+    // Trigger next playful animation
+    const anim = ANIMATION_CLASSES[(newCount - 1) % ANIMATION_CLASSES.length];
+    setActionClass('');
+    setTimeout(() => setActionClass(anim), 10);
+
+    // Pick funny interactive quote
+    const quote = newCount <= 5
+      ? FUNNY_QUOTES[newCount - 1]
+      : FUNNY_QUOTES[4 + ((newCount - 5) % (FUNNY_QUOTES.length - 4))];
+    setSpeechText(quote);
+
+    if (speechTimeoutRef.current) {
+      clearTimeout(speechTimeoutRef.current);
+    }
+    speechTimeoutRef.current = setTimeout(() => {
+      setSpeechText(null);
+    }, 3600);
+  };
+
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
     try {
       return localStorage.getItem('agentic_onboarding_dismissed') !== 'true';
@@ -69,40 +116,95 @@ export function HeroWelcome({
         textAlign: 'center',
         transform: 'translateY(-20px)'
       }}>
-        {/* Custom Studio Logo */}
+        {/* Custom Studio Logo with Interactive Reaction & Speech Bubble */}
         <div style={{
+          position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '18px'
         }}>
+          {/* Playful Floating Speech Bubble Popup */}
+          {speechText && (
+            <div 
+              className="mascot-speech-bubble"
+              style={{
+                position: 'absolute',
+                bottom: 'calc(100% + 14px)',
+                left: '50%',
+                backgroundColor: '#ffffff',
+                border: `1.5px solid ${THEME.burgundyBorder}`,
+                borderRadius: '16px',
+                padding: '8px 14px',
+                boxShadow: '0 8px 24px rgba(122, 28, 48, 0.12), 0 2px 6px rgba(0,0,0,0.04)',
+                color: THEME.burgundy,
+                fontSize: '12.5px',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                zIndex: 20
+              }}
+            >
+              {speechText}
+              {/* Downward triangle pointer toward the mascot's head */}
+              <div style={{
+                position: 'absolute',
+                bottom: '-6px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: `6px solid ${THEME.burgundyBorder}`
+              }} />
+              <div style={{
+                position: 'absolute',
+                bottom: '-4.5px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 0,
+                height: 0,
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: '5px solid #ffffff'
+              }} />
+            </div>
+          )}
+
           <div 
-            onClick={() => onSetAvatarState((prev) => prev === 'sleeping' ? 'idle' : 'success')}
-            title="Click to interact with your AI companion"
+            onClick={handleMascotClick}
+            className={actionClass}
+            title="Click me to play!"
             style={{ 
               cursor: 'pointer', 
-              transition: 'transform 0.25s ease',
+              transition: 'transform 0.18s ease',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseEnter={(e) => {
+              if (!actionClass) e.currentTarget.style.transform = 'scale(1.06)';
+            }}
+            onMouseLeave={(e) => {
+              if (!actionClass) e.currentTarget.style.transform = 'scale(1)';
+            }}
           >
             <StudioBrandLogo size={68} animation={avatarState} />
           </div>
 
-          {/* Active status indicator only when busy / searching / sleeping */}
-          {avatarState !== 'idle' && (
+          {/* Active status indicator only during actual busy / processing states */}
+          {avatarState !== 'idle' && avatarState !== 'success' && (
             <div style={{
               marginTop: '10px',
               fontSize: '11px',
               fontWeight: 600,
               padding: '3px 12px',
               borderRadius: '14px',
-              backgroundColor: avatarState === 'sleeping' ? '#e2e8f0' : (avatarState === 'error' ? '#fee2e2' : (avatarState === 'success' ? '#dcfce7' : '#fce7eb')),
-              color: avatarState === 'sleeping' ? '#64748b' : (avatarState === 'error' ? '#dc2626' : (avatarState === 'success' ? '#16a34a' : '#7a1c30')),
+              backgroundColor: avatarState === 'sleeping' ? '#e2e8f0' : (avatarState === 'error' ? '#fee2e2' : '#fce7eb'),
+              color: avatarState === 'sleeping' ? '#64748b' : (avatarState === 'error' ? '#dc2626' : '#7a1c30'),
               transition: 'all 0.25s ease',
               display: 'inline-flex',
               alignItems: 'center',
@@ -112,13 +214,12 @@ export function HeroWelcome({
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                backgroundColor: avatarState === 'sleeping' ? '#94a3b8' : (avatarState === 'error' ? '#ef4444' : (avatarState === 'success' ? '#22c55e' : '#7a1c30'))
+                backgroundColor: avatarState === 'sleeping' ? '#94a3b8' : (avatarState === 'error' ? '#ef4444' : '#7a1c30')
               }} />
               {avatarState === 'sleeping' && 'Resting (Zzz...)'}
               {avatarState === 'thinking' && 'Analyzing question & routing...'}
               {avatarState === 'searching' && 'Searching vector docs & live web...'}
               {avatarState === 'generating' && 'Synthesizing response...'}
-              {avatarState === 'success' && 'Response complete!'}
               {avatarState === 'error' && 'Error encountered'}
             </div>
           )}

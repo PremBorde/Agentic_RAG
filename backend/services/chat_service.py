@@ -58,16 +58,13 @@ async def stream_chat_events(
     try:
         yield 'data: {"type":"stage","stage":"thinking"}\n\n'
         llm = get_llm(model_name)
-        
-        # Check Google connection status for Gmail and Calendar tools
-        conn_status = get_connection_status(user_id)
-        is_google_connected = conn_status.get("connected", False)
 
         # ── 1. GMAIL ROUTING ─────────────────────────────────────────
         gmail_intent = detect_gmail_intent(question)
         if gmail_intent:
             action_name, params = gmail_intent
             source = "Gmail"
+            is_google_connected = get_connection_status(user_id).get("connected", False)
             
             if not is_google_connected:
                 yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[],"requires_google_auth":True})}\n\n'
@@ -150,6 +147,7 @@ async def stream_chat_events(
             cal_intent = detect_calendar_intent(question)
             action_name, params = cal_intent
             source = "Google Calendar"
+            is_google_connected = get_connection_status(user_id).get("connected", False)
             
             if not is_google_connected:
                 yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[],"requires_google_auth":True})}\n\n'
