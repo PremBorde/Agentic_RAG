@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![Personal AI Agent Studio Logo](./Futuristic%20AI%20Knowledge%20Assistant%20Logo.png)
-
 ### Production-Grade Personal AI Assistant with LangGraph, Gmail, Google Calendar, FAISS RAG, and Human-in-the-Loop Approvals
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
