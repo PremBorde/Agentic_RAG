@@ -2,7 +2,7 @@
 
 <div align="center">
 
-### Production-Grade Personal AI Assistant with LangGraph, Gmail, Google Calendar, FAISS RAG, and Human-in-the-Loop Approvals
+### Personal AI Assistant
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
