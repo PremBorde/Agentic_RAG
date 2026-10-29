@@ -1,0 +1,352 @@
+:root {
+  /* Burgundy accents */
+  --burgundy: #7a1c30;
+  --burgundy-dark: #5c1020;
+  --burgundy-hover: #661425;
+  --burgundy-light: #94253e;
+  --burgundy-subtle: #fbf0f2;
+  --burgundy-border: #f2cbd3;
+
+  /* Warm Beige Palette */
+  --beige-bg: #f7f4ee;
+  --beige-surface: #f1ebdE;
+  --beige-card: #ffffff;
+  --beige-border: #e5ded2;
+  --beige-border-dark: #d5cbbe;
+
+  /* Slate / Sage Gray Palette */
+  --gray-dark: #1e242a;
+  --gray-sidebar: #242a33;
+  --gray-card: #2e3540;
+  --text-main: #1d2329;
+  --text-muted: #5e6b7c;
+  --text-light: #919ea7;
+
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text-main);
+  background-color: var(--beige-bg);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--beige-bg);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--beige-bg);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d5cbbe;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b8ac9d;
+}
+
+/* ChatGPT / Claude Thinking Animations */
+@keyframes thinkingWave {
+  0%, 80%, 100% {
+    transform: scale(0.65);
+    opacity: 0.35;
+  }
+  40% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmerGlow {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes breathGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(122, 28, 48, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(122, 28, 48, 0.08);
+  }
+}
+
+.thinking-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--burgundy);
+  animation: thinkingWave 1.4s infinite ease-in-out both;
+}
+
+.thinking-dot-1 {
+  animation-delay: -0.32s;
+}
+
+.thinking-dot-2 {
+  animation-delay: -0.16s;
+}
+
+.thinking-dot-3 {
+  animation-delay: 0s;
+}
+
+.shimmer-bar {
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(122, 28, 48, 0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmerGlow 2s infinite linear;
+}
+
+/* Document Upload Animations */
+@keyframes floatAnim {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes uploadShimmerStripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 30px 0;
+  }
+}
+
+@keyframes pulseUploadCloud {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(122, 28, 48, 0.25);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(122, 28, 48, 0.4);
+  }
+}
+
+@keyframes spinUploadBadge {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.upload-floating-icon {
+  animation: floatAnim 2s ease-in-out infinite;
+}
+
+.upload-cloud-pulse {
+  animation: pulseUploadCloud 1.5s ease-in-out infinite;
+}
+
+.upload-chip-bar {
+  background: linear-gradient(
+    90deg, 
+    #7a1c30 0%, 
+    #b33952 35%, 
+    #e88498 50%, 
+    #b33952 65%, 
+    #7a1c30 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerGlow 1.4s linear infinite;
+}
+
+.animated-progress-bar {
+  background: linear-gradient(90deg, #7a1c30, #b23a54, #7a1c30);
+  background-size: 200% 200%;
+  animation: progressGradient 2s ease infinite;
+}
+
+/* Blinking cursor shown at the end of a streaming message */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.streaming-cursor::after {
+  content: '▋';
+  display: inline-block;
+  margin-left: 1px;
+  color: #7a1c30;
+  animation: blink 0.9s step-end infinite;
+  font-size: 0.85em;
+  vertical-align: baseline;
+}
+
+/* Smooth fade-in for each new token chunk */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stream-chunk {
+  animation: fadeSlideIn 0.15s ease forwards;
+}
+
+/* Citation button badge */
+.citation-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  min-width: 18px;
+  padding: 0 5px;
+  margin: 0 2px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #f7e8ec;
+  color: #7a1c30;
+  border: 1px solid #ecc9d2;
+  cursor: pointer;
+  vertical-align: 3px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.citation-badge:hover {
+  background-color: #7a1c30;
+  color: #ffffff;
+  border-color: #7a1c30;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(122, 28, 48, 0.25);
+}
+
+/* Target Chunk Flash Highlight */
+@keyframes chunkHighlight {
+  0% {
+    background-color: #fce8ed;
+    border-color: #7a1c30;
+    box-shadow: 0 0 0 3px rgba(122, 28, 48, 0.25);
+  }
+  100% {
+    background-color: #f8f4ec;
+    border-color: #d1c6b5;
+    box-shadow: none;
+  }
+}
+
+.chunk-target-highlight {
+  animation: chunkHighlight 2.5s ease-out forwards;
+}
+
+/* Follow-up question chip */
+.followup-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  background-color: #ffffff;
+  color: #1e242a;
+  border: 1px solid #e4dcd0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.followup-chip:hover {
+  background-color: #fbf0f2;
+  color: #7a1c30;
+  border-color: #f0c2cc;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(122, 28, 48, 0.12);
+}
+
+/* Global focus-visible accessibility ring (excluding composer textarea) */
+button:focus-visible, 
+input:focus-visible, 
+select:focus-visible {
+  outline: 2px solid #7a1c30 !important;
+  outline-offset: 1px !important;
+}
+
+/* Rounded Composer focus-within ring */
+.composer-container {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.composer-container:focus-within {
+  border-color: #7a1c30 !important;
+  box-shadow: 0 0 0 2px rgba(122, 28, 48, 0.16), 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Borderless, transparent composer textarea with zero internal rectangular outline */
+.composer-textarea {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  resize: none !important;
+}
+
+.composer-textarea:focus,
+.composer-textarea:focus-visible {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Mobile responsive drawer */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-drawer {
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100 !important;
+    box-shadow: 0 0 30px rgba(0,0,0,0.2) !important;
+  }
+  .mobile-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(30, 36, 42, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 90;
+  }
+}
