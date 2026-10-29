@@ -17,6 +17,8 @@ import { ThinkingIndicator } from './components/chat/ThinkingIndicator';
 import { Composer } from './components/composer/Composer';
 import { TextModal } from './components/modals/TextModal';
 import { YouTubeModal } from './components/modals/YouTubeModal';
+import { TaskManagerModal } from './components/modals/TaskManagerModal';
+import { GoogleConnectModal } from './components/modals/GoogleConnectModal';
 
 export default function App() {
   // Sessions & History
@@ -56,6 +58,8 @@ export default function App() {
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<'text' | 'youtube' | null>(null);
+  const [taskManagerOpen, setTaskManagerOpen] = useState(false);
+  const [googleConnectOpen, setGoogleConnectOpen] = useState(false);
 
   // Modal Input states
   const [docTitle, setDocTitle] = useState('');
@@ -317,6 +321,7 @@ export default function App() {
     let streamedText = '';
     let metaSource = 'Assistant';
     let metaDocs: RetrievedDoc[] = [];
+    let metaProposal: any = null;
     let msgInserted = false;
     setStreamingMsgId(assistantMsgId);
 
@@ -363,10 +368,15 @@ export default function App() {
           if (evt.type === 'stage') {
             if (['thinking', 'searching', 'generating', 'success', 'error'].includes(evt.stage)) {
               setAvatarState(evt.stage as AvatarState);
+            } else if (['searching_emails', 'checking_calendar', 'organizing_tasks', 'preparing_draft'].includes(evt.stage)) {
+              setAvatarState('searching');
             }
           } else if (evt.type === 'meta') {
             metaSource = evt.source ?? 'Assistant';
             metaDocs = evt.retrieved_docs ?? [];
+            if (evt.proposal) {
+              metaProposal = evt.proposal;
+            }
             if (metaDocs.length > 0) {
               setAvatarState('searching');
             }
@@ -381,6 +391,7 @@ export default function App() {
                 text: streamedText,
                 source: metaSource,
                 retrievedDocs: metaDocs,
+                proposal: metaProposal,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               };
               setMessages([...nextMessages, aiMsg]);
@@ -390,7 +401,7 @@ export default function App() {
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMsgId
-                    ? { ...m, text: streamedText, source: metaSource, retrievedDocs: metaDocs }
+                    ? { ...m, text: streamedText, source: metaSource, retrievedDocs: metaDocs, proposal: metaProposal }
                     : m
                 )
               );
@@ -407,6 +418,7 @@ export default function App() {
               text: streamedText || 'No answer generated.',
               source: metaSource,
               retrievedDocs: metaDocs,
+              proposal: metaProposal,
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             setMessages((prev) => {
@@ -706,6 +718,8 @@ export default function App() {
           currentThreadTitle={currentTitle}
           currentThreadId={currentThreadId}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onOpenTaskManager={() => setTaskManagerOpen(true)}
+          onOpenGoogleConnect={() => setGoogleConnectOpen(true)}
         />
 
         {/* Chat or Hero View */}
@@ -871,6 +885,16 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* Global Modals for Personal AI Agent */}
+      <TaskManagerModal
+        isOpen={taskManagerOpen}
+        onClose={() => setTaskManagerOpen(false)}
+      />
+      <GoogleConnectModal
+        isOpen={googleConnectOpen}
+        onClose={() => setGoogleConnectOpen(false)}
+      />
     </div>
   );
 }

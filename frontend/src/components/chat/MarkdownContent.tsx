@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check, Database, Globe, Sparkles } from 'lucide-react';
+import { Copy, Check, Database, Globe, Sparkles, Mail, Calendar, CheckSquare, Brain } from 'lucide-react';
 import { THEME } from '../../constants/theme';
 
 export function getDisplaySourceBadge(source?: string): {
@@ -23,6 +23,50 @@ export function getDisplaySourceBadge(source?: string): {
     s === 'unknown'
   ) {
     return null;
+  }
+
+  // Gmail
+  if (s.includes('gmail') || s.includes('email')) {
+    return {
+      label: 'Gmail',
+      icon: <Mail size={11} />,
+      color: '#b3261e',
+      bg: '#fdf2f2',
+      border: '#f8d7da'
+    };
+  }
+
+  // Google Calendar
+  if (s.includes('calendar')) {
+    return {
+      label: 'Google Calendar',
+      icon: <Calendar size={11} />,
+      color: '#1a73e8',
+      bg: '#eff6ff',
+      border: '#bfdbfe'
+    };
+  }
+
+  // Tasks & Reminders
+  if (s.includes('task') || s.includes('reminder')) {
+    return {
+      label: 'Tasks & Reminders',
+      icon: <CheckSquare size={11} />,
+      color: '#047857',
+      bg: '#f0fdf4',
+      border: '#bbf7d0'
+    };
+  }
+
+  // Long-Term Memory
+  if (s.includes('memory')) {
+    return {
+      label: 'Long-Term Memory',
+      icon: <Brain size={11} />,
+      color: '#6d28d9',
+      bg: '#f5f3ff',
+      border: '#ddd6fe'
+    };
   }
 
   // Document Search: Concise plain-language label for local vector retrieval

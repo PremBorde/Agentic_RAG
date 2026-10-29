@@ -1,5 +1,5 @@
-import React from 'react';
-import { PanelLeft } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { PanelLeft, CheckSquare, Mail } from 'lucide-react';
 import { THEME } from '../../constants/theme';
 import { StudioBrandLogo } from '../avatar/StudioBrandLogo';
 
@@ -8,14 +8,35 @@ interface TopBarProps {
   currentThreadTitle: string;
   currentThreadId: string | null;
   onToggleSidebar: () => void;
+  onOpenTaskManager?: () => void;
+  onOpenGoogleConnect?: () => void;
 }
 
 export function TopBar({
   sidebarOpen,
   currentThreadTitle,
   currentThreadId,
-  onToggleSidebar
+  onToggleSidebar,
+  onOpenTaskManager,
+  onOpenGoogleConnect
 }: TopBarProps) {
+  const [googleConnected, setGoogleConnected] = useState(false);
+
+  useEffect(() => {
+    const checkGoogle = async () => {
+      try {
+        const res = await fetch('/api/auth/google/status');
+        if (res.ok) {
+          const data = await res.json();
+          setGoogleConnected(data.connected);
+        }
+      } catch {
+        // Ignored
+      }
+    };
+    checkGoogle();
+  }, []);
+
   return (
     <header style={{
       height: '56px',
@@ -61,7 +82,7 @@ export function TopBar({
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          maxWidth: '380px'
+          maxWidth: '320px'
         }}>
           {currentThreadTitle}
         </span>
@@ -75,11 +96,67 @@ export function TopBar({
           color: THEME.slateMuted,
           border: `1px solid ${THEME.beigeBorder}`
         }}>
-          LangGraph RAG
+          Personal Agent
         </span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Google Workspace Pill */}
+        {onOpenGoogleConnect && (
+          <button
+            type="button"
+            onClick={onOpenGoogleConnect}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '14px',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              backgroundColor: googleConnected ? '#ecfdf5' : THEME.beigeSurface,
+              color: googleConnected ? '#065f46' : THEME.slateMuted,
+              border: `1px solid ${googleConnected ? '#a7f3d0' : THEME.beigeBorder}`
+            }}
+            title={googleConnected ? 'Google Workspace Connected' : 'Connect Google Account'}
+          >
+            <Mail size={12} color={googleConnected ? '#059669' : THEME.burgundy} />
+            <span>{googleConnected ? 'Google Connected' : 'Connect Google'}</span>
+            <span style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: googleConnected ? '#10b981' : '#9ca3af'
+            }} />
+          </button>
+        )}
+
+        {/* Task Manager Button */}
+        {onOpenTaskManager && (
+          <button
+            type="button"
+            onClick={onOpenTaskManager}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '4px 10px',
+              borderRadius: '14px',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              backgroundColor: THEME.beigeSurface,
+              color: THEME.slateDark,
+              border: `1px solid ${THEME.beigeBorder}`
+            }}
+            title="Open Task Manager"
+          >
+            <CheckSquare size={12} color={THEME.burgundy} />
+            <span>Tasks</span>
+          </button>
+        )}
+
         {currentThreadId && (
           <span style={{ fontSize: '11px', color: THEME.slateLight, fontFamily: 'monospace' }}>
             ID: {currentThreadId.slice(0, 14)}
@@ -89,4 +166,3 @@ export function TopBar({
     </header>
   );
 }
-

@@ -18,6 +18,7 @@ import { THEME } from '../../constants/theme';
 import { StudioBrandLogo } from '../avatar/StudioBrandLogo';
 import { MarkdownContent, getDisplaySourceBadge } from './MarkdownContent';
 import { RetrievedContext } from './RetrievedContext';
+import { ActionProposalCard } from './ActionProposalCard';
 
 interface ChatMessageProps {
   msg: Message;
@@ -266,6 +267,11 @@ export function ChatMessage({
               isStreaming={streamingMsgId === msg.id}
               onCitationClick={(chunkIdx) => onJumpToChunk(msg.id, chunkIdx)}
             />
+
+            {/* Human-in-the-Loop Action Proposal Card */}
+            {msg.proposal && (
+              <ActionProposalCard proposal={msg.proposal} />
+            )}
 
             {/* Quick-Access Interactive Citation Pills */}
             {msg.sender === 'assistant' && msg.retrievedDocs && msg.retrievedDocs.length > 0 && (
