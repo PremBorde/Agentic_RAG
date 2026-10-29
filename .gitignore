@@ -1,0 +1,45 @@
+# Environment Variables (Never commit keys)
+.env
+.env.*
+!.env.example
+
+# Python Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.pyo
+
+# Packaging / Distribution
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Logs and databases
+*.log
+*.sqlite
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
