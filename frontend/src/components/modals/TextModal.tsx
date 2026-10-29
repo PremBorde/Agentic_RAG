@@ -37,7 +37,7 @@ export function TextModal({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: THEME.burgundy }}>
           <FilePlus size={15} />
-          <span>Add Custom Text / Notes into FAISS</span>
+          <span>Add Custom Text / Notes into Knowledge Base</span>
         </div>
         <button
           type="button"

@@ -37,7 +37,7 @@ export function YouTubeModal({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: THEME.burgundy }}>
           <Video size={15} />
-          <span>Index YouTube Video Transcript into FAISS</span>
+          <span>Index YouTube Video Transcript into Knowledge Base</span>
         </div>
         <button
           type="button"

@@ -1,8 +1,9 @@
 import json as _json
 from datetime import datetime, timedelta
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from backend.config import get_llm
+from backend.utils.retry import astream_with_backoff, format_friendly_error
 from backend.embeddings import safe_str
 from backend.vector_store import vector_store, retriever, format_docs
 from backend.tools import (
@@ -28,6 +29,7 @@ from backend.services.database import (
 )
 from backend.services.approval_service import propose_action
 from backend.services.google_service import (
+    get_connection_status,
     search_emails,
     read_email,
     summarize_email_thread,
@@ -40,7 +42,8 @@ from backend.services.google_service import (
 async def stream_chat_events(
     question: str, 
     model_name: str, 
-    thread_id: str
+    thread_id: str,
+    user_id: Optional[str] = None
 ) -> AsyncGenerator[str, None]:
     """Generates Server-Sent Events (SSE) for streaming responses with tool orchestration & action proposals."""
     chat_hist = get_thread_context_str(thread_id)
@@ -55,15 +58,30 @@ async def stream_chat_events(
     try:
         yield 'data: {"type":"stage","stage":"thinking"}\n\n'
         llm = get_llm(model_name)
+        
+        # Check Google connection status for Gmail and Calendar tools
+        conn_status = get_connection_status(user_id)
+        is_google_connected = conn_status.get("connected", False)
 
         # ── 1. GMAIL ROUTING ─────────────────────────────────────────
         gmail_intent = detect_gmail_intent(question)
         if gmail_intent:
             action_name, params = gmail_intent
+            source = "Gmail"
             
+            if not is_google_connected:
+                yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[],"requires_google_auth":True})}\n\n'
+                yield 'data: {"type":"stage","stage":"generating"}\n\n'
+                friendly_msg = (
+                    "### 🔒 Google Workspace is Not Connected\n\n"
+                    "I noticed you requested a Gmail operation, but your Google account is currently not connected (or your authentication token has expired).\n\n"
+                    "To search emails, read conversation threads, draft messages, or send updates, please connect your Google account below:"
+                )
+                yield f"data: {_json.dumps({'type':'token','text':friendly_msg})}\n\n"
+                answer_parts.append(friendly_msg)
+
             # Sensitive: Sending an Email -> Propose Action
-            if action_name == "send_email":
-                source = "Gmail"
+            elif action_name == "send_email":
                 to_addr = params.get("to", "recipient@example.com")
                 subj = params.get("subject", "Project Update")
                 body = (
@@ -88,10 +106,9 @@ async def stream_chat_events(
 
             # Creating a Draft
             elif action_name == "create_draft":
-                source = "Gmail"
                 yield 'data: {"type":"stage","stage":"preparing_draft"}\n\n'
                 to_addr = params.get("to", "team@example.com")
-                res = create_email_draft(to=to_addr, subject="Draft Reply", body="Thank you for your message. I am following up on your request.")
+                res = create_email_draft(to=to_addr, subject="Draft Reply", body="Thank you for your message. I am following up on your request.", user_id=user_id)
                 msg = f"Draft email to **{to_addr}** has been created in your Gmail account.\n\n{res.get('message', '')}"
                 yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[]})}\n\n'
                 yield 'data: {"type":"stage","stage":"generating"}\n\n'
@@ -100,10 +117,9 @@ async def stream_chat_events(
 
             # Searching or Reading Emails
             else:
-                source = "Gmail"
-                yield 'data: {"type":"stage","stage":"searching_emails"}\n\n'
+                yield 'data: {"type":"stage","stage":"searching_gmail"}\n\n'
                 query_str = params.get("query", "")
-                emails = search_emails(query=query_str, max_results=5)
+                emails = search_emails(query=query_str, max_results=5, user_id=user_id)
                 
                 lines = []
                 for em in emails:
@@ -123,7 +139,7 @@ async def stream_chat_events(
                     "context": context,
                     "question": question
                 })
-                async for chunk in llm.astream(prompt_val):
+                async for chunk in astream_with_backoff(llm, prompt_val):
                     token = safe_str(chunk.content)
                     if token:
                         answer_parts.append(token)
@@ -133,9 +149,21 @@ async def stream_chat_events(
         elif detect_calendar_intent(question):
             cal_intent = detect_calendar_intent(question)
             action_name, params = cal_intent
+            source = "Google Calendar"
             
+            if not is_google_connected:
+                yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[],"requires_google_auth":True})}\n\n'
+                yield 'data: {"type":"stage","stage":"generating"}\n\n'
+                friendly_msg = (
+                    "### 🔒 Google Workspace is Not Connected\n\n"
+                    "I noticed you requested a Calendar operation, but your Google account is currently not connected (or your authentication token has expired).\n\n"
+                    "To check upcoming meetings, verify free slots, or schedule calendar events, please connect your Google account below:"
+                )
+                yield f"data: {_json.dumps({'type':'token','text':friendly_msg})}\n\n"
+                answer_parts.append(friendly_msg)
+
             # Sensitive: Creating a Calendar Event -> Propose Action
-            if action_name == "create_event":
+            elif action_name == "create_event":
                 source = "Google Calendar"
                 start_dt = (datetime.now() + timedelta(days=1)).replace(hour=14, minute=0, second=0, microsecond=0)
                 end_dt = start_dt + timedelta(minutes=45)
@@ -168,7 +196,7 @@ async def stream_chat_events(
             elif action_name == "check_availability":
                 source = "Google Calendar"
                 yield 'data: {"type":"stage","stage":"checking_calendar"}\n\n'
-                slots = find_free_meeting_slots(duration_minutes=30, days_ahead=3)
+                slots = find_free_meeting_slots(duration_minutes=30, days_ahead=3, user_id=user_id)
                 
                 lines = ["Available meeting slots in your calendar:"]
                 for s in slots:
@@ -188,7 +216,7 @@ async def stream_chat_events(
                     "context": context,
                     "question": question
                 })
-                async for chunk in llm.astream(prompt_val):
+                async for chunk in astream_with_backoff(llm, prompt_val):
                     token = safe_str(chunk.content)
                     if token:
                         answer_parts.append(token)
@@ -198,7 +226,7 @@ async def stream_chat_events(
             else:
                 source = "Google Calendar"
                 yield 'data: {"type":"stage","stage":"checking_calendar"}\n\n'
-                events = list_calendar_events(max_results=5)
+                events = list_calendar_events(max_results=5, user_id=user_id)
                 lines = []
                 for ev in events:
                     if ev.get("status") == "not_connected":
@@ -217,7 +245,7 @@ async def stream_chat_events(
                     "context": context,
                     "question": question
                 })
-                async for chunk in llm.astream(prompt_val):
+                async for chunk in astream_with_backoff(llm, prompt_val):
                     token = safe_str(chunk.content)
                     if token:
                         answer_parts.append(token)
@@ -232,7 +260,7 @@ async def stream_chat_events(
             
             if action_name == "create_task":
                 title = params.get("title", question)
-                created = create_task(title=title)
+                created = create_task(title=title, user_id=user_id)
                 msg = f"✓ Added task to your list: **\"{created['title']}\"** (Priority: {created['priority'].upper()})."
             elif action_name == "list_overdue":
                 overdue = get_overdue_tasks()
@@ -244,7 +272,7 @@ async def stream_chat_events(
                         lines.append(f"- ⚠️ **{t['title']}** (Due: {t['due_date']}, Priority: {t['priority']})")
                     msg = "\n".join(lines)
             else:
-                tasks = list_tasks()
+                tasks = list_tasks(user_id=user_id)
                 if not tasks:
                     msg = "You currently have no tasks in your task manager. You can create one anytime by asking (e.g., *\"Create task to review slides tomorrow\"*)."
                 else:
@@ -295,7 +323,7 @@ async def stream_chat_events(
                 "chat_history": chat_hist,
                 "question": question
             })
-            async for chunk in llm.astream(prompt_val):
+            async for chunk in astream_with_backoff(llm, prompt_val):
                 token = safe_str(chunk.content)
                 if token:
                     answer_parts.append(token)
@@ -304,7 +332,7 @@ async def stream_chat_events(
         # ── 6. EXPLICIT WEB SEARCH ───────────────────────────────────
         elif is_explicit_web_search(question):
             source = "Web Search"
-            yield 'data: {"type":"stage","stage":"searching"}\n\n'
+            yield 'data: {"type":"stage","stage":"searching_web"}\n\n'
             try:
                 context = web_search_tool.invoke(question)
                 docs_meta = [{"content": context, "source": "Web Search", "doc_id": "web-search"}]
@@ -320,7 +348,7 @@ async def stream_chat_events(
                 "context": context,
                 "question": question
             })
-            async for chunk in llm.astream(prompt_val):
+            async for chunk in astream_with_backoff(llm, prompt_val):
                 token = safe_str(chunk.content)
                 if token:
                     answer_parts.append(token)
@@ -329,7 +357,7 @@ async def stream_chat_events(
         # ── 7. DOCUMENT RETRIEVAL (FAISS) ────────────────────────────
         elif doc_count > 0:
             source = "Document Search"
-            yield 'data: {"type":"stage","stage":"searching"}\n\n'
+            yield 'data: {"type":"stage","stage":"searching_docs"}\n\n'
             last_q = get_last_user_query(thread_id)
             search_query = f"{last_q} {question}".strip() if last_q and is_followup_query(question) else question
             
@@ -353,7 +381,7 @@ async def stream_chat_events(
                 "context": context,
                 "question": question
             })
-            async for chunk in llm.astream(prompt_val):
+            async for chunk in astream_with_backoff(llm, prompt_val):
                 token = safe_str(chunk.content)
                 if token:
                     answer_parts.append(token)
@@ -369,7 +397,7 @@ async def stream_chat_events(
                 "chat_history": chat_hist,
                 "question": question
             })
-            async for chunk in llm.astream(prompt_val):
+            async for chunk in astream_with_backoff(llm, prompt_val):
                 token = safe_str(chunk.content)
                 if token:
                     answer_parts.append(token)
@@ -385,10 +413,6 @@ async def stream_chat_events(
             record_thread_turn(thread_id, "assistant", full_answer)
 
     except Exception as exc:
-        err = str(exc)
-        if "429" in err or "RESOURCE_EXHAUSTED" in err:
-            msg = "Google Gemini Free Tier quota reached. Please wait a moment or select a different model in the dropdown."
-        else:
-            msg = f"Error: {err}"
+        msg = format_friendly_error(exc)
         yield 'data: {"type":"stage","stage":"error"}\n\n'
         yield f"data: {_json.dumps({'type':'error','text':msg})}\n\n"

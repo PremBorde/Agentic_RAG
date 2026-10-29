@@ -1,9 +1,11 @@
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from backend.config import AVAILABLE_MODELS
+from backend.utils.retry import format_friendly_error
+from backend.utils.auth import get_current_user_id
 from backend.graph import rag_app
 from backend.memory import get_thread_context_str, record_thread_turn
 from backend.services.chat_service import stream_chat_events
@@ -56,26 +58,25 @@ def chat_sync(req: QueryRequest):
             "model_used": req.model
         }
     except Exception as e:
-        err = str(e)
-        if "429" in err or "RESOURCE_EXHAUSTED" in err:
-            return {
-                "answer": "Google Gemini Free Tier daily quota limit reached (20 requests per day for this model). You can select a different model in the dropdown or add your personal API key.",
-                "source": "Quota Limit Notice",
-                "retrieved_docs": []
-            }
-        raise HTTPException(status_code=500, detail=f"Processing failed: {err}")
+        msg = format_friendly_error(e)
+        return {
+            "answer": msg,
+            "source": "System Notification",
+            "retrieved_docs": []
+        }
 
 @router.post("/chat/stream")
-async def chat_streaming(req: QueryRequest):
+async def chat_streaming(req: QueryRequest, request: Request):
     """Streaming LangGraph RAG execution with Server-Sent Events (SSE)."""
     question = req.message.strip()
     if not question:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     model_name = req.model or "gemini-2.5-flash"
+    user_id = get_current_user_id(request)
 
     return StreamingResponse(
-        stream_chat_events(question, model_name, req.thread_id or ""),
+        stream_chat_events(question, model_name, req.thread_id or "", user_id=user_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

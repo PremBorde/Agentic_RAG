@@ -15,14 +15,27 @@ def get_db_connection() -> sqlite3.Connection:
     return conn
 
 def init_db():
-    """Initializes tables for tasks, long-term memory, and pending sensitive actions."""
+    """Initializes tables for users, tasks, long-term memory, and pending sensitive actions."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Tasks & Reminders
+    # Users (OAuth Multi-user management)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        google_access_token TEXT,
+        google_refresh_token TEXT,
+        token_expires_at TEXT,
+        created_at TEXT NOT NULL
+    )
+    """)
+
+    # Tasks & Reminders (linked to user_id)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
+        user_id TEXT REFERENCES users(id),
         title TEXT NOT NULL,
         description TEXT DEFAULT '',
         due_date TEXT,
@@ -33,6 +46,12 @@ def init_db():
         updated_at TEXT NOT NULL
     )
     """)
+
+    # Migration: check if user_id column exists on existing tasks table
+    cursor.execute("PRAGMA table_info(tasks)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if "user_id" not in columns:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN user_id TEXT REFERENCES users(id)")
 
     # Long-Term Memories & User Preferences
     cursor.execute("""
@@ -64,6 +83,58 @@ def init_db():
 init_db()
 
 # ─────────────────────────────────────────────────────────────────────────────
+# User CRUD (OAuth Multi-user management)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def create_or_update_user(
+    email: str,
+    google_access_token: Optional[str] = None,
+    google_refresh_token: Optional[str] = None,
+    token_expires_at: Optional[str] = None
+) -> Dict[str, Any]:
+    """Creates a new user or updates their OAuth credentials if they already exist."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, google_refresh_token FROM users WHERE email = ?", (email,))
+    row = cursor.fetchone()
+    now = datetime.utcnow().isoformat()
+
+    if row:
+        user_id = row["id"]
+        refresh_tok = google_refresh_token if google_refresh_token else row["google_refresh_token"]
+        cursor.execute("""
+            UPDATE users
+            SET google_access_token = ?,
+                google_refresh_token = ?,
+                token_expires_at = ?
+            WHERE id = ?
+        """, (google_access_token, refresh_tok, token_expires_at, user_id))
+    else:
+        user_id = str(uuid.uuid4())
+        cursor.execute("""
+            INSERT INTO users (id, email, google_access_token, google_refresh_token, token_expires_at, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (user_id, email, google_access_token, google_refresh_token, token_expires_at, now))
+
+    conn.commit()
+    conn.close()
+    return get_user_by_id(user_id)
+
+def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieves a user profile by ID."""
+    conn = get_db_connection()
+    row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    """Retrieves a user profile by Email."""
+    conn = get_db_connection()
+    row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Task & Reminder CRUD
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -72,17 +143,18 @@ def create_task(
     description: str = "",
     due_date: Optional[str] = None,
     priority: str = "medium",
-    category: str = "general"
+    category: str = "general",
+    user_id: Optional[str] = None
 ) -> Dict[str, Any]:
     task_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
     conn = get_db_connection()
     conn.execute(
         """
-        INSERT INTO tasks (id, title, description, due_date, priority, status, category, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+        INSERT INTO tasks (id, user_id, title, description, due_date, priority, status, category, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
         """,
-        (task_id, title.strip(), description.strip(), due_date, priority.lower(), category.lower(), now, now)
+        (task_id, user_id, title.strip(), description.strip(), due_date, priority.lower(), category.lower(), now, now)
     )
     conn.commit()
     conn.close()
@@ -94,10 +166,17 @@ def get_task(task_id: str) -> Optional[Dict[str, Any]]:
     conn.close()
     return dict(row) if row else None
 
-def list_tasks(status: Optional[str] = None, category: Optional[str] = None) -> List[Dict[str, Any]]:
+def list_tasks(
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    user_id: Optional[str] = None
+) -> List[Dict[str, Any]]:
     conn = get_db_connection()
     query = "SELECT * FROM tasks WHERE 1=1"
     params = []
+    if user_id:
+        query += " AND (user_id = ? OR user_id IS NULL)"
+        params.append(user_id)
     if status:
         query += " AND status = ?"
         params.append(status.lower())
@@ -246,3 +325,4 @@ def update_action_status(action_id: str, status: str) -> bool:
     updated = cur.rowcount > 0
     conn.close()
     return updated
+

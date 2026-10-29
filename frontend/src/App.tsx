@@ -43,6 +43,7 @@ export default function App() {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMsgId, setStreamingMsgId] = useState<string | null>(null);
+  const [currentStage, setCurrentStage] = useState<string>('thinking');
   const [userScrolledUp, setUserScrolledUp] = useState(false);
 
   // Avatar procedural animations & inactivity
@@ -60,6 +61,7 @@ export default function App() {
   const [activeModal, setActiveModal] = useState<'text' | 'youtube' | null>(null);
   const [taskManagerOpen, setTaskManagerOpen] = useState(false);
   const [googleConnectOpen, setGoogleConnectOpen] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
 
   // Modal Input states
   const [docTitle, setDocTitle] = useState('');
@@ -153,6 +155,22 @@ export default function App() {
     const interval = setInterval(fetchDocs, 12000);
     return () => clearInterval(interval);
   }, []);
+
+  const checkGoogleStatus = async () => {
+    try {
+      const res = await fetch('/api/auth/status');
+      if (res.ok) {
+        const data = await res.json();
+        setGoogleConnected(Boolean(data.connected));
+      }
+    } catch {
+      // Ignored
+    }
+  };
+
+  useEffect(() => {
+    checkGoogleStatus();
+  }, [googleConnectOpen]);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -296,6 +314,7 @@ export default function App() {
     setUserScrolledUp(false);
     setIsLoading(true);
     setAvatarState('thinking');
+    setCurrentStage('thinking');
 
     if (isBrandNewSession) {
       const newTitle = textToSend.trim().slice(0, 36) + (textToSend.trim().length > 36 ? '...' : '');
@@ -322,6 +341,7 @@ export default function App() {
     let metaSource = 'Assistant';
     let metaDocs: RetrievedDoc[] = [];
     let metaProposal: any = null;
+    let metaRequiresGoogleAuth = false;
     let msgInserted = false;
     setStreamingMsgId(assistantMsgId);
 
@@ -366,9 +386,10 @@ export default function App() {
           }
 
           if (evt.type === 'stage') {
+            setCurrentStage(evt.stage);
             if (['thinking', 'searching', 'generating', 'success', 'error'].includes(evt.stage)) {
               setAvatarState(evt.stage as AvatarState);
-            } else if (['searching_emails', 'checking_calendar', 'organizing_tasks', 'preparing_draft'].includes(evt.stage)) {
+            } else if (['searching_gmail', 'searching_emails', 'checking_calendar', 'searching_docs', 'searching_web', 'organizing_tasks', 'preparing_draft'].includes(evt.stage)) {
               setAvatarState('searching');
             }
           } else if (evt.type === 'meta') {
@@ -376,6 +397,9 @@ export default function App() {
             metaDocs = evt.retrieved_docs ?? [];
             if (evt.proposal) {
               metaProposal = evt.proposal;
+            }
+            if (evt.requires_google_auth) {
+              metaRequiresGoogleAuth = true;
             }
             if (metaDocs.length > 0) {
               setAvatarState('searching');
@@ -392,6 +416,7 @@ export default function App() {
                 source: metaSource,
                 retrievedDocs: metaDocs,
                 proposal: metaProposal,
+                requiresGoogleAuth: metaRequiresGoogleAuth,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               };
               setMessages([...nextMessages, aiMsg]);
@@ -401,7 +426,7 @@ export default function App() {
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMsgId
-                    ? { ...m, text: streamedText, source: metaSource, retrievedDocs: metaDocs, proposal: metaProposal }
+                    ? { ...m, text: streamedText, source: metaSource, retrievedDocs: metaDocs, proposal: metaProposal, requiresGoogleAuth: metaRequiresGoogleAuth }
                     : m
                 )
               );
@@ -419,6 +444,7 @@ export default function App() {
               source: metaSource,
               retrievedDocs: metaDocs,
               proposal: metaProposal,
+              requiresGoogleAuth: metaRequiresGoogleAuth,
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             setMessages((prev) => {
@@ -433,7 +459,9 @@ export default function App() {
               )
             );
             setStreamingMsgId(null);
+            setCurrentStage('');
           } else if (evt.type === 'error') {
+            setCurrentStage('');
             setAvatarState('error');
             setTimeout(() => {
               setAvatarState((curr) => (curr === 'error' ? 'idle' : curr));
@@ -487,9 +515,8 @@ export default function App() {
     };
     const text = [
       `**${icons[sourceType]} ${typeLabels[sourceType]}: ${title}**`,
-      `Indexed **${chunkCount} semantic chunk${chunkCount !== 1 ? 's' : ''}** into the vector store. You can now ask questions about this document.`,
-      preview ? `\n*Preview:* "${preview.slice(0, 160)}${preview.length > 160 ? '…' : ''}"` : ''
-    ].filter(Boolean).join('\n\n');
+      `**${chunkCount} page${chunkCount !== 1 ? 's' : ''} • Docs Uploaded**. You can now ask questions about this document.`
+    ].join('\n\n');
 
     const docMsg: Message = {
       id: `doc-${Date.now()}`,
@@ -497,7 +524,7 @@ export default function App() {
       text,
       source: 'Document Indexed',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      docMeta: { title, chunkCount, sourceType, preview }
+      docMeta: { title, chunkCount, sourceType }
     };
 
     const updated = [...messages, docMsg];
@@ -517,20 +544,20 @@ export default function App() {
     setIsUploadingFile(true);
     setUploadingFileName(file.name);
     setUploadProgress(15);
-    setUploadStep('Reading and extracting document...');
+    setUploadStep('Reading and analyzing document...');
     setAvatarState('searching');
 
     let currentVal = 15;
     const progressInterval = setInterval(() => {
       if (currentVal < 45) {
         currentVal += 5;
-        setUploadStep('Extracting text content...');
+        setUploadStep('Extracting content...');
       } else if (currentVal < 75) {
         currentVal += 3;
-        setUploadStep('Chunking document...');
+        setUploadStep('Organizing sections...');
       } else if (currentVal < 92) {
         currentVal += 1;
-        setUploadStep('Generating vector embeddings & indexing with FAISS...');
+        setUploadStep('Indexing into knowledge base...');
       }
       setUploadProgress(currentVal);
     }, 110);
@@ -549,9 +576,9 @@ export default function App() {
       if (!res.ok) throw new Error(data.detail || data.message || 'Upload failed');
 
       setUploadProgress(100);
-      setUploadStep('Indexed into vector store successfully!');
+      setUploadStep('Indexed into knowledge base successfully!');
       setAvatarState('success');
-      showToast('success', `✓ Successfully indexed "${file.name}" into FAISS!`);
+      showToast('success', `✓ Successfully indexed "${file.name}" into Knowledge Base!`);
       fetchDocs();
       injectDocUploadMessage(
         data.document?.title || file.name,
@@ -587,7 +614,7 @@ export default function App() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || data.message || 'Ingestion failed');
 
-      showToast('success', `✓ Successfully indexed "${docTitle}" into FAISS!`);
+      showToast('success', `✓ Successfully indexed "${docTitle}" into Knowledge Base!`);
       setDocTitle('');
       setDocContent('');
       setActiveModal(null);
@@ -728,6 +755,10 @@ export default function App() {
             avatarState={avatarState}
             onSetAvatarState={setAvatarState}
             onSelectPrompt={(prompt) => handleSendMessage(prompt)}
+            onOpenGoogleConnect={() => setGoogleConnectOpen(true)}
+            onTriggerFileUpload={() => fileInputRef.current?.click()}
+            googleConnected={googleConnected}
+            docsCount={documents.length}
           >
             {/* Ingestion Modals in Hero */}
             <TextModal
@@ -792,39 +823,47 @@ export default function App() {
               style={{
                 flex: 1,
                 overflowY: 'auto',
-                padding: '24px 20px',
+                padding: '24px 20px'
+              }}
+            >
+              <div style={{
+                maxWidth: '820px',
+                width: '100%',
+                margin: '0 auto',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '24px'
-              }}
-            >
-              {messages.map((msg, index) => (
-                <ChatMessage
-                  key={msg.id || index}
-                  msg={msg}
-                  isLatest={index === messages.length - 1}
-                  streamingMsgId={streamingMsgId}
-                  avatarState={avatarState}
-                  copiedMsgId={copiedMsgId}
-                  likedMsgId={likedMap}
-                  expandedDocs={expandedDocs}
-                  highlightedChunk={highlightedChunk}
-                  onCopy={handleCopy}
-                  onRetry={handleRegenerate}
-                  onLike={handleLike}
-                  onDislike={handleDislike}
-                  onToggleDocExpand={handleToggleDocExpand}
-                  onJumpToChunk={handleJumpToChunk}
-                  onSendFollowup={(q) => handleSendMessage(q)}
-                />
-              ))}
+              }}>
+                {messages.map((msg, index) => (
+                  <ChatMessage
+                    key={msg.id || index}
+                    msg={msg}
+                    isLatest={index === messages.length - 1}
+                    streamingMsgId={streamingMsgId}
+                    avatarState={avatarState}
+                    copiedMsgId={copiedMsgId}
+                    likedMsgId={likedMap}
+                    expandedDocs={expandedDocs}
+                    highlightedChunk={highlightedChunk}
+                    onCopy={handleCopy}
+                    onRetry={handleRegenerate}
+                    onLike={handleLike}
+                    onDislike={handleDislike}
+                    onToggleDocExpand={handleToggleDocExpand}
+                    onJumpToChunk={handleJumpToChunk}
+                    onSendFollowup={(q) => handleSendMessage(q)}
+                    onOpenGoogleConnect={() => setGoogleConnectOpen(true)}
+                    currentStage={streamingMsgId === msg.id ? currentStage : undefined}
+                  />
+                ))}
 
-              {/* Real-time Thinking Dots with Procedural Avatar */}
-              {isLoading && !streamingMsgId && (
-                <ThinkingIndicator avatarState={avatarState} />
-              )}
+                {/* Real-time Thinking Dots with Procedural Avatar */}
+                {(isLoading || Boolean(streamingMsgId)) && (!messages.length || messages[messages.length - 1]?.sender === 'user') && (
+                  <ThinkingIndicator avatarState={avatarState} currentStage={currentStage} />
+                )}
 
-              <div ref={messagesEndRef} style={{ height: '12px' }} />
+                <div ref={messagesEndRef} style={{ height: '12px' }} />
+              </div>
             </div>
 
             {/* Bottom Docked Composer */}

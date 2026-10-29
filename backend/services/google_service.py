@@ -10,6 +10,9 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+from backend.utils.retry import execute_with_backoff, format_friendly_error
+from backend.services.database import get_user_by_id, create_or_update_user, get_db_connection
+from backend.utils.crypto import encrypt_token, decrypt_token
 
 SCOPES = [
     "openid",
@@ -115,6 +118,121 @@ def handle_oauth_callback(code: str, redirect_uri: Optional[str] = None) -> Dict
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+def exchange_code_for_user(code: str, redirect_uri: Optional[str] = None) -> Dict[str, Any]:
+    """Exchanges OAuth authorization code, extracts user profile, encrypts tokens, and stores user in DB."""
+    config = get_client_config()
+    if not config:
+        return {"success": False, "error": "Google OAuth configuration missing."}
+    
+    r_uri = redirect_uri or os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
+    try:
+        flow = Flow.from_client_config(
+            config,
+            scopes=SCOPES,
+            redirect_uri=r_uri
+        )
+        flow.fetch_token(code=code)
+        creds = flow.credentials
+        
+        # Get user email
+        oauth2_service = build("oauth2", "v2", credentials=creds)
+        user_info = execute_with_backoff(oauth2_service.userinfo().get())
+        email_addr = user_info.get("email")
+        if not email_addr:
+            return {"success": False, "error": "Unable to retrieve Google email address."}
+            
+        # Encrypt tokens with Fernet before DB persistence
+        enc_access = encrypt_token(creds.token)
+        enc_refresh = encrypt_token(creds.refresh_token) if creds.refresh_token else None
+        expires_at = creds.expiry.isoformat() if creds.expiry else None
+        
+        user = create_or_update_user(
+            email=email_addr,
+            google_access_token=enc_access,
+            google_refresh_token=enc_refresh,
+            token_expires_at=expires_at
+        )
+        
+        return {
+            "success": True,
+            "user_id": user["id"],
+            "email": user["email"],
+            "expires_at": expires_at
+        }
+    except Exception as e:
+        print(f"[OAuth Exchange Error]: {e}")
+        return {"success": False, "error": str(e)}
+
+def get_user_credentials(user_id: Optional[str] = None) -> Optional[Credentials]:
+    """Retrieves and auto-refreshes decrypted Google credentials for a specific user."""
+    user = None
+    if user_id:
+        user = get_user_by_id(user_id)
+    else:
+        # Fallback: check if any user exists in database
+        conn = get_db_connection()
+        row = conn.execute("SELECT * FROM users ORDER BY created_at DESC LIMIT 1").fetchone()
+        conn.close()
+        if row:
+            user = dict(row)
+            
+    if not user:
+        return get_google_credentials() # Legacy token file fallback
+        
+    enc_access = user.get("google_access_token")
+    enc_refresh = user.get("google_refresh_token")
+    
+    access_token = decrypt_token(enc_access) if enc_access else None
+    refresh_token = decrypt_token(enc_refresh) if enc_refresh else None
+    
+    if not access_token and not refresh_token:
+        return None
+        
+    cfg = get_client_config()
+    client_info = cfg.get("web", {}) if cfg else {}
+    client_id = client_info.get("client_id")
+    client_secret = client_info.get("client_secret")
+    
+    creds = Credentials(
+        token=access_token,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=SCOPES
+    )
+    
+    # Auto-refresh if expired
+    if creds and creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+            # Save refreshed token encrypted
+            create_or_update_user(
+                email=user["email"],
+                google_access_token=encrypt_token(creds.token),
+                google_refresh_token=encrypt_token(creds.refresh_token),
+                token_expires_at=creds.expiry.isoformat() if creds.expiry else None
+            )
+        except Exception as e:
+            print(f"[OAuth Token Refresh Error for user {user.get('email')}]: {e}")
+            return None
+            
+    return creds
+
+def get_gmail_service(user_id: Optional[str] = None):
+    """Initializes a per-user Gmail service object."""
+    creds = get_user_credentials(user_id)
+    if not creds:
+        return None
+    return build("gmail", "v1", credentials=creds)
+
+def get_calendar_service(user_id: Optional[str] = None):
+    """Initializes a per-user Google Calendar service object."""
+    creds = get_user_credentials(user_id)
+    if not creds:
+        return None
+    return build("calendar", "v3", credentials=creds)
+
 def get_google_credentials() -> Optional[Credentials]:
     """Loads and auto-refreshes Google credentials."""
     if not os.path.exists(TOKEN_FILE):
@@ -134,30 +252,45 @@ def get_google_credentials() -> Optional[Credentials]:
         )
         
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-            # Save refreshed token
-            token_data["token"] = creds.token
-            token_data["expiry"] = creds.expiry.isoformat() if creds.expiry else None
-            with open(TOKEN_FILE, "w", encoding="utf-8") as f:
-                json.dump(token_data, f, indent=2)
+            try:
+                creds.refresh(Request())
+                # Save refreshed token
+                token_data["token"] = creds.token
+                token_data["expiry"] = creds.expiry.isoformat() if creds.expiry else None
+                with open(TOKEN_FILE, "w", encoding="utf-8") as f:
+                    json.dump(token_data, f, indent=2)
+            except Exception as refresh_err:
+                print(f"  [Google Token Refresh Failed]: {refresh_err}. Cleaning stale token to prompt re-auth.")
+                try:
+                    os.remove(TOKEN_FILE)
+                except Exception:
+                    pass
+                return None
                 
         return creds
     except Exception as e:
         print(f"  [Google Credentials error]: {e}")
         return None
 
-def get_connection_status() -> Dict[str, Any]:
-    """Returns the Google connection state and user email."""
-    creds = get_google_credentials()
+def get_connection_status(user_id: Optional[str] = None) -> Dict[str, Any]:
+    """Returns the Google connection state, user email, and token expiration for the current user."""
+    creds = get_user_credentials(user_id)
     if not creds:
-        return {"connected": False, "email": None}
+        return {"connected": False, "email": None, "expires_at": None}
+    
+    expires_at = creds.expiry.isoformat() if creds.expiry else None
     
     try:
         oauth2_service = build("oauth2", "v2", credentials=creds)
-        user_info = oauth2_service.userinfo().get().execute()
-        return {"connected": True, "email": user_info.get("email")}
-    except Exception:
-        return {"connected": True, "email": "Google Connected"}
+        user_info = execute_with_backoff(oauth2_service.userinfo().get())
+        return {
+            "connected": True,
+            "email": user_info.get("email", "Connected"),
+            "expires_at": expires_at
+        }
+    except Exception as e:
+        print(f"  [Google Userinfo Validation Failed]: {e}.")
+        return {"connected": False, "email": None, "expires_at": None}
 
 def disconnect_google() -> bool:
     """Disconnects Google account and deletes local tokens."""
@@ -173,24 +306,23 @@ def disconnect_google() -> bool:
 # GMAIL TOOLS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def search_emails(query: str = "", max_results: int = 5) -> List[Dict[str, Any]]:
+def search_emails(query: str = "", max_results: int = 5, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """Searches emails using Gmail search syntax (e.g., 'is:unread', 'from:professor', 'internship')."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_gmail_service(user_id)
+    if not service:
         return [{
             "status": "not_connected",
-            "message": "Google account not connected. Please connect your Google account in Settings to search emails."
+            "message": "Google account not connected. Please click Sign in with Google to search emails."
         }]
     
     try:
-        service = build("gmail", "v1", credentials=creds)
-        results = service.users().messages().list(userId="me", q=query, maxResults=max_results).execute()
+        results = execute_with_backoff(service.users().messages().list(userId="me", q=query, maxResults=max_results))
         messages = results.get("messages", [])
         
         emails = []
         for msg in messages:
-            msg_data = service.users().messages().get(userId="me", id=msg["id"], format="metadata",
-                                                     metadataHeaders=["From", "Subject", "Date"]).execute()
+            msg_data = execute_with_backoff(service.users().messages().get(userId="me", id=msg["id"], format="metadata",
+                                                     metadataHeaders=["From", "Subject", "Date"]))
             headers = {h["name"]: h["value"] for h in msg_data.get("payload", {}).get("headers", [])}
             emails.append({
                 "id": msg["id"],
@@ -202,17 +334,16 @@ def search_emails(query: str = "", max_results: int = 5) -> List[Dict[str, Any]]
             })
         return emails
     except Exception as e:
-        return [{"status": "error", "message": f"Gmail search error: {str(e)}"}]
+        return [{"status": "error", "message": format_friendly_error(e)}]
 
-def read_email(message_id: str) -> Dict[str, Any]:
+def read_email(message_id: str, user_id: Optional[str] = None) -> Dict[str, Any]:
     """Retrieves full email content including headers and cleaned body text."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_gmail_service(user_id)
+    if not service:
         return {"status": "not_connected", "message": "Google account not connected."}
     
     try:
-        service = build("gmail", "v1", credentials=creds)
-        msg = service.users().messages().get(userId="me", id=message_id, format="full").execute()
+        msg = execute_with_backoff(service.users().messages().get(userId="me", id=message_id, format="full"))
         
         headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
         
@@ -241,17 +372,16 @@ def read_email(message_id: str) -> Dict[str, Any]:
             "body": body_text[:4000] # Safe limit
         }
     except Exception as e:
-        return {"status": "error", "message": f"Gmail read error: {str(e)}"}
+        return {"status": "error", "message": format_friendly_error(e)}
 
-def summarize_email_thread(thread_id: str) -> Dict[str, Any]:
+def summarize_email_thread(thread_id: str, user_id: Optional[str] = None) -> Dict[str, Any]:
     """Retrieves all messages in a thread for summarization."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_gmail_service(user_id)
+    if not service:
         return {"status": "not_connected", "message": "Google account not connected."}
         
     try:
-        service = build("gmail", "v1", credentials=creds)
-        thread = service.users().threads().get(userId="me", id=thread_id).execute()
+        thread = execute_with_backoff(service.users().threads().get(userId="me", id=thread_id))
         messages = thread.get("messages", [])
         
         convo_snippets = []
@@ -268,25 +398,24 @@ def summarize_email_thread(thread_id: str) -> Dict[str, Any]:
             "thread_content": "\n---\n".join(convo_snippets)
         }
     except Exception as e:
-        return {"status": "error", "message": f"Gmail thread error: {str(e)}"}
+        return {"status": "error", "message": format_friendly_error(e)}
 
-def create_email_draft(to: str, subject: str, body: str) -> Dict[str, Any]:
+def create_email_draft(to: str, subject: str, body: str, user_id: Optional[str] = None) -> Dict[str, Any]:
     """Creates a draft email in Gmail without sending it."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_gmail_service(user_id)
+    if not service:
         return {"status": "not_connected", "message": "Google account not connected."}
         
     try:
-        service = build("gmail", "v1", credentials=creds)
         message = MIMEText(body)
         message["to"] = to
         message["subject"] = subject
         raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
         
-        draft = service.users().drafts().create(
+        draft = execute_with_backoff(service.users().drafts().create(
             userId="me",
             body={"message": {"raw": raw}}
-        ).execute()
+        ))
         
         return {
             "status": "success",
@@ -296,25 +425,24 @@ def create_email_draft(to: str, subject: str, body: str) -> Dict[str, Any]:
             "message": "Draft created successfully in Gmail."
         }
     except Exception as e:
-        return {"status": "error", "message": f"Gmail draft creation failed: {str(e)}"}
+        return {"status": "error", "message": format_friendly_error(e)}
 
-def send_email_direct(to: str, subject: str, body: str) -> Dict[str, Any]:
+def send_email_direct(to: str, subject: str, body: str, user_id: Optional[str] = None) -> Dict[str, Any]:
     """Directly sends an email. IMPORTANT: Only invoke after explicit human approval."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_gmail_service(user_id)
+    if not service:
         return {"status": "not_connected", "message": "Google account not connected."}
         
     try:
-        service = build("gmail", "v1", credentials=creds)
         message = MIMEText(body)
         message["to"] = to
         message["subject"] = subject
         raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
         
-        sent = service.users().messages().send(
+        sent = execute_with_backoff(service.users().messages().send(
             userId="me",
             body={"raw": raw}
-        ).execute()
+        ))
         
         return {
             "status": "success",
@@ -324,34 +452,43 @@ def send_email_direct(to: str, subject: str, body: str) -> Dict[str, Any]:
             "message": f"Email successfully sent to {to}."
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to send email: {str(e)}"}
+        return {"status": "error", "message": format_friendly_error(e)}
+        
+        return {
+            "status": "success",
+            "message_id": sent.get("id"),
+            "to": to,
+            "subject": subject,
+            "message": f"Email successfully sent to {to}."
+        }
+    except Exception as e:
+        return {"status": "error", "message": format_friendly_error(e)}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GOOGLE CALENDAR TOOLS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def list_calendar_events(time_min: Optional[str] = None, time_max: Optional[str] = None, max_results: int = 10) -> List[Dict[str, Any]]:
+def list_calendar_events(time_min: Optional[str] = None, time_max: Optional[str] = None, max_results: int = 10, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """Retrieves upcoming Google Calendar events."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_calendar_service(user_id)
+    if not service:
         return [{
             "status": "not_connected",
             "message": "Google account not connected. Please connect your Google account in Settings."
         }]
         
     try:
-        service = build("calendar", "v3", credentials=creds)
         now_iso = datetime.utcnow().isoformat() + "Z"
         t_min = time_min or now_iso
         
-        events_result = service.events().list(
+        events_result = execute_with_backoff(service.events().list(
             calendarId="primary",
             timeMin=t_min,
             timeMax=time_max,
             maxResults=max_results,
             singleEvents=True,
             orderBy="startTime"
-        ).execute()
+        ))
         
         items = events_result.get("items", [])
         events = []
@@ -370,22 +507,21 @@ def list_calendar_events(time_min: Optional[str] = None, time_max: Optional[str]
             })
         return events
     except Exception as e:
-        return [{"status": "error", "message": f"Calendar error: {str(e)}"}]
+        return [{"status": "error", "message": format_friendly_error(e)}]
 
-def check_calendar_availability(start_iso: str, end_iso: str) -> Dict[str, Any]:
+def check_calendar_availability(start_iso: str, end_iso: str, user_id: Optional[str] = None) -> Dict[str, Any]:
     """Checks if there is a conflict in the primary calendar between start and end times."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_calendar_service(user_id)
+    if not service:
         return {"status": "not_connected", "message": "Google account not connected."}
         
     try:
-        service = build("calendar", "v3", credentials=creds)
         body = {
             "timeMin": start_iso,
             "timeMax": end_iso,
             "items": [{"id": "primary"}]
         }
-        res = service.freebusy().query(body=body).execute()
+        res = execute_with_backoff(service.freebusy().query(body=body))
         busy_slots = res.get("calendars", {}).get("primary", {}).get("busy", [])
         is_free = len(busy_slots) == 0
         return {
@@ -394,12 +530,12 @@ def check_calendar_availability(start_iso: str, end_iso: str) -> Dict[str, Any]:
             "busy_slots": busy_slots
         }
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": format_friendly_error(e)}
 
-def find_free_meeting_slots(duration_minutes: int = 30, days_ahead: int = 3) -> List[Dict[str, Any]]:
+def find_free_meeting_slots(duration_minutes: int = 30, days_ahead: int = 3, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """Scans business hours (9 AM - 5 PM) over the next N days to find available meeting slots."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_calendar_service(user_id)
+    if not service:
         return [{"status": "not_connected", "message": "Google account not connected."}]
         
     now = datetime.now()
@@ -419,7 +555,8 @@ def find_free_meeting_slots(duration_minutes: int = 30, days_ahead: int = 3) -> 
                 # Check slot
                 avail = check_calendar_availability(
                     slot_start.isoformat() + "Z",
-                    slot_end.isoformat() + "Z"
+                    slot_end.isoformat() + "Z",
+                    user_id=user_id
                 )
                 if avail.get("available", False):
                     available_slots.append({
@@ -439,15 +576,15 @@ def create_calendar_event_direct(
     start_time: str,
     end_time: str,
     description: str = "",
-    attendees: Optional[List[str]] = None
+    attendees: Optional[List[str]] = None,
+    user_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """Directly creates a calendar event. IMPORTANT: Only invoke after explicit human approval."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_calendar_service(user_id)
+    if not service:
         return {"status": "not_connected", "message": "Google account not connected."}
         
     try:
-        service = build("calendar", "v3", credentials=creds)
         event_body: Dict[str, Any] = {
             "summary": summary,
             "description": description,
@@ -457,7 +594,7 @@ def create_calendar_event_direct(
         if attendees:
             event_body["attendees"] = [{"email": a} for a in attendees]
             
-        created = service.events().insert(calendarId="primary", body=event_body).execute()
+        created = execute_with_backoff(service.events().insert(calendarId="primary", body=event_body))
         return {
             "status": "success",
             "event_id": created.get("id"),
@@ -468,22 +605,22 @@ def create_calendar_event_direct(
             "message": f"Event '{summary}' scheduled successfully."
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to create event: {str(e)}"}
+        return {"status": "error", "message": format_friendly_error(e)}
 
 def update_calendar_event_direct(
     event_id: str,
     summary: Optional[str] = None,
     start_time: Optional[str] = None,
-    end_time: Optional[str] = None
+    end_time: Optional[str] = None,
+    user_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """Updates an existing calendar event. Only invoke after explicit human approval."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_calendar_service(user_id)
+    if not service:
         return {"status": "not_connected", "message": "Google account not connected."}
         
     try:
-        service = build("calendar", "v3", credentials=creds)
-        event = service.events().get(calendarId="primary", eventId=event_id).execute()
+        event = execute_with_backoff(service.events().get(calendarId="primary", eventId=event_id))
         if summary:
             event["summary"] = summary
         if start_time:
@@ -491,7 +628,7 @@ def update_calendar_event_direct(
         if end_time:
             event["end"] = {"dateTime": end_time}
             
-        updated = service.events().update(calendarId="primary", eventId=event_id, body=event).execute()
+        updated = execute_with_backoff(service.events().update(calendarId="primary", eventId=event_id, body=event))
         return {
             "status": "success",
             "event_id": event_id,
@@ -499,21 +636,21 @@ def update_calendar_event_direct(
             "message": "Calendar event updated successfully."
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to update event: {str(e)}"}
+        return {"status": "error", "message": format_friendly_error(e)}
 
-def delete_calendar_event_direct(event_id: str) -> Dict[str, Any]:
+def delete_calendar_event_direct(event_id: str, user_id: Optional[str] = None) -> Dict[str, Any]:
     """Deletes a calendar event. Only invoke after explicit human approval."""
-    creds = get_google_credentials()
-    if not creds:
+    service = get_calendar_service(user_id)
+    if not service:
         return {"status": "not_connected", "message": "Google account not connected."}
         
     try:
-        service = build("calendar", "v3", credentials=creds)
-        service.events().delete(calendarId="primary", eventId=event_id).execute()
+        execute_with_backoff(service.events().delete(calendarId="primary", eventId=event_id))
         return {
             "status": "success",
             "event_id": event_id,
             "message": "Calendar event deleted successfully."
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to delete event: {str(e)}"}
+        return {"status": "error", "message": format_friendly_error(e)}
+

@@ -20,21 +20,31 @@ export function TopBar({
   onOpenTaskManager,
   onOpenGoogleConnect
 }: TopBarProps) {
-  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleStatus, setGoogleStatus] = useState<{
+    connected: boolean;
+    email?: string | null;
+    expires_at?: string | null;
+  }>({
+    connected: false,
+    email: null,
+    expires_at: null
+  });
 
   useEffect(() => {
     const checkGoogle = async () => {
       try {
-        const res = await fetch('/api/auth/google/status');
+        const res = await fetch('/api/auth/status');
         if (res.ok) {
           const data = await res.json();
-          setGoogleConnected(data.connected);
+          setGoogleStatus(data);
         }
       } catch {
         // Ignored
       }
     };
     checkGoogle();
+    const interval = setInterval(checkGoogle, 8000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -115,19 +125,27 @@ export function TopBar({
               fontSize: '11px',
               fontWeight: 600,
               cursor: 'pointer',
-              backgroundColor: googleConnected ? '#ecfdf5' : THEME.beigeSurface,
-              color: googleConnected ? '#065f46' : THEME.slateMuted,
-              border: `1px solid ${googleConnected ? '#a7f3d0' : THEME.beigeBorder}`
+              backgroundColor: googleStatus.connected ? '#ecfdf5' : '#f3f4f6',
+              color: googleStatus.connected ? '#065f46' : '#6b7280',
+              border: `1px solid ${googleStatus.connected ? '#a7f3d0' : '#e5e7eb'}`
             }}
-            title={googleConnected ? 'Google Workspace Connected' : 'Connect Google Account'}
+            title={
+              googleStatus.connected
+                ? `Connected as ${googleStatus.email || 'Google User'}`
+                : 'Google not connected. Click to connect'
+            }
           >
-            <Mail size={12} color={googleConnected ? '#059669' : THEME.burgundy} />
-            <span>{googleConnected ? 'Google Connected' : 'Connect Google'}</span>
+            <Mail size={12} color={googleStatus.connected ? '#059669' : '#9ca3af'} />
+            <span>
+              {googleStatus.connected
+                ? (googleStatus.email ? (googleStatus.email.length > 22 ? googleStatus.email.slice(0, 20) + '…' : googleStatus.email) : 'Connected')
+                : 'Connect Google'}
+            </span>
             <span style={{
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              backgroundColor: googleConnected ? '#10b981' : '#9ca3af'
+              backgroundColor: googleStatus.connected ? '#10b981' : '#9ca3af'
             }} />
           </button>
         )}

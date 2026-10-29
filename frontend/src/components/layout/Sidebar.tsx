@@ -11,8 +11,7 @@ import {
   ChevronDown, 
   ChevronUp, 
   FileText, 
-  Video, 
-  Sparkles 
+  Video 
 } from 'lucide-react';
 import { ChatSession, DocumentItem } from '../../types';
 import { THEME } from '../../constants/theme';
@@ -382,8 +381,8 @@ export function Sidebar({
                 gap: '4px'
               }}>
                 {docs.length === 0 ? (
-                  <div style={{ fontSize: '11px', color: THEME.slateMuted, padding: '4px', textAlign: 'center' }}>
-                    No documents indexed yet.
+                  <div style={{ fontSize: '11px', color: THEME.slateMuted, padding: '8px 6px', textAlign: 'center', lineHeight: '1.4' }}>
+                    Upload a PDF, DOCX, or YouTube link to get started.
                   </div>
                 ) : (
                   docs.map((d) => (

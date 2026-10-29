@@ -25,3 +25,4 @@ def cancel_action(action_id: str):
     """Cancels a proposed action."""
     result = reject_action(action_id)
     return result
+

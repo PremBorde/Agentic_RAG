@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional, List
 
+from backend.utils.auth import get_current_user_id
 from backend.services.database import (
     create_task,
     list_tasks,
@@ -30,9 +31,10 @@ class TaskUpdateRequest(BaseModel):
     category: Optional[str] = None
 
 @router.get("")
-def get_all_tasks(status: Optional[str] = None, category: Optional[str] = None):
-    """Lists all tasks with optional status and category filters."""
-    return list_tasks(status, category)
+def get_all_tasks(request: Request, status: Optional[str] = None, category: Optional[str] = None):
+    """Lists all tasks with optional status, category, and user isolation filters."""
+    user_id = get_current_user_id(request)
+    return list_tasks(status=status, category=category, user_id=user_id)
 
 @router.get("/overdue")
 def get_overdue():
@@ -47,13 +49,15 @@ def get_single_task(task_id: str):
     return task
 
 @router.post("")
-def add_new_task(req: TaskCreateRequest):
+def add_new_task(req: TaskCreateRequest, request: Request):
+    user_id = get_current_user_id(request)
     return create_task(
         title=req.title,
         description=req.description or "",
         due_date=req.due_date,
         priority=req.priority or "medium",
-        category=req.category or "general"
+        category=req.category or "general",
+        user_id=user_id
     )
 
 @router.put("/{task_id}")
@@ -84,3 +88,4 @@ def remove_task(task_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Task not found")
     return {"success": True, "message": "Task deleted"}
+

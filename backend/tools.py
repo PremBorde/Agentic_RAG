@@ -96,16 +96,21 @@ def detect_gmail_intent(text: str) -> Optional[Tuple[str, Dict[str, Any]]]:
     if "summarize email thread" in t or "summarize this thread" in t:
         return ("summarize_thread", {"query": text})
         
-    # 4. Search Emails
+    # 4. Search, Read, or Check Emails
     email_search_triggers = [
         "search email", "search emails", "find email", "find emails", "check email",
         "check emails", "unread emails", "inbox", "emails from", "emails about",
-        "latest email", "read email"
+        "latest email", "read email", "read emails", "my email", "my emails",
+        "emails of today", "emails today", "get email", "get emails",
+        "show email", "show emails", "scan inbox", "scan email", "check my mail"
     ]
-    if any(k in t for k in email_search_triggers):
+    has_email_word = any(w in t for w in ["email", "emails", "gmail", "inbox", "mail"])
+    has_read_action = any(w in t for w in ["read", "check", "search", "find", "get", "show", "summarize", "list", "open", "look", "today", "yesterday", "recent", "latest"])
+
+    if any(k in t for k in email_search_triggers) or (has_email_word and has_read_action):
         # Extract search query
         q = text
-        for prefix in ["search email for", "search emails for", "find email from", "find emails about", "check emails for", "search email about"]:
+        for prefix in ["search email for", "search emails for", "find email from", "find emails about", "check emails for", "search email about", "read my emails of", "read emails of", "read my emails"]:
             if prefix in t:
                 idx = t.find(prefix) + len(prefix)
                 q = text[idx:].strip()
@@ -144,7 +149,10 @@ def detect_calendar_intent(text: str) -> Optional[Tuple[str, Dict[str, Any]]]:
         "what's on my calendar", "whats on my calendar", "upcoming meetings", "upcoming events",
         "schedule for tomorrow", "schedule for today", "my schedule"
     ]
-    if any(k in t for k in list_triggers):
+    has_cal_word = any(w in t for w in ["calendar", "meeting", "meetings", "event", "events", "schedule", "appointment"])
+    has_cal_action = any(w in t for w in ["check", "what", "find", "show", "list", "have", "am i", "tomorrow", "today", "friday", "next", "upcoming", "view"])
+
+    if any(k in t for k in list_triggers) or (has_cal_word and has_cal_action):
         return ("list_events", {"prompt": text})
         
     return None

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check, Database, Globe, Sparkles, Mail, Calendar, CheckSquare, Brain } from 'lucide-react';
+import { Copy, Check, Database, Globe, Brain, Mail, Calendar, CheckSquare } from 'lucide-react';
 import { THEME } from '../../constants/theme';
 
 export function getDisplaySourceBadge(source?: string): {
@@ -95,7 +95,7 @@ export function getDisplaySourceBadge(source?: string): {
   if (s.includes('system') || s.includes('guidance')) {
     return {
       label: 'System Guidance',
-      icon: <Sparkles size={11} />,
+      icon: <Brain size={11} />,
       color: '#5e6b7c',
       bg: '#f7f4ee',
       border: '#e5ded2'
@@ -213,7 +213,7 @@ export function MarkdownContent({
   onCitationClick 
 }: MarkdownContentProps) {
   if (isUser) {
-    return <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{content}</div>;
+    return <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px', lineHeight: 1.55 }}>{content}</div>;
   }
 
   const renderTextWithCitations = (children: React.ReactNode): React.ReactNode => {
@@ -268,12 +268,12 @@ export function MarkdownContent({
         components={{
           code: CodeBlock,
           p: ({ children }) => (
-            <p style={{ margin: '0 0 10px', lineHeight: 1.65, fontSize: '14.5px' }}>
+            <p style={{ margin: '0 0 10px', lineHeight: 1.6, fontSize: '14px' }}>
               {renderTextWithCitations(children)}
             </p>
           ),
           li: ({ children }) => (
-            <li style={{ margin: '4px 0', lineHeight: 1.6, fontSize: '14px' }}>
+            <li style={{ margin: '4px 0', lineHeight: 1.55, fontSize: '14px' }}>
               {renderTextWithCitations(children)}
             </li>
           ),

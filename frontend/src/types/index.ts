@@ -32,6 +32,7 @@ export interface Message {
   source?: string;
   retrievedDocs?: RetrievedDoc[];
   proposal?: ActionProposal;
+  requiresGoogleAuth?: boolean;
   timestamp: string;
   docMeta?: {
     title: string;

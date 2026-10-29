@@ -98,96 +98,207 @@ export const TaskManagerModal: React.FC<TaskManagerModalProps> = ({ isOpen, onCl
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-      <div className="w-full max-w-xl rounded-2xl border border-[#e2d5c3] bg-[#faf7f2] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-[#e8ded0] px-6 py-4 bg-[#f4ede1]">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7a1c30] text-white">
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(30, 24, 20, 0.45)',
+      backdropFilter: 'blur(3px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      padding: '20px'
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '560px',
+        maxHeight: '85vh',
+        backgroundColor: '#ffffff',
+        borderRadius: '16px',
+        border: `1px solid ${THEME.beigeBorderDark}`,
+        boxShadow: '0 20px 40px rgba(122, 28, 48, 0.15)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 20px',
+          backgroundColor: THEME.beigeSurface,
+          borderBottom: `1px solid ${THEME.beigeBorder}`
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              backgroundColor: THEME.burgundy,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ffffff'
+            }}>
               <CheckSquare size={16} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-[#2c2226]">Tasks & Reminders</h2>
-              <p className="text-xs text-[#786b68]">Manage your AI-assisted to-dos and deadlines</p>
+              <div style={{ fontSize: '15px', fontWeight: 650, color: THEME.slateDark }}>
+                Tasks & Reminders
+              </div>
+              <div style={{ fontSize: '11px', color: THEME.slateMuted }}>
+                Personal to-dos, priorities, and deadlines
+              </div>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[#786b68] hover:bg-[#ebdccf] transition-colors cursor-pointer"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: THEME.slateMuted,
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Task Creator Form */}
-        <form onSubmit={handleCreateTask} className="border-b border-[#e8ded0] p-4 bg-white/70 space-y-3">
-          <div className="flex gap-2">
+        <form onSubmit={handleCreateTask} style={{
+          padding: '14px 20px',
+          backgroundColor: THEME.beigeBg,
+          borderBottom: `1px solid ${THEME.beigeBorder}`,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px'
+        }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <input
               type="text"
-              placeholder="Add a new task (e.g. Finish RAG presentation)..."
+              placeholder="Add a new task (e.g. Finish RAG report)..."
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="flex-1 rounded-xl border border-[#d8ccc0] bg-white px-3.5 py-2 text-xs text-[#2c2226] focus:outline-none focus:border-[#7a1c30]"
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${THEME.beigeBorderDark}`,
+                fontSize: '12.5px',
+                outline: 'none',
+                backgroundColor: '#ffffff',
+                color: THEME.slateDark
+              }}
             />
             <button
               type="submit"
               disabled={!newTitle.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-[#7a1c30] px-4 py-2 text-xs font-semibold text-white hover:bg-[#621626] transition-colors disabled:opacity-50 cursor-pointer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: THEME.burgundy,
+                color: '#ffffff',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                opacity: newTitle.trim() ? 1 : 0.6
+              }}
             >
               <Plus size={14} /> Add
             </button>
           </div>
-          <div className="flex items-center gap-3 text-xs text-[#6e6360]">
-            <div className="flex items-center gap-1.5">
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '12px', color: THEME.slateMuted }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>Priority:</span>
               <select
                 value={newPriority}
                 onChange={(e: any) => setNewPriority(e.target.value)}
-                className="rounded-lg border border-[#d8ccc0] bg-white px-2 py-1 text-xs text-[#2c2226] focus:outline-none"
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: `1px solid ${THEME.beigeBorderDark}`,
+                  fontSize: '11.5px',
+                  backgroundColor: '#ffffff',
+                  outline: 'none'
+                }}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Calendar size={13} />
               <span>Due:</span>
               <input
                 type="date"
                 value={newDueDate}
                 onChange={(e) => setNewDueDate(e.target.value)}
-                className="rounded-lg border border-[#d8ccc0] bg-white px-2 py-1 text-xs text-[#2c2226] focus:outline-none"
-              >
-              </input>
+                style={{
+                  padding: '3px 6px',
+                  borderRadius: '6px',
+                  border: `1px solid ${THEME.beigeBorderDark}`,
+                  fontSize: '11.5px',
+                  backgroundColor: '#ffffff',
+                  outline: 'none'
+                }}
+              />
             </div>
           </div>
         </form>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-2 px-6 pt-3 pb-1 border-b border-[#ede4d7] bg-[#faf7f2]">
+        {/* Filter Tabs */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '10px 20px',
+          backgroundColor: '#ffffff',
+          borderBottom: `1px solid ${THEME.beigeBorder}`
+        }}>
           {(['all', 'pending', 'overdue', 'completed'] as const).map((tab) => (
             <button
               key={tab}
+              type="button"
               onClick={() => setFilter(tab)}
-              className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors cursor-pointer ${
-                filter === tab
-                  ? 'bg-[#7a1c30] text-white shadow-xs'
-                  : 'bg-[#eee5d8] text-[#5e5250] hover:bg-[#e4d8c8]'
-              }`}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '12px',
+                border: 'none',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textTransform: 'capitalize',
+                backgroundColor: filter === tab ? THEME.burgundy : THEME.beigeSurface,
+                color: filter === tab ? '#ffffff' : THEME.slateMuted
+              }}
             >
               {tab}
             </button>
           ))}
-          <span className="ml-auto text-[11px] text-[#8c807e]">
+          <span style={{ marginLeft: 'auto', fontSize: '11px', color: THEME.slateLight }}>
             {filteredTasks.length} task{filteredTasks.length === 1 ? '' : 's'}
           </span>
         </div>
 
-        {/* Task Items List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {/* Task List */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {filteredTasks.length === 0 ? (
-            <div className="py-8 text-center text-xs text-[#8c807e]">
+            <div style={{ padding: '30px 0', textAlign: 'center', fontSize: '12.5px', color: THEME.slateLight }}>
               No tasks found in this view.
             </div>
           ) : (
@@ -196,36 +307,48 @@ export const TaskManagerModal: React.FC<TaskManagerModalProps> = ({ isOpen, onCl
               return (
                 <div
                   key={t.id}
-                  className={`flex items-center justify-between rounded-xl border p-3 text-xs transition-colors ${
-                    t.status === 'completed'
-                      ? 'border-[#e4ded6] bg-[#f5f1eb] opacity-60'
-                      : isOverdue
-                      ? 'border-[#fecaca] bg-[#fff5f5]'
-                      : 'border-[#e8ded0] bg-white shadow-xs'
-                  }`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: `1px solid ${isOverdue ? '#fca5a5' : THEME.beigeBorder}`,
+                    backgroundColor: t.status === 'completed' ? THEME.beigeBg : isOverdue ? '#fff5f5' : '#ffffff',
+                    opacity: t.status === 'completed' ? 0.65 : 1
+                  }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <input
                       type="checkbox"
                       checked={t.status === 'completed'}
                       onChange={() => handleToggleComplete(t.id, t.status)}
-                      className="h-4 w-4 rounded accent-[#7a1c30] cursor-pointer"
+                      style={{ width: '15px', height: '15px', accentColor: THEME.burgundy, cursor: 'pointer' }}
                     />
                     <div>
-                      <div className={`font-medium ${t.status === 'completed' ? 'line-through text-[#8c807e]' : 'text-[#2c2226]'}`}>
+                      <div style={{
+                        fontSize: '13px',
+                        fontWeight: 550,
+                        color: THEME.slateDark,
+                        textDecoration: t.status === 'completed' ? 'line-through' : 'none'
+                      }}>
                         {t.title}
                       </div>
-                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[#7a6e6b]">
-                        <span className={`uppercase font-semibold text-[10px] px-1.5 py-0.5 rounded ${
-                          t.priority === 'high' ? 'bg-[#fee2e2] text-[#991b1b]' :
-                          t.priority === 'low' ? 'bg-[#f3f4f6] text-[#4b5563]' :
-                          'bg-[#fef3c7] text-[#92400e]'
-                        }`}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', fontSize: '11px', color: THEME.slateMuted }}>
+                        <span style={{
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          backgroundColor: t.priority === 'high' ? '#fee2e2' : t.priority === 'low' ? '#f3f4f6' : '#fef3c7',
+                          color: t.priority === 'high' ? '#991b1b' : t.priority === 'low' ? '#4b5563' : '#92400e'
+                        }}>
                           {t.priority}
                         </span>
                         {t.due_date && (
-                          <span className={isOverdue ? 'font-semibold text-[#dc2626] flex items-center gap-1' : ''}>
-                            {isOverdue && <AlertCircle size={10} />}
+                          <span style={{ color: isOverdue ? '#dc2626' : THEME.slateMuted, fontWeight: isOverdue ? 650 : 400, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            {isOverdue && <AlertCircle size={11} />}
                             Due: {t.due_date}
                           </span>
                         )}
@@ -233,8 +356,9 @@ export const TaskManagerModal: React.FC<TaskManagerModalProps> = ({ isOpen, onCl
                     </div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => handleDeleteTask(t.id)}
-                    className="p-1 text-[#a39491] hover:text-[#dc2626] transition-colors cursor-pointer"
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: THEME.slateLight, padding: '4px' }}
                     title="Delete task"
                   >
                     <Trash2 size={13} />

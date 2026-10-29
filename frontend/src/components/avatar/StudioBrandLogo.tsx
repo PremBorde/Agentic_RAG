@@ -22,15 +22,17 @@ export function StudioBrandLogo({
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        borderRadius: `${Math.max(6, Math.round(size * 0.28))}px`,
+        borderRadius: '50%',
         overflow: 'hidden',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
         backgroundColor: '#ffffff',
-        border: '1px solid #f0c2cc',
-        boxShadow: '0 2px 6px rgba(122, 28, 48, 0.08)'
+        border: size > 48 ? '2px solid #ecd8dc' : '1.5px solid #f0c2cc',
+        boxShadow: size > 48 
+          ? '0 8px 24px rgba(122, 28, 48, 0.08), 0 2px 6px rgba(0,0,0,0.03)' 
+          : '0 1px 4px rgba(122, 28, 48, 0.08)'
       }}
     >
       <ProceduralStudioAvatar 

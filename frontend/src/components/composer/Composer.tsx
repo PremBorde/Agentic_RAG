@@ -94,11 +94,11 @@ export function Composer({
       <div 
         className="composer-container"
         style={{
-          backgroundColor: THEME.beigeCard,
-          borderRadius: '16px',
-          border: `1px solid ${THEME.beigeBorderDark}`,
-          boxShadow: isHero ? '0 4px 20px rgba(0,0,0,0.06)' : '0 2px 14px rgba(0,0,0,0.05)',
-          padding: '8px 14px 6px',
+          backgroundColor: '#ffffff',
+          borderRadius: isHero ? '20px' : '16px',
+          border: `1.5px solid ${isHero ? '#e7dfd5' : THEME.beigeBorderDark}`,
+          boxShadow: isHero ? '0 10px 32px rgba(122, 28, 48, 0.05), 0 2px 8px rgba(0,0,0,0.03)' : '0 2px 14px rgba(0,0,0,0.05)',
+          padding: isHero ? '14px 18px 12px' : '8px 14px 6px',
           display: 'flex',
           flexDirection: 'column'
         }}
@@ -119,14 +119,14 @@ export function Composer({
             outline: 'none',
             boxShadow: 'none',
             resize: 'none',
-            fontSize: '14px',
+            fontSize: isHero ? '15px' : '14px',
             fontFamily: 'inherit',
             backgroundColor: 'transparent',
             color: THEME.slateDark,
-            lineHeight: '1.4',
-            minHeight: '22px',
+            lineHeight: '1.5',
+            minHeight: isHero ? '38px' : '22px',
             maxHeight: '120px',
-            padding: '1px 0'
+            padding: '2px 0'
           }}
         />
 
@@ -134,8 +134,8 @@ export function Composer({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingTop: '6px',
-          borderTop: `1px solid ${THEME.beigeBorder}`
+          paddingTop: isHero ? '10px' : '6px',
+          borderTop: isHero ? 'none' : `1px solid ${THEME.beigeBorder}`
         }}>
           {/* Left: '+' Popover Trigger */}
           <div style={{ position: 'relative' }}>

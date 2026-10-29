@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
@@ -23,6 +24,15 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+session_secret = os.getenv("SECRET_KEY", "agentic-rag-studio-secure-session-key-random")
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=session_secret,
+    max_age=14 * 24 * 3600,
+    same_site="lax",
+    https_only=False
 )
 
 # Register API Routers
@@ -52,4 +62,4 @@ if os.path.exists(frontend_dist):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=False)
