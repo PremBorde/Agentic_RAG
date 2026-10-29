@@ -1,8 +1,9 @@
 # 🧠 Personal AI Agent Studio
+<img width="1902" height="872" alt="image" src="https://github.com/user-attachments/assets/798843dc-759d-4401-b29d-5d063cf500ff" />
 
 <div align="center">
 
-### Personal AI Assistant
+### Agentic_RAG
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
