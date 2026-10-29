@@ -1,0 +1,237 @@
+{
+  "schema": "bible-strong/avatar-definition",
+  "schemaVersion": 1,
+  "name": "AgenticStudioCompanion",
+  "body": {
+    "primary": {
+      "type": "capsule",
+      "width": 200,
+      "height": 240,
+      "depth": 190,
+      "roundness": 0.95
+    },
+    "nodes": [
+      {
+        "surface": {
+          "type": "sphere",
+          "width": 55,
+          "height": 55,
+          "depth": 55,
+          "roundness": 1
+        },
+        "position": [-95, 20, 0],
+        "rotation": [0, 0, 0]
+      },
+      {
+        "surface": {
+          "type": "sphere",
+          "width": 55,
+          "height": 55,
+          "depth": 55,
+          "roundness": 1
+        },
+        "position": [95, 20, 0],
+        "rotation": [0, 0, 0]
+      }
+    ]
+  },
+  "colors": {
+    "body": "#7a1c30",
+    "eyes": "#faf7f2"
+  },
+  "expressions": {
+    "neutral": {
+      "head": { "x": 0, "y": 0, "z": 0 },
+      "eyes": {
+        "left": { "width": 16, "height": 30, "x": -28, "y": 0, "angle": 0 },
+        "right": { "width": 16, "height": 30, "x": 28, "y": 0, "angle": 0 },
+        "spacing": 56
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "microSaccades",
+        "body": "slowDrift"
+      }
+    },
+    "thinking": {
+      "head": { "x": 8, "y": -14, "z": 6 },
+      "eyes": {
+        "left": { "width": 18, "height": 18, "x": -24, "y": -12, "angle": -12 },
+        "right": { "width": 18, "height": 18, "x": 32, "y": -12, "angle": 12 },
+        "spacing": 56
+      },
+      "perspective": 1.1,
+      "motion": {
+        "eyes": "microSaccades",
+        "body": "slowDrift"
+      }
+    },
+    "searching": {
+      "head": { "x": 0, "y": 4, "z": 0 },
+      "eyes": {
+        "left": { "width": 22, "height": 26, "x": -28, "y": 2, "angle": 0 },
+        "right": { "width": 22, "height": 26, "x": 28, "y": 2, "angle": 0 },
+        "spacing": 56
+      },
+      "perspective": 1.05,
+      "motion": {
+        "eyes": "microSaccades",
+        "body": "slowDrift"
+      }
+    },
+    "generating": {
+      "head": { "x": -4, "y": 0, "z": -2 },
+      "eyes": {
+        "left": { "width": 16, "height": 26, "x": -28, "y": -2, "angle": 6 },
+        "right": { "width": 16, "height": 26, "x": 28, "y": -2, "angle": -6 },
+        "spacing": 56
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "microSaccades",
+        "body": "slowDrift"
+      }
+    },
+    "happy": {
+      "head": { "x": 0, "y": -6, "z": 0 },
+      "eyes": {
+        "left": { "width": 22, "height": 18, "x": -28, "y": -4, "angle": 20 },
+        "right": { "width": 22, "height": 18, "x": 28, "y": -4, "angle": -20 },
+        "spacing": 56
+      },
+      "perspective": 1,
+      "motion": {
+        "eyes": "microSaccades",
+        "body": "slowDrift"
+      }
+    },
+    "concerned": {
+      "head": { "x": 0, "y": 8, "z": -4 },
+      "eyes": {
+        "left": { "width": 16, "height": 22, "x": -28, "y": 4, "angle": -18 },
+        "right": { "width": 16, "height": 22, "x": 28, "y": 4, "angle": 18 },
+        "spacing": 56
+      },
+      "perspective": 0.98,
+      "motion": {
+        "eyes": "shake",
+        "body": "none"
+      }
+    },
+    "sleeping": {
+      "head": { "x": 0, "y": 14, "z": 4 },
+      "eyes": {
+        "left": { "width": 18, "height": 4, "x": -28, "y": 8, "angle": 0 },
+        "right": { "width": 18, "height": 4, "x": 28, "y": 8, "angle": 0 },
+        "spacing": 56
+      },
+      "perspective": 0.95,
+      "motion": {
+        "eyes": "none",
+        "body": "slowDrift"
+      }
+    }
+  },
+  "expressionOrder": ["neutral", "thinking", "searching", "generating", "happy", "concerned", "sleeping"],
+  "animations": {
+    "idle": {
+      "playbackMode": "loop",
+      "steps": [
+        { "expression": "neutral", "holdMs": 3500, "transitionMs": 500, "transition": "smooth" },
+        { "expression": "happy", "holdMs": 1500, "transitionMs": 400, "transition": "smooth" }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 1200,
+        "minIntervalMs": 2500,
+        "maxIntervalMs": 5500,
+        "durationMs": 160
+      }
+    },
+    "thinking": {
+      "playbackMode": "loop",
+      "steps": [
+        { "expression": "thinking", "holdMs": 2200, "transitionMs": 350, "transition": "snappy" },
+        { "expression": "neutral", "holdMs": 800, "transitionMs": 350, "transition": "smooth" }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 600,
+        "minIntervalMs": 2000,
+        "maxIntervalMs": 4000,
+        "durationMs": 150
+      }
+    },
+    "searching": {
+      "playbackMode": "loop",
+      "steps": [
+        { "expression": "searching", "holdMs": 1600, "transitionMs": 350, "transition": "smooth" },
+        { "expression": "neutral", "holdMs": 600, "transitionMs": 250, "transition": "smooth" }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 800,
+        "minIntervalMs": 1500,
+        "maxIntervalMs": 3500,
+        "durationMs": 140
+      }
+    },
+    "generating": {
+      "playbackMode": "loop",
+      "steps": [
+        { "expression": "generating", "holdMs": 1200, "transitionMs": 300, "transition": "smooth" },
+        { "expression": "neutral", "holdMs": 800, "transitionMs": 300, "transition": "smooth" },
+        { "expression": "happy", "holdMs": 1000, "transitionMs": 300, "transition": "smooth" }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 800,
+        "minIntervalMs": 2000,
+        "maxIntervalMs": 4500,
+        "durationMs": 150
+      }
+    },
+    "success": {
+      "playbackMode": "loop",
+      "steps": [
+        { "expression": "happy", "holdMs": 2000, "transitionMs": 300, "transition": "smooth" },
+        { "expression": "neutral", "holdMs": 1200, "transitionMs": 300, "transition": "smooth" }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 600,
+        "minIntervalMs": 2000,
+        "maxIntervalMs": 5000,
+        "durationMs": 150
+      }
+    },
+    "error": {
+      "playbackMode": "loop",
+      "steps": [
+        { "expression": "concerned", "holdMs": 2200, "transitionMs": 300, "transition": "snappy" },
+        { "expression": "neutral", "holdMs": 800, "transitionMs": 300, "transition": "smooth" }
+      ],
+      "blink": {
+        "enabled": true,
+        "initialDelayMs": 1000,
+        "minIntervalMs": 3000,
+        "maxIntervalMs": 6000,
+        "durationMs": 180
+      }
+    },
+    "sleeping": {
+      "playbackMode": "loop",
+      "steps": [
+        { "expression": "sleeping", "holdMs": 4000, "transitionMs": 800, "transition": "smooth" }
+      ],
+      "blink": {
+        "enabled": false,
+        "initialDelayMs": 0,
+        "minIntervalMs": 10000,
+        "maxIntervalMs": 20000,
+        "durationMs": 50
+      }
+    }
+  },
+  "animationOrder": ["idle", "thinking", "searching", "generating", "success", "error", "sleeping"]
+}
