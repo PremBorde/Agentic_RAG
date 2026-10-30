@@ -11,6 +11,7 @@ from backend.routes.auth import router as auth_router
 from backend.routes.tasks import router as tasks_router
 from backend.routes.memory import router as memory_router
 from backend.routes.actions import router as actions_router
+from backend.routes.conversations import router as conversations_router
 
 app = FastAPI(
     title="Personal AI Agent Studio",
@@ -42,6 +43,7 @@ app.include_router(auth_router)
 app.include_router(tasks_router)
 app.include_router(memory_router)
 app.include_router(actions_router)
+app.include_router(conversations_router)
 
 # Mount Frontend Single Page Application (SPA)
 frontend_dist = os.path.join(os.path.dirname(__file__), "frontend", "dist")

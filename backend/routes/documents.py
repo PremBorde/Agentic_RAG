@@ -5,7 +5,8 @@ from backend.vector_store import indexed_documents, clear_vector_store
 from backend.services.document_service import (
     process_uploaded_file, 
     process_custom_text, 
-    process_youtube_url
+    process_youtube_url,
+    remove_document
 )
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
@@ -46,4 +47,10 @@ def clear_documents():
     """Clears all indexed documents from the vector store."""
     clear_vector_store()
     return {"message": "All documents successfully removed."}
+
+@router.delete("/{doc_id}")
+def delete_document_by_id(doc_id: str):
+    """Deletes a specific document from the vector store by ID."""
+    return remove_document(doc_id)
+
 

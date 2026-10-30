@@ -6,7 +6,14 @@ import pypdf
 from youtube_transcript_api import YouTubeTranscriptApi
 
 from backend.embeddings import splitter
-from backend.vector_store import vector_store, indexed_documents
+from backend.vector_store import (
+    vector_store,
+    indexed_documents,
+    save_vector_store_to_disk,
+    find_duplicate_document,
+    compute_content_hash,
+    delete_document
+)
 
 def extract_youtube_video_id(url_or_id: str) -> str:
     patterns = [
@@ -38,6 +45,15 @@ async def process_uploaded_file(file: UploadFile) -> dict:
         
     if not content:
         raise HTTPException(status_code=400, detail="Uploaded file is empty or contains no readable text.")
+
+    # Deduplication check
+    existing_doc = find_duplicate_document(content, filename)
+    if existing_doc:
+        return {
+            "message": f"'{filename}' is already indexed in the Knowledge Base.",
+            "document": existing_doc,
+            "already_indexed": True
+        }
         
     new_chunks = splitter.split_text(content)
     if not new_chunks:
@@ -59,9 +75,11 @@ async def process_uploaded_file(file: UploadFile) -> dict:
         "chunk_count": len(new_chunks),
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "preview": content[:240] + ("..." if len(content) > 240 else ""),
-        "full_content": content
+        "full_content": content,
+        "content_hash": compute_content_hash(content)
     }
     indexed_documents.append(doc_entry)
+    save_vector_store_to_disk()
     
     return {
         "message": f"Successfully indexed '{filename}' into {len(new_chunks)} chunks.",
@@ -72,6 +90,18 @@ def process_custom_text(title: str, content: str) -> dict:
     clean_title = title.strip() or "Untitled Note"
     clean_content = content.strip()
     
+    if not clean_content:
+        raise HTTPException(status_code=400, detail="Notes content cannot be empty.")
+
+    # Deduplication check
+    existing_doc = find_duplicate_document(clean_content, clean_title)
+    if existing_doc:
+        return {
+            "message": f"Notes titled '{clean_title}' are already indexed in the Knowledge Base.",
+            "document": existing_doc,
+            "already_indexed": True
+        }
+
     new_chunks = splitter.split_text(clean_content)
     if not new_chunks:
         raise HTTPException(status_code=400, detail="Content was too short to generate chunks.")
@@ -92,9 +122,11 @@ def process_custom_text(title: str, content: str) -> dict:
         "chunk_count": len(new_chunks),
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "preview": clean_content[:240] + ("..." if len(clean_content) > 240 else ""),
-        "full_content": clean_content
+        "full_content": clean_content,
+        "content_hash": compute_content_hash(clean_content)
     }
     indexed_documents.append(doc_entry)
+    save_vector_store_to_disk()
     
     return {
         "message": f"Successfully indexed '{clean_title}' into {len(new_chunks)} chunks.",
@@ -117,6 +149,16 @@ def process_youtube_url(url: str, custom_title: str = "") -> dict:
         raise HTTPException(status_code=400, detail="YouTube video had no transcript available.")
 
     title = custom_title.strip() if custom_title else f"YouTube Video ({video_id})"
+
+    # Deduplication check
+    existing_doc = find_duplicate_document(transcript, title)
+    if existing_doc:
+        return {
+            "message": f"Transcript for '{title}' is already indexed in the Knowledge Base.",
+            "document": existing_doc,
+            "already_indexed": True
+        }
+
     new_chunks = splitter.split_text(transcript)
     if not new_chunks:
         raise HTTPException(status_code=400, detail="Video transcript was too short to generate chunks.")
@@ -137,12 +179,20 @@ def process_youtube_url(url: str, custom_title: str = "") -> dict:
         "chunk_count": len(new_chunks),
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "preview": transcript[:240] + ("..." if len(transcript) > 240 else ""),
-        "full_content": transcript
+        "full_content": transcript,
+        "content_hash": compute_content_hash(transcript)
     }
     indexed_documents.append(doc_entry)
+    save_vector_store_to_disk()
     
     return {
         "message": f"Successfully indexed YouTube video into {len(new_chunks)} chunks.",
         "document": doc_entry
     }
 
+def remove_document(doc_id: str) -> dict:
+    """Removes a specific document by its ID and saves the updated index."""
+    success = delete_document(doc_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Document not found.")
+    return {"message": f"Document '{doc_id}' successfully removed from Knowledge Base."}

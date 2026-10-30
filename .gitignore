@@ -33,6 +33,7 @@ data/*.sqlite
 data/*.sqlite3
 data/google_tokens.json
 data/client_secret.json
+data/vector_store/
 
 # Node / Frontend
 node_modules/

@@ -54,27 +54,50 @@ def is_retryable_llm_error(exc: Exception) -> bool:
 async def astream_with_backoff(
     llm: Any,
     prompt_val: Any,
-    max_retries: int = 3,
-    initial_delay: float = 1.5,
-    factor: float = 2.0
+    max_retries: int = 2,
+    initial_delay: float = 1.0,
+    factor: float = 2.0,
+    allow_fallback: bool = True
 ) -> AsyncGenerator[Any, None]:
     """
-    Streams chunks from an LLM with exponential backoff retries if rate-limited (429 / RESOURCE_EXHAUSTED).
+    Streams chunks from an LLM with exponential backoff on transient errors (429/503),
+    and automatic resilient failover to the active fallback model (gemini-2.5-flash-lite)
+    if the requested model encounters deprecation (404), demand spikes, or quota limits.
     """
     delay = initial_delay
+    last_exc = None
+
     for attempt in range(1, max_retries + 1):
         try:
             async for chunk in llm.astream(prompt_val):
                 yield chunk
             return
         except Exception as exc:
+            last_exc = exc
             if is_retryable_llm_error(exc) and attempt < max_retries:
-                jitter = random.uniform(0.2, 0.6)
+                jitter = random.uniform(0.1, 0.4)
                 sleep_time = (delay * (factor ** (attempt - 1))) + jitter
-                logger.warning(f"Gemini LLM stream rate limit/transient error (attempt {attempt}/{max_retries}). Retrying in {sleep_time:.2f}s...")
+                logger.warning(f"Gemini LLM stream transient error (attempt {attempt}/{max_retries}). Retrying in {sleep_time:.2f}s...")
                 await asyncio.sleep(sleep_time)
             else:
-                raise exc
+                break
+
+    # Resilient Automatic Failover
+    current_model = getattr(llm, "model", "")
+    if allow_fallback and current_model != "gemini-3.5-flash-lite":
+        try:
+            from backend.config import get_llm
+            logger.warning(f"Primary model '{current_model}' encountered issue: {last_exc}. Automatically failing over to gemini-3.5-flash-lite...")
+            fallback_llm = get_llm("gemini-3.5-flash-lite")
+            async for chunk in fallback_llm.astream(prompt_val):
+                yield chunk
+            return
+        except Exception as fallback_exc:
+            logger.error(f"Fallback model also failed: {fallback_exc}")
+            raise last_exc or fallback_exc
+
+    if last_exc:
+        raise last_exc
 
 def format_friendly_error(exc: Exception) -> str:
     """
@@ -115,12 +138,25 @@ def format_friendly_error(exc: Exception) -> str:
     err_str = str(exc)
     err_lower = err_str.lower()
 
+    if any(k in err_lower for k in ["not found", "not_found", "no longer available", "not supported for generatecontent"]):
+        return (
+            "⚠️ **AI Model Deprecated or Unavailable**\n\n"
+            "The requested model is no longer active or is temporarily unavailable from Google. "
+            "Please select **Gemini 2.5 Flash Lite (Fastest)** from the model selector in the composer."
+        )
+
     if any(k in err_lower for k in ["429", "resource_exhausted", "resourceexhausted", "quota"]):
         return (
-            "⚠️ **Gemini API Rate Limit Reached**\n\n"
-            "The Google Gemini model is temporarily busy (Free Tier quota reached). "
-            "Please select a different model in the dropdown above (e.g., Gemini 3.5 Flash Lite or Gemini 3.8 Flash) "
-            "or wait a few moments before sending your next request."
+            "⏳ **Gemini API Rate Limit Reached**\n\n"
+            "The Google Gemini free tier rate limit was temporarily reached. "
+            "Please wait a moment before sending your next request, or select another model."
+        )
+
+    if any(k in err_lower for k in ["503", "unavailable", "overloaded", "high demand"]):
+        return (
+            "⚠️ **AI Service High Demand**\n\n"
+            "The selected Gemini model is currently experiencing high global demand. "
+            "Please retry in a few seconds or switch to **Gemini 2.5 Flash Lite**."
         )
 
     if any(k in err_lower for k in ["timeout", "timed out", "connection error", "connectionerror", "socket"]):
@@ -129,16 +165,16 @@ def format_friendly_error(exc: Exception) -> str:
             "Unable to reach the remote AI or Google services. Please verify your internet connection and try again."
         )
 
-    if "invalid credentials" in err_lower or "token" in err_lower and "expired" in err_lower:
+    if "invalid credentials" in err_lower or ("token" in err_lower and "expired" in err_lower):
         return (
             "🔒 **Authentication Expired**\n\n"
             "Your login credentials or API keys need re-authentication. Please check your connection settings."
         )
 
-    # General fallback - sanitized, friendly, no stack traces
+    # General fallback - sanitized, friendly, actionable
     return (
         "⚠️ **Unable to Complete Request**\n\n"
         "We encountered an unexpected issue while processing your request. "
-        "Please try rephrasing your question or selecting another model."
+        "Please try rephrasing your message or select **Gemini 2.5 Flash Lite**."
     )
 

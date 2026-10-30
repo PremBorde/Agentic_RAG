@@ -12,5 +12,22 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          if (id.includes('@bible-strong')) {
+            return 'avatar-vendor';
+          }
+          if (id.includes('react-markdown') || id.includes('remark-gfm')) {
+            return 'markdown-vendor';
+          }
+        },
+      },
+    },
+  },
 });
 

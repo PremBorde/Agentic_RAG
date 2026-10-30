@@ -17,8 +17,13 @@ import { ThinkingIndicator } from './components/chat/ThinkingIndicator';
 import { Composer } from './components/composer/Composer';
 import { TextModal } from './components/modals/TextModal';
 import { YouTubeModal } from './components/modals/YouTubeModal';
-import { TaskManagerModal } from './components/modals/TaskManagerModal';
-import { GoogleConnectModal } from './components/modals/GoogleConnectModal';
+
+const TaskManagerModal = React.lazy(() =>
+  import('./components/modals/TaskManagerModal').then((m) => ({ default: m.TaskManagerModal }))
+);
+const GoogleConnectModal = React.lazy(() =>
+  import('./components/modals/GoogleConnectModal').then((m) => ({ default: m.GoogleConnectModal }))
+);
 
 export default function App() {
   // Sessions & History
@@ -51,7 +56,7 @@ export default function App() {
   const idleTimerRef = useRef<any>(null);
 
   // Model & Documents State
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-3.5-flash-lite');
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [docsPanelOpen, setDocsPanelOpen] = useState(false);
 
@@ -101,6 +106,48 @@ export default function App() {
       console.error('Failed to save sessions:', e);
     }
   }, [sessions]);
+
+  // Load conversation threads from SQLite backend on initial mount
+  useEffect(() => {
+    const loadBackendThreads = async () => {
+      try {
+        const res = await fetch('/api/conversations');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.conversations) && data.conversations.length > 0) {
+            const serverSessions: ChatSession[] = await Promise.all(
+              data.conversations.map(async (c: any) => {
+                let msgs: Message[] = [];
+                try {
+                  const mRes = await fetch(`/api/conversations/${c.id}`);
+                  if (mRes.ok) {
+                    const mData = await mRes.json();
+                    msgs = mData.messages || [];
+                  }
+                } catch {}
+                return {
+                  thread_id: c.id,
+                  title: c.title,
+                  messages: msgs,
+                  model: c.model || 'gemini-3.5-flash-lite',
+                  updatedAt: new Date(c.updated_at).getTime() || Date.now(),
+                };
+              })
+            );
+            setSessions((prev) => {
+              const map = new Map<string, ChatSession>();
+              prev.forEach((s) => map.set(s.thread_id, s));
+              serverSessions.forEach((s) => map.set(s.thread_id, s));
+              return Array.from(map.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to sync conversations from backend:', err);
+      }
+    };
+    loadBackendThreads();
+  }, []);
 
   // Window resize listener
   useEffect(() => {
@@ -255,17 +302,29 @@ export default function App() {
       setCurrentThreadId(sess.thread_id);
       setMessages(sess.messages || []);
       if (sess.model) {
-        setSelectedModel(sess.model === 'gemini-3.5-flash-lite' ? 'gemini-2.5-flash' : sess.model);
+        const validModel = ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-flash-latest'].includes(sess.model)
+          ? sess.model
+          : 'gemini-3.5-flash-lite';
+        setSelectedModel(validModel);
       }
     }
     setPlusMenuOpen(false);
     setActiveModal(null);
   };
 
-  const handleRenameThread = (threadId: string, newTitle: string) => {
+  const handleRenameThread = async (threadId: string, newTitle: string) => {
     setSessions((prev) =>
       prev.map((s) => (s.thread_id === threadId ? { ...s, title: newTitle } : s))
     );
+    try {
+      await fetch(`/api/conversations/${threadId}/title`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+      });
+    } catch (e) {
+      console.error('Failed to rename thread on server:', e);
+    }
   };
 
   const handleDeleteThread = async (threadId: string) => {
@@ -274,7 +333,7 @@ export default function App() {
       handleStartNewChat();
     }
     try {
-      await fetch(`/api/threads/${threadId}`, { method: 'DELETE' });
+      await fetch(`/api/conversations/${threadId}`, { method: 'DELETE' });
     } catch (e) {
       console.error('Failed to delete thread on server:', e);
     }
@@ -460,6 +519,17 @@ export default function App() {
                   : s
               )
             );
+            // Background sync session to backend SQLite
+            fetch('/api/conversations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                thread_id: activeThreadId,
+                title: textToSend.slice(0, 36).trim() || 'New Conversation',
+                model: selectedModel,
+                messages: [...nextMessages, finalMsg],
+              }),
+            }).catch(() => {});
             setStreamingMsgId(null);
             setCurrentStage('');
           } else if (evt.type === 'error') {
@@ -928,14 +998,20 @@ export default function App() {
       </div>
 
       {/* Global Modals for Personal AI Agent */}
-      <TaskManagerModal
-        isOpen={taskManagerOpen}
-        onClose={() => setTaskManagerOpen(false)}
-      />
-      <GoogleConnectModal
-        isOpen={googleConnectOpen}
-        onClose={() => setGoogleConnectOpen(false)}
-      />
+      <React.Suspense fallback={null}>
+        {taskManagerOpen && (
+          <TaskManagerModal
+            isOpen={taskManagerOpen}
+            onClose={() => setTaskManagerOpen(false)}
+          />
+        )}
+        {googleConnectOpen && (
+          <GoogleConnectModal
+            isOpen={googleConnectOpen}
+            onClose={() => setGoogleConnectOpen(false)}
+          />
+        )}
+      </React.Suspense>
     </div>
   );
 }

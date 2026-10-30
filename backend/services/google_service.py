@@ -215,6 +215,13 @@ def get_user_credentials(user_id: Optional[str] = None) -> Optional[Credentials]
             )
         except Exception as e:
             print(f"[OAuth Token Refresh Error for user {user.get('email')}]: {e}")
+            try:
+                conn = get_db_connection()
+                conn.execute("UPDATE users SET google_access_token = NULL WHERE email = ?", (user["email"],))
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
             return None
             
     return creds
@@ -305,14 +312,23 @@ def get_connection_status(user_id: Optional[str] = None) -> Dict[str, Any]:
 
     return {"connected": False, "email": None, "expires_at": None}
 
-def disconnect_google() -> bool:
-    """Disconnects Google account and deletes local tokens."""
+def disconnect_google(user_id: Optional[str] = None) -> bool:
+    """Disconnects Google account and clears local/DB tokens."""
+    try:
+        conn = get_db_connection()
+        if user_id:
+            conn.execute("UPDATE users SET google_access_token = NULL, google_refresh_token = NULL WHERE id = ?", (user_id,))
+        else:
+            conn.execute("UPDATE users SET google_access_token = NULL, google_refresh_token = NULL")
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
     if os.path.exists(TOKEN_FILE):
         try:
             os.remove(TOKEN_FILE)
-            return True
         except Exception:
-            return False
+            pass
     return True
 
 # ─────────────────────────────────────────────────────────────────────────────

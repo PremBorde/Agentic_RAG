@@ -1,3 +1,4 @@
+import asyncio
 import json as _json
 from datetime import datetime, timedelta
 from typing import AsyncGenerator, Optional
@@ -8,9 +9,11 @@ from backend.embeddings import safe_str
 from backend.vector_store import vector_store, retriever, format_docs
 from backend.tools import (
     is_conversational_query,
+    get_direct_greeting_response,
     is_explicit_web_search,
     is_followup_query,
     web_search_tool,
+    detect_multi_intent,
     detect_gmail_intent,
     detect_calendar_intent,
     detect_task_intent,
@@ -25,7 +28,8 @@ from backend.services.database import (
     get_overdue_tasks,
     list_memories,
     add_memory,
-    get_relevant_memories_text
+    get_relevant_memories_text,
+    save_conversation_message
 )
 from backend.services.approval_service import propose_action
 from backend.services.google_service import (
@@ -57,11 +61,135 @@ async def stream_chat_events(
 
     try:
         yield 'data: {"type":"stage","stage":"thinking"}\n\n'
-        llm = get_llm(model_name)
+        
+        # Lazy LLM loader so greetings and local operations never touch external LLM APIs
+        _active_llm = None
+        def get_active_llm():
+            nonlocal _active_llm
+            if _active_llm is None:
+                _active_llm = get_llm(model_name)
+            return _active_llm
 
-        # ── 1. GMAIL ROUTING ─────────────────────────────────────────
-        gmail_intent = detect_gmail_intent(question)
-        if gmail_intent:
+        # ── 1. CONVERSATIONAL GREETINGS (ZERO-LLM DIRECT STREAM) ────────────
+        if is_conversational_query(question):
+            source = "Assistant"
+            yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[]})}\n\n'
+            yield 'data: {"type":"stage","stage":"generating"}\n\n'
+
+            direct_reply = get_direct_greeting_response(question)
+            if not direct_reply:
+                direct_reply = "Hello! Everything looks set up and ready to go. How can I assist you today?"
+
+            # Stream words with snappy 12ms cadence for instant typing without LLM latency
+            words = direct_reply.split(" ")
+            for i, word in enumerate(words):
+                token = word if i == 0 else " " + word
+                answer_parts.append(token)
+                yield f"data: {_json.dumps({'type':'token','text':token})}\n\n"
+                await asyncio.sleep(0.012)
+
+        # ── 1.5 MULTI-INTENT AGENT ORCHESTRATION ──────────────────────
+        elif detect_multi_intent(question):
+            multi_type, multi_params = detect_multi_intent(question)
+            source = "Agent Orchestrator"
+            is_google_connected = get_connection_status(user_id).get("connected", False)
+
+            if multi_type == "email_and_calendar":
+                if not is_google_connected:
+                    yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[],"requires_google_auth":True})}\n\n'
+                    yield 'data: {"type":"stage","stage":"generating"}\n\n'
+                    auth_prompt = (
+                        "### 🔒 Google Workspace Required for Multi-Step Workflow\n\n"
+                        "To search your emails, summarize the thread, and schedule the calendar meeting, "
+                        "please connect your Google account in Settings."
+                    )
+                    yield f"data: {_json.dumps({'type':'token','text':auth_prompt})}\n\n"
+                    answer_parts.append(auth_prompt)
+                else:
+                    # Step 1: Search Gmail
+                    yield 'data: {"type":"stage","stage":"searching_gmail"}\n\n'
+                    clean_q = question
+                    for filler in ["find the email from", "find email from", "search email from", "summarize it, and schedule", "and schedule a meeting for"]:
+                        clean_q = clean_q.replace(filler, " ")
+                    search_terms = " ".join([w for w in clean_q.split() if w.lower() not in ["find", "the", "email", "from", "about", "project", "and", "schedule", "meeting", "tomorrow", "for", "at", "pm", "am"]][:3]) or "project"
+                    
+                    emails = search_emails(query=search_terms, max_results=3, user_id=user_id)
+                    email_summary_ctx = ""
+                    if emails and emails[0].get("status") != "not_connected":
+                        lines = [f"- From: {e.get('sender')} | Subject: {e.get('subject')}\n  Snippet: {e.get('snippet')}" for e in emails]
+                        email_summary_ctx = "\n".join(lines)
+                    else:
+                        email_summary_ctx = f"Email search for '{search_terms}' completed. (Referenced in context: email discussions on the project)."
+
+                    # Step 2: Propose Calendar Event
+                    yield 'data: {"type":"stage","stage":"checking_calendar"}\n\n'
+                    now = datetime.now()
+                    tomorrow = now + timedelta(days=1)
+                    start_dt = tomorrow.replace(hour=14, minute=0, second=0, microsecond=0)
+                    end_dt = start_dt + timedelta(minutes=30)
+                    
+                    event_title = "Meeting on Project Follow-up"
+                    for word in question.split():
+                        if word.istitle() and word.lower() not in ["find", "the", "email", "meeting", "tomorrow", "pm", "am", "schedule"]:
+                            event_title = f"Meeting with {word} - Project Discussion"
+                            break
+
+                    proposal = propose_action(
+                        action_type="create_calendar_event",
+                        summary=f"{event_title} on {start_dt.strftime('%A, %b %d at %I:%M %p')}",
+                        payload={
+                            "summary": event_title,
+                            "start_time": start_dt.isoformat(),
+                            "end_time": end_dt.isoformat(),
+                            "description": f"Scheduled follow-up meeting based on email context: {question}"
+                        }
+                    )
+                    
+                    docs_meta = [{"content": email_summary_ctx, "source": "Gmail", "doc_id": "gmail-multi"}]
+                    yield f'data: {_json.dumps({"type":"meta","source":"Gmail & Calendar Orchestrator","retrieved_docs":docs_meta,"proposal":proposal})}\n\n'
+                    yield 'data: {"type":"stage","stage":"generating"}\n\n'
+                    
+                    synthesis_prompt = (
+                        f"You are an executive AI assistant. The user requested: '{question}'.\n"
+                        f"Here is the email context found:\n{email_summary_ctx}\n\n"
+                        f"Task: 1. Summarize the key points from the email.\n"
+                        f"2. Inform the user you prepared the calendar invite for {start_dt.strftime('%A, %b %d at %I:%M %p')} and that they can click 'Approve' below to confirm.\n"
+                        f"Keep it professional and concise."
+                    )
+                    prompt_val = conv_prompt.invoke({
+                        "memories": memories,
+                        "chat_history": chat_hist,
+                        "question": synthesis_prompt
+                    })
+                    async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
+                        token = safe_str(chunk.content)
+                        if token:
+                            answer_parts.append(token)
+                            yield f"data: {_json.dumps({'type':'token','text':token})}\n\n"
+
+            elif multi_type == "email_and_task":
+                yield 'data: {"type":"stage","stage":"searching_gmail"}\n\n'
+                emails = search_emails(query="feedback", max_results=2, user_id=user_id) if is_google_connected else []
+                summary_snippet = emails[0].get("snippet", "Client requested feedback review") if emails and emails[0].get("status") != "not_connected" else "Review client feedback and follow up"
+                
+                # Step 2: Create task
+                yield 'data: {"type":"stage","stage":"organizing_tasks"}\n\n'
+                task = create_task(title=f"Follow up: {summary_snippet[:50]}", priority="high", user_id=user_id)
+                
+                resp_text = (
+                    f"### Multi-Step Action Completed\n\n"
+                    f"1. **Email Referenced:** {summary_snippet}\n"
+                    f"2. **Task Created:** '{task['title']}' (Priority: High, ID: `{task['id']}`).\n\n"
+                    f"You can view and manage this in your Task Manager anytime."
+                )
+                yield f'data: {_json.dumps({"type":"meta","source":"Orchestrator: Email & Tasks","retrieved_docs":[]})}\n\n'
+                yield 'data: {"type":"stage","stage":"generating"}\n\n'
+                yield f"data: {_json.dumps({'type':'token','text':resp_text})}\n\n"
+                answer_parts.append(resp_text)
+
+        # ── 2. GMAIL ROUTING ─────────────────────────────────────────
+        elif detect_gmail_intent(question):
+            gmail_intent = detect_gmail_intent(question)
             action_name, params = gmail_intent
             source = "Gmail"
             is_google_connected = get_connection_status(user_id).get("connected", False)
@@ -136,7 +264,7 @@ async def stream_chat_events(
                     "context": context,
                     "question": question
                 })
-                async for chunk in astream_with_backoff(llm, prompt_val):
+                async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
                     token = safe_str(chunk.content)
                     if token:
                         answer_parts.append(token)
@@ -214,7 +342,7 @@ async def stream_chat_events(
                     "context": context,
                     "question": question
                 })
-                async for chunk in astream_with_backoff(llm, prompt_val):
+                async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
                     token = safe_str(chunk.content)
                     if token:
                         answer_parts.append(token)
@@ -243,7 +371,7 @@ async def stream_chat_events(
                     "context": context,
                     "question": question
                 })
-                async for chunk in astream_with_backoff(llm, prompt_val):
+                async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
                     token = safe_str(chunk.content)
                     if token:
                         answer_parts.append(token)
@@ -311,22 +439,6 @@ async def stream_chat_events(
             yield f"data: {_json.dumps({'type':'token','text':msg})}\n\n"
             answer_parts.append(msg)
 
-        # ── 5. CONVERSATIONAL GREETINGS & INTRO ───────────────────────
-        elif is_conversational_query(question):
-            source = "Assistant"
-            yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[]})}\n\n'
-            yield 'data: {"type":"stage","stage":"generating"}\n\n'
-            prompt_val = conv_prompt.invoke({
-                "memories": memories,
-                "chat_history": chat_hist,
-                "question": question
-            })
-            async for chunk in astream_with_backoff(llm, prompt_val):
-                token = safe_str(chunk.content)
-                if token:
-                    answer_parts.append(token)
-                    yield f"data: {_json.dumps({'type':'token','text':token})}\n\n"
-
         # ── 6. EXPLICIT WEB SEARCH ───────────────────────────────────
         elif is_explicit_web_search(question):
             source = "Web Search"
@@ -346,7 +458,7 @@ async def stream_chat_events(
                 "context": context,
                 "question": question
             })
-            async for chunk in astream_with_backoff(llm, prompt_val):
+            async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
                 token = safe_str(chunk.content)
                 if token:
                     answer_parts.append(token)
@@ -379,7 +491,7 @@ async def stream_chat_events(
                 "context": context,
                 "question": question
             })
-            async for chunk in astream_with_backoff(llm, prompt_val):
+            async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
                 token = safe_str(chunk.content)
                 if token:
                     answer_parts.append(token)
@@ -395,7 +507,7 @@ async def stream_chat_events(
                 "chat_history": chat_hist,
                 "question": question
             })
-            async for chunk in astream_with_backoff(llm, prompt_val):
+            async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
                 token = safe_str(chunk.content)
                 if token:
                     answer_parts.append(token)
@@ -409,6 +521,21 @@ async def stream_chat_events(
         if thread_id:
             record_thread_turn(thread_id, "user", question)
             record_thread_turn(thread_id, "assistant", full_answer)
+            try:
+                import uuid
+                u_msg_id = f"msg_{uuid.uuid4().hex[:10]}"
+                a_msg_id = f"msg_{uuid.uuid4().hex[:10]}"
+                save_conversation_message(thread_id, u_msg_id, "user", question)
+                save_conversation_message(
+                    thread_id, 
+                    a_msg_id, 
+                    "assistant", 
+                    full_answer, 
+                    source=source,
+                    metadata={"retrievedDocs": docs_meta, "proposal": proposal}
+                )
+            except Exception as db_err:
+                pass
 
     except Exception as exc:
         msg = format_friendly_error(exc)

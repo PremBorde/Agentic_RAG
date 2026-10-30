@@ -76,6 +76,33 @@ def init_db():
     )
     """)
 
+    # Conversations (Chat Threads)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS conversations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        title TEXT NOT NULL,
+        model TEXT NOT NULL DEFAULT 'gemini-3.5-flash-lite',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """)
+
+    # Messages (Thread turns & metadata)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        sender TEXT NOT NULL,
+        text TEXT NOT NULL,
+        source TEXT,
+        metadata_json TEXT DEFAULT '{}',
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id)")
+
     conn.commit()
     conn.close()
 
@@ -325,4 +352,163 @@ def update_action_status(action_id: str, status: str) -> bool:
     updated = cur.rowcount > 0
     conn.close()
     return updated
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Conversations & Messages Persistence
+# ─────────────────────────────────────────────────────────────────────────────
+
+def create_or_update_conversation(
+    thread_id: str,
+    title: str,
+    model: str = "gemini-3.5-flash-lite",
+    user_id: Optional[str] = None
+) -> Dict[str, Any]:
+    now = datetime.utcnow().isoformat()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM conversations WHERE id = ?", (thread_id,))
+    existing = cursor.fetchone()
+    if existing:
+        cursor.execute(
+            "UPDATE conversations SET title = ?, model = ?, updated_at = ? WHERE id = ?",
+            (title, model, now, thread_id)
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO conversations (id, user_id, title, model, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (thread_id, user_id, title, model, now, now)
+        )
+    conn.commit()
+    conn.close()
+    return {"id": thread_id, "user_id": user_id, "title": title, "model": model, "updated_at": now}
+
+def list_conversations(user_id: Optional[str] = None, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    conn = get_db_connection()
+    if user_id:
+        rows = conn.execute(
+            "SELECT * FROM conversations WHERE user_id = ? ORDER BY updated_at DESC LIMIT ? OFFSET ?",
+            (user_id, limit, offset)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM conversations ORDER BY updated_at DESC LIMIT ? OFFSET ?",
+            (limit, offset)
+        ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_conversation_with_messages(thread_id: str, message_limit: int = 100, message_offset: int = 0) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    c_row = conn.execute("SELECT * FROM conversations WHERE id = ?", (thread_id,)).fetchone()
+    if not c_row:
+        conn.close()
+        return None
+    conv = dict(c_row)
+    m_rows = conn.execute(
+        "SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT ? OFFSET ?",
+        (thread_id, message_limit, message_offset)
+    ).fetchall()
+    conn.close()
+    
+    msgs = []
+    for r in m_rows:
+        m = dict(r)
+        meta = json.loads(m.get("metadata_json") or "{}")
+        item = {
+            "id": m["id"],
+            "sender": m["sender"],
+            "text": m["text"],
+            "source": m.get("source"),
+            "timestamp": m["created_at"],
+            **meta
+        }
+        msgs.append(item)
+    conv["messages"] = msgs
+    return conv
+
+def save_conversation_message(
+    thread_id: str,
+    msg_id: str,
+    sender: str,
+    text: str,
+    source: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    created_at: Optional[str] = None
+) -> Dict[str, Any]:
+    now = created_at or datetime.utcnow().isoformat()
+    meta_json = json.dumps(metadata or {})
+    conn = get_db_connection()
+    # Ensure conversation exists
+    conn.execute(
+        "INSERT OR IGNORE INTO conversations (id, user_id, title, model, created_at, updated_at) VALUES (?, NULL, ?, 'gemini-3.5-flash-lite', ?, ?)",
+        (thread_id, text[:40].strip() or "New Conversation", now, now)
+    )
+    # Insert or update message
+    conn.execute(
+        """INSERT INTO messages (id, conversation_id, sender, text, source, metadata_json, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             text = excluded.text,
+             source = excluded.source,
+             metadata_json = excluded.metadata_json""",
+        (msg_id, thread_id, sender, text, source, meta_json, now)
+    )
+    # Update conversation's updated_at
+    conn.execute("UPDATE conversations SET updated_at = ? WHERE id = ?", (now, thread_id))
+    conn.commit()
+    conn.close()
+    return {"id": msg_id, "conversation_id": thread_id, "sender": sender, "text": text}
+
+def save_conversation_thread_batch(
+    thread_id: str,
+    title: str,
+    model: str,
+    messages: List[Dict[str, Any]],
+    user_id: Optional[str] = None
+) -> bool:
+    now = datetime.utcnow().isoformat()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM conversations WHERE id = ?", (thread_id,))
+    if cursor.fetchone():
+        cursor.execute(
+            "UPDATE conversations SET title = ?, model = ?, updated_at = ? WHERE id = ?",
+            (title, model, now, thread_id)
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO conversations (id, user_id, title, model, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (thread_id, user_id, title, model, now, now)
+        )
+    for m in messages:
+        msg_id = m.get("id") or f"msg_{uuid.uuid4().hex[:10]}"
+        sender = m.get("sender", "user")
+        text = m.get("text", "")
+        source = m.get("source")
+        timestamp = m.get("timestamp") or now
+        # extract extra fields for metadata_json
+        meta = {k: v for k, v in m.items() if k not in ("id", "sender", "text", "source", "timestamp")}
+        cursor.execute(
+            """INSERT INTO messages (id, conversation_id, sender, text, source, metadata_json, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 text = excluded.text,
+                 source = excluded.source,
+                 metadata_json = excluded.metadata_json""",
+            (msg_id, thread_id, sender, text, source, json.dumps(meta), timestamp)
+        )
+    conn.commit()
+    conn.close()
+    return True
+
+def delete_conversation_thread(thread_id: str) -> bool:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM messages WHERE conversation_id = ?", (thread_id,))
+    cursor.execute("DELETE FROM conversations WHERE id = ?", (thread_id,))
+    conn.commit()
+    deleted = cursor.rowcount > 0
+    conn.close()
+    return deleted
+
 

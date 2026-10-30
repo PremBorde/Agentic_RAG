@@ -9,16 +9,27 @@ load_dotenv()
 _llm_cache = {}
 
 AVAILABLE_MODELS = [
-    {"id": "gemini-2.5-flash", "label": "Gemini 2.5 Flash (Fast)"},
-    {"id": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash Lite (Fastest)"},
+    {"id": "gemini-3.5-flash-lite", "label": "Gemini 3.5 Flash Lite (Recommended)"},
     {"id": "gemini-3-flash-preview", "label": "Gemini 3 Flash"},
-    {"id": "gemini-3.1-pro-preview", "label": "Gemini 3.1 Pro"}
+    {"id": "gemini-flash-latest", "label": "Gemini Flash (Latest)"}
 ]
+
+DEFAULT_MODEL = "gemini-3.5-flash-lite"
 
 def get_llm(model_name: Optional[str] = None):
     """Returns a cached LangChain LLM instance for the specified Gemini model."""
-    if not model_name or model_name in ("gemini-3.5-flash-lite", "gemini-1.5-flash", "gemini-2.0-flash"):
-        model_name = "gemini-2.5-flash"
+    # Map deprecated, 404, or zero-quota models directly to the active, supported Google model
+    deprecated_or_unsupported = {
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-1.5-flash",
+        "gemini-2.0-flash",
+        "gemini-3.1-pro-preview",
+        "gemini-3.8-flash"
+    }
+    if not model_name or model_name in deprecated_or_unsupported:
+        model_name = DEFAULT_MODEL
+
     if model_name not in _llm_cache:
         _llm_cache[model_name] = ChatGoogleGenerativeAI(
             model=model_name,

@@ -8,13 +8,16 @@ from backend.vector_store import vector_store, retriever, format_docs
 from backend.tools import (
     web_search_tool,
     is_conversational_query,
+    get_direct_greeting_response,
     is_explicit_web_search,
+    detect_multi_intent,
     detect_gmail_intent,
     detect_calendar_intent,
     detect_task_intent,
     detect_memory_intent
 )
 from backend.prompts import gen_prompt, conv_prompt
+from backend.services.approval_service import propose_action
 from backend.services.database import (
     list_tasks,
     create_task,
@@ -46,7 +49,16 @@ class AgentState(TypedDict):
     chat_history: Optional[str]
 
 def conversation_node(state: AgentState) -> dict:
-    model_name = state.get("model_name") or "gemini-3.5-flash-lite"
+    direct = get_direct_greeting_response(state["question"])
+    if direct:
+        return {
+            "answer": direct,
+            "source": "Assistant",
+            "context": "",
+            "docs_metadata": []
+        }
+
+    model_name = state.get("model_name") or "gemini-2.5-flash"
     chat_hist = state.get("chat_history") or "No prior conversational context."
     memories = get_relevant_memories_text()
     try:
@@ -57,7 +69,7 @@ def conversation_node(state: AgentState) -> dict:
             "question": state["question"]
         })
     except Exception as e:
-        fallback_llm = get_llm("gemini-3.5-flash-lite")
+        fallback_llm = get_llm("gemini-2.5-flash")
         reply = (conv_prompt | fallback_llm | StrOutputParser()).invoke({
             "memories": memories,
             "chat_history": chat_hist,
@@ -212,6 +224,44 @@ def memory_node(state: AgentState) -> dict:
         "docs_metadata": [{"content": context, "source": "Long-Term Memory", "doc_id": "memory"}]
     }
 
+def orchestrate_node(state: AgentState) -> dict:
+    from datetime import datetime, timedelta
+    multi_data = detect_multi_intent(state["question"])
+    multi_type = multi_data[0] if multi_data else "email_and_calendar"
+    
+    if multi_type == "email_and_calendar":
+        emails = search_emails("project", max_results=2)
+        email_ctx = "\n".join([f"- From: {e.get('sender')} | Subject: {e.get('subject')}\n  Snippet: {e.get('snippet')}" for e in emails]) if emails else "No recent emails found on this topic."
+        
+        now = datetime.now()
+        tomorrow = now + timedelta(days=1)
+        start_dt = tomorrow.replace(hour=14, minute=0, second=0, microsecond=0)
+        end_dt = start_dt + timedelta(minutes=30)
+        
+        proposal = propose_action(
+            action_type="create_calendar_event",
+            summary=f"Project Meeting on {start_dt.strftime('%A, %b %d at %I:%M %p')}",
+            payload={
+                "summary": "Project Follow-up Discussion",
+                "start_time": start_dt.isoformat(),
+                "end_time": end_dt.isoformat(),
+                "description": "Scheduled following email thread."
+            }
+        )
+        return {
+            "context": f"Relevant Email Thread Context:\n{email_ctx}\n\nPrepared proposal: {proposal['summary']}",
+            "source": "Gmail & Calendar Orchestrator",
+            "docs_metadata": [{"content": email_ctx, "source": "Gmail", "doc_id": "multi-email"}],
+            "proposal": proposal
+        }
+    else:
+        task = create_task(title=f"Review and follow up on email inquiry: {state['question'][:40]}")
+        return {
+            "context": f"Created task '{task['title']}' in Task Manager.",
+            "source": "Agent Orchestrator",
+            "docs_metadata": []
+        }
+
 def generate_node(state: AgentState) -> dict:
     model_name = state.get("model_name") or "gemini-3.5-flash-lite"
     chat_hist = state.get("chat_history") or "No prior conversational context."
@@ -242,6 +292,10 @@ def route_start(state: AgentState) -> str:
     if is_conversational_query(question):
         return "conversation"
         
+    # 1.5 Multi-intent Orchestration
+    if detect_multi_intent(question):
+        return "orchestrate"
+        
     # 2. Gmail intent
     if detect_gmail_intent(question):
         return "gmail"
@@ -271,6 +325,7 @@ def route_start(state: AgentState) -> str:
 # Build StateGraph
 workflow = StateGraph(AgentState)
 workflow.add_node("conversation", conversation_node)
+workflow.add_node("orchestrate", orchestrate_node)
 workflow.add_node("retrieve", retrieve_node)
 workflow.add_node("web_search", web_search_node)
 workflow.add_node("gmail", gmail_node)
@@ -284,6 +339,7 @@ workflow.add_conditional_edges(
     route_start,
     {
         "conversation": "conversation",
+        "orchestrate": "orchestrate",
         "retrieve": "retrieve",
         "web_search": "web_search",
         "gmail": "gmail",
@@ -294,6 +350,7 @@ workflow.add_conditional_edges(
 )
 
 workflow.add_edge("conversation", END)
+workflow.add_edge("orchestrate", "generate")
 workflow.add_edge("retrieve", "generate")
 workflow.add_edge("web_search", "generate")
 workflow.add_edge("gmail", "generate")

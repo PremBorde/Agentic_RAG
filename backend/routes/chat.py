@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api", tags=["chat"])
 
 class QueryRequest(BaseModel):
     message: str
-    model: Optional[str] = "gemini-2.5-flash"
+    model: Optional[str] = "gemini-3.5-flash-lite"
     thread_id: Optional[str] = None
 
 @router.get("/models")
