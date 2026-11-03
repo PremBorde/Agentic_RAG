@@ -39,6 +39,9 @@ interface ChatMessageProps {
   onJumpToChunk: (msgId: string, chunkIdx: number) => void;
   onSendFollowup: (q: string) => void;
   onOpenGoogleConnect?: () => void;
+  onOpenDocsPanel?: () => void;
+  onOpenTaskManager?: () => void;
+  onUploadFile?: () => void;
   currentStage?: string;
 }
 
@@ -59,6 +62,9 @@ export function ChatMessage({
   onJumpToChunk,
   onSendFollowup,
   onOpenGoogleConnect,
+  onOpenDocsPanel,
+  onOpenTaskManager,
+  onUploadFile,
   currentStage
 }: ChatMessageProps) {
   // System Document Ingestion Notification Card
@@ -178,7 +184,7 @@ export function ChatMessage({
 
   // User & Assistant Chat Messages
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+    <div className="chat-message-row" style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
       <div style={{
         display: 'flex',
         gap: '10px',
@@ -281,7 +287,8 @@ export function ChatMessage({
                   border: '1px solid #f0c2cc'
                 }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#7a1c30', display: 'inline-block' }} />
-                  {currentStage === 'searching_gmail' ? 'Searching Gmail...' :
+                  {currentStage === 'greeting' ? 'Preparing workspace...' :
+                   currentStage === 'searching_gmail' ? 'Searching Gmail...' :
                    currentStage === 'checking_calendar' ? 'Checking calendar...' :
                    currentStage === 'searching_docs' ? 'Searching documents...' :
                    currentStage === 'searching_web' ? 'Searching the web...' :
@@ -292,13 +299,117 @@ export function ChatMessage({
               </div>
             )}
 
-            {/* Markdown Content with Code Block highlighting & Tables */}
-            <MarkdownContent 
-              content={msg.text} 
-              isUser={msg.sender === 'user'} 
-              isStreaming={streamingMsgId === msg.id}
-              onCitationClick={(chunkIdx) => onJumpToChunk(msg.id, chunkIdx)}
-            />
+            {/* Editorial Typography Showcase for Greetings */}
+            {msg.sender === 'assistant' && msg.source === 'Greeting' ? (
+              <div className="editorial-greeting-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span className="editorial-eyebrow">✦ Studio Assistant • Ready</span>
+                  <span style={{ fontSize: '11px', color: '#8892a0', fontStyle: 'italic', fontFamily: "'Newsreader', serif" }}>
+                    Personal Workspace
+                  </span>
+                </div>
+
+                <h2 className="editorial-title">
+                  {msg.text.split('\n\n')[0] || "Hello! Everything is set up and ready."}
+                </h2>
+
+                <p className="editorial-lead">
+                  Your knowledge base, email, schedule, and tasks are synchronized. Click any capability below or ask directly:
+                </p>
+
+                <div className="editorial-grid">
+                  <div 
+                    className="editorial-item"
+                    onClick={() => {
+                      if (onOpenDocsPanel) onOpenDocsPanel();
+                      onSendFollowup("What documents do I have in my knowledge base?");
+                    }}
+                    title="Click to explore and query your Knowledge Base"
+                  >
+                    <span className="editorial-num">01</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                        <div className="editorial-item-title">Knowledge Base & RAG</div>
+                        <ArrowRight size={13} color="#94253e" style={{ opacity: 0.8 }} />
+                      </div>
+                      <div className="editorial-item-desc">Query PDFs, notes, and YouTube transcripts with source citations.</div>
+                    </div>
+                  </div>
+
+                  <div 
+                    className="editorial-item"
+                    onClick={() => onSendFollowup("Check my recent emails in Gmail")}
+                    title="Click to search your Gmail"
+                  >
+                    <span className="editorial-num">02</span>
+                    <div>
+                      <div className="editorial-item-title">Gmail Workspace</div>
+                      <div className="editorial-item-desc">Search your inbox, read threads, and compose drafted replies.</div>
+                    </div>
+                  </div>
+
+                  <div 
+                    className="editorial-item"
+                    onClick={() => onSendFollowup("What is on my calendar today?")}
+                    title="Click to inspect your calendar"
+                  >
+                    <span className="editorial-num">03</span>
+                    <div>
+                      <div className="editorial-item-title">Google Calendar</div>
+                      <div className="editorial-item-desc">Check upcoming schedules, find open slots, and propose events.</div>
+                    </div>
+                  </div>
+
+                  <div 
+                    className="editorial-item"
+                    onClick={() => onSendFollowup("Show my pending tasks")}
+                    title="Click to view pending tasks"
+                  >
+                    <span className="editorial-num">04</span>
+                    <div>
+                      <div className="editorial-item-title">Tasks & Reminders</div>
+                      <div className="editorial-item-desc">Track priority to-dos, view deadlines, and manage overdue items.</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Typographic Prompt Inspirations */}
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '6px',
+                  marginTop: '10px',
+                  paddingTop: '10px',
+                  borderTop: '1px dashed #ebdcd3'
+                }}>
+                  {[
+                    "📚 Summarize uploaded documents",
+                    "📬 Check recent emails",
+                    "📅 Find free meeting slots",
+                    "📋 What are my overdue tasks?",
+                    "🌐 Search today's tech news"
+                  ].map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="followup-chip"
+                      onClick={() => onSendFollowup(chip.replace(/^[^\w]+/, '').trim())}
+                      style={{ fontSize: '11.5px', padding: '4px 10px' }}
+                    >
+                      <ArrowRight size={10} color={THEME.burgundy} />
+                      <span>{chip}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <MarkdownContent 
+                content={msg.text} 
+                isUser={msg.sender === 'user'} 
+                isStreaming={streamingMsgId === msg.id}
+                onCitationClick={(chunkIdx) => onJumpToChunk(msg.id, chunkIdx)}
+              />
+            )}
 
             {/* Human-in-the-Loop Action Proposal Card */}
             {msg.proposal && (
@@ -311,7 +422,12 @@ export function ChatMessage({
               msg.text.includes("haven't connected it or authenticated your session") ||
               msg.text.includes("Google Workspace is Not Connected") ||
               msg.text.includes("Google account not connected") ||
-              msg.text.includes("set up the Gmail integration")
+              msg.text.includes("set up the Gmail integration") ||
+              msg.text.includes("Connect Your Google Account") ||
+              msg.text.includes("Connect Google Calendar") ||
+              msg.text.includes("sign in with Google below") ||
+              msg.text.includes("connect your Google account") ||
+              msg.text.includes("connect your Gmail account")
             ))) && (
               <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center' }}>
                 <button
@@ -348,8 +464,8 @@ export function ChatMessage({
               </div>
             )}
 
-            {/* Quick-Access Interactive Citation Pills */}
-            {msg.sender === 'assistant' && msg.retrievedDocs && msg.retrievedDocs.length > 0 && (
+            {/* Quick-Access Interactive Citation Pills - Render after text streaming completes */}
+            {msg.sender === 'assistant' && msg.retrievedDocs && msg.retrievedDocs.length > 0 && streamingMsgId !== msg.id && (
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -379,8 +495,8 @@ export function ChatMessage({
               </div>
             )}
 
-            {/* Expandable Actual Retrieved Docs Accordion */}
-            {msg.retrievedDocs && msg.retrievedDocs.length > 0 && (
+            {/* Expandable Actual Retrieved Docs Accordion - Render after text streaming completes */}
+            {msg.retrievedDocs && msg.retrievedDocs.length > 0 && streamingMsgId !== msg.id && (
               <RetrievedContext 
                 messageId={msg.id}
                 docs={msg.retrievedDocs}
@@ -491,7 +607,7 @@ export function ChatMessage({
           )}
 
           {/* Follow-up question chips for the latest completed assistant message */}
-          {msg.sender === 'assistant' && streamingMsgId !== msg.id && isLatest && (
+          {msg.sender === 'assistant' && msg.source !== 'Greeting' && streamingMsgId !== msg.id && isLatest && (
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -499,7 +615,13 @@ export function ChatMessage({
               marginTop: '10px',
               paddingLeft: '4px'
             }}>
-              {(msg.retrievedDocs && msg.retrievedDocs.length > 0 ? [
+              {(msg.source === 'Greeting' ? [
+                "📚 What documents are in my Knowledge Base?",
+                "📬 Search my recent Gmail emails",
+                "📅 What is on my Google Calendar today?",
+                "📋 Show my active task list",
+                "🌐 Search today's tech news"
+              ] : msg.retrievedDocs && msg.retrievedDocs.length > 0 ? [
                 "Can you summarize key takeaways in bullet points?",
                 "Are there any limitations or exceptions mentioned?",
                 "What are practical applications of this?"

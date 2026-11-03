@@ -9,6 +9,7 @@ import {
   ToastFeedback 
 } from './types';
 import { THEME } from './constants/theme';
+import { UploadCloud } from 'lucide-react';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 import { HeroWelcome } from './components/welcome/HeroWelcome';
@@ -42,6 +43,8 @@ export default function App() {
     return typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   });
   const [historySearchQuery, setHistorySearchQuery] = useState('');
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const dragCounter = useRef(0);
 
   // Messages & Stream State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -402,6 +405,7 @@ export default function App() {
     let metaSource = 'Assistant';
     let metaDocs: RetrievedDoc[] = [];
     let metaProposal: any = null;
+    let stagedProposal: any = null;
     let metaRequiresGoogleAuth = false;
     let msgInserted = false;
     setStreamingMsgId(assistantMsgId);
@@ -448,7 +452,9 @@ export default function App() {
 
           if (evt.type === 'stage') {
             setCurrentStage(evt.stage);
-            if (['thinking', 'searching', 'generating', 'success', 'error'].includes(evt.stage)) {
+            if (evt.stage === 'greeting') {
+              setAvatarState('thinking');
+            } else if (['thinking', 'searching', 'generating', 'success', 'error'].includes(evt.stage)) {
               setAvatarState(evt.stage as AvatarState);
             } else if (['searching_gmail', 'searching_emails', 'checking_calendar', 'searching_docs', 'searching_web', 'organizing_tasks', 'preparing_draft'].includes(evt.stage)) {
               setAvatarState('searching');
@@ -457,13 +463,22 @@ export default function App() {
             metaSource = evt.source ?? 'Assistant';
             metaDocs = evt.retrieved_docs ?? [];
             if (evt.proposal) {
-              metaProposal = evt.proposal;
+              stagedProposal = evt.proposal;
             }
             if (evt.requires_google_auth) {
               metaRequiresGoogleAuth = true;
             }
             if (metaDocs.length > 0) {
               setAvatarState('searching');
+            }
+          } else if (evt.type === 'proposal') {
+            metaProposal = evt.proposal;
+            if (msgInserted) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId ? { ...m, proposal: metaProposal } : m
+                )
+              );
             }
           } else if (evt.type === 'token') {
             streamedText += evt.text;
@@ -493,6 +508,9 @@ export default function App() {
               );
             }
           } else if (evt.type === 'done') {
+            if (!metaProposal && stagedProposal) {
+              metaProposal = stagedProposal;
+            }
             setAvatarState('success');
             setTimeout(() => {
               setAvatarState((curr) => (curr === 'success' ? 'idle' : curr));
@@ -554,6 +572,8 @@ export default function App() {
       if (err.name === 'AbortError') {
         setStreamingMsgId(null);
         setAvatarState('idle');
+        setIsLoading(false);
+        setCurrentStage('');
         return;
       }
       setAvatarState('error');
@@ -608,11 +628,8 @@ export default function App() {
     }
   };
 
-  // Direct file upload
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  // Upload a single file into the vector knowledge base
+  const uploadSingleFile = async (file: File) => {
     setIsUploadingFile(true);
     setUploadingFileName(file.name);
     setUploadProgress(15);
@@ -663,11 +680,66 @@ export default function App() {
       clearInterval(progressInterval);
       setAvatarState('error');
       setTimeout(() => setAvatarState('idle'), 3000);
-      showToast('error', `Failed to upload: ${err.message}`);
+      showToast('error', `Failed to upload "${file.name}": ${err.message}`);
     } finally {
       setIsUploadingFile(false);
       setUploadingFileName(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  // Upload multiple files sequentially
+  const uploadMultipleFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (!fileArray.length) return;
+    for (const f of fileArray) {
+      await uploadSingleFile(f);
+    }
+  };
+
+  // Direct file input change (supports multi-selection)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      await uploadMultipleFiles(e.target.files);
+    }
+  };
+
+  // Global Drag and Drop event handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer?.types && Array.from(e.dataTransfer.types).includes('Files')) {
+      dragCounter.current += 1;
+      setIsDraggingFile(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setIsDraggingFile(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDraggingFile(false);
+
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      await uploadMultipleFiles(e.dataTransfer.files);
     }
   };
 
@@ -756,6 +828,7 @@ export default function App() {
         ref={fileInputRef}
         onChange={handleFileUpload}
         accept=".pdf,.txt,.docx,.md,.csv,.json"
+        multiple
         style={{ display: 'none' }}
       />
 
@@ -802,15 +875,93 @@ export default function App() {
         onTriggerFileUpload={() => fileInputRef.current?.click()}
       />
 
-      {/* Main Content Area */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        minWidth: 0,
-        position: 'relative'
-      }}>
+      {/* Main Content Area with Direct Drag & Drop */}
+      <div 
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          minWidth: 0,
+          position: 'relative'
+        }}
+      >
+        {/* Visual Drag & Drop Upload Overlay */}
+        {isDraggingFile && (
+          <div 
+            style={{
+              position: 'absolute',
+              inset: '14px',
+              zIndex: 2000,
+              borderRadius: '20px',
+              backgroundColor: 'rgba(253, 248, 246, 0.95)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: `2px dashed ${THEME.burgundy}`,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              pointerEvents: 'none',
+              boxShadow: '0 20px 50px rgba(122, 28, 48, 0.16)',
+              animation: 'fadeSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            }}
+          >
+            <div style={{
+              width: '76px',
+              height: '76px',
+              borderRadius: '50%',
+              backgroundColor: '#fbf0f2',
+              border: '2px solid #f0c2cc',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(122, 28, 48, 0.12)'
+            }}>
+              <UploadCloud size={40} color={THEME.burgundy} style={{ animation: 'floatAnim 2s ease-in-out infinite' }} />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{
+                fontFamily: "'Newsreader', 'Georgia', serif",
+                fontSize: '24px',
+                fontWeight: 650,
+                color: THEME.burgundy,
+                margin: '0 0 6px 0'
+              }}>
+                Drop files to index into Knowledge Base
+              </h3>
+              <p style={{
+                fontSize: '13.5px',
+                color: THEME.slateMuted,
+                margin: 0
+              }}>
+                Release to immediately vectorize PDFs, TXT, DOCX, CSV, or Markdown
+              </p>
+            </div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #ebdcd3',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              color: THEME.slateDark,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+            }}>
+              <span>✓ Instant RAG Indexing</span>
+              <span>•</span>
+              <span>Multi-file Drag & Drop</span>
+            </div>
+          </div>
+        )}
         {/* Top Header Bar */}
         <TopBar
           sidebarOpen={sidebarOpen}
@@ -925,6 +1076,12 @@ export default function App() {
                     onJumpToChunk={handleJumpToChunk}
                     onSendFollowup={(q) => handleSendMessage(q)}
                     onOpenGoogleConnect={() => setGoogleConnectOpen(true)}
+                    onOpenDocsPanel={() => {
+                      setSidebarOpen(true);
+                      setDocsPanelOpen(true);
+                    }}
+                    onOpenTaskManager={() => setTaskManagerOpen(true)}
+                    onUploadFile={() => fileInputRef.current?.click()}
                     currentStage={streamingMsgId === msg.id ? currentStage : undefined}
                   />
                 ))}

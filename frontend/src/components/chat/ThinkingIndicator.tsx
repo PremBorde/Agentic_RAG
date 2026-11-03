@@ -11,6 +11,8 @@ interface ThinkingIndicatorProps {
 export function ThinkingIndicator({ avatarState, currentStage }: ThinkingIndicatorProps) {
   const getStageLabel = () => {
     switch (currentStage) {
+      case 'greeting':
+        return 'Preparing workspace...';
       case 'searching_gmail':
         return 'Searching Gmail...';
       case 'checking_calendar':
@@ -24,11 +26,11 @@ export function ThinkingIndicator({ avatarState, currentStage }: ThinkingIndicat
       case 'preparing_draft':
         return 'Preparing draft...';
       case 'generating':
-        return 'Formulating response...';
+        return 'Responding...';
       default:
         return avatarState === 'searching'
           ? 'Searching...'
-          : (avatarState === 'generating' ? 'Formulating response...' : 'Evaluating intent...');
+          : 'Thinking...';
     }
   };
 
@@ -51,7 +53,7 @@ export function ThinkingIndicator({ avatarState, currentStage }: ThinkingIndicat
       >
         <StudioBrandLogo size={32} animation={avatarState === 'idle' ? 'thinking' : avatarState} />
       </div>
-      <div style={{
+      <div className="thinking-indicator-pill" style={{
         backgroundColor: '#ffffff',
         border: `1px solid ${THEME.beigeBorder}`,
         borderRadius: '16px 16px 16px 4px',

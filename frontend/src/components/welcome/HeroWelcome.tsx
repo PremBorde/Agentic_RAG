@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Globe, BookOpen, Mail, UploadCloud, Check, X, ArrowRight, Compass } from 'lucide-react';
+import { MessageSquare, Globe, BookOpen, Mail } from 'lucide-react';
 import { AvatarState } from '../../types';
 import { THEME } from '../../constants/theme';
 import { StudioBrandLogo } from '../avatar/StudioBrandLogo';
@@ -17,12 +17,8 @@ interface HeroWelcomeProps {
 
 export function HeroWelcome({
   avatarState,
-  onSetAvatarState,
   onSelectPrompt,
-  onOpenGoogleConnect,
-  onTriggerFileUpload,
   googleConnected = false,
-  docsCount = 0,
   children
 }: HeroWelcomeProps) {
   const [pokeCount, setPokeCount] = useState<number>(0);
@@ -72,29 +68,21 @@ export function HeroWelcome({
     }, 3600);
   };
 
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('agentic_onboarding_dismissed') !== 'true';
-    } catch {
-      return true;
-    }
-  });
-
-  const handleDismissOnboarding = () => {
-    setShowOnboarding(false);
-    try {
-      localStorage.setItem('agentic_onboarding_dismissed', 'true');
-    } catch {
-      // Ignored
-    }
-  };
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
+
+  const suggestions = [
+    { text: "Hello! What can you do?", icon: <MessageSquare size={13} color={THEME.burgundy} /> },
+    ...(googleConnected
+      ? [{ text: "Summarize my recent emails", icon: <Mail size={13} color={THEME.burgundy} /> }]
+      : []),
+    { text: "Search Agentic AI breakthroughs", icon: <Globe size={13} color={THEME.burgundy} /> },
+    { text: "What is Corrective RAG?", icon: <BookOpen size={13} color={THEME.burgundy} /> }
+  ];
 
   return (
     <div style={{
@@ -114,7 +102,7 @@ export function HeroWelcome({
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        transform: 'translateY(-20px)'
+        transform: 'translateY(-12px)'
       }}>
         {/* Custom Studio Logo with Interactive Reaction & Speech Bubble */}
         <div style={{
@@ -123,7 +111,7 @@ export function HeroWelcome({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: '18px'
+          marginBottom: '20px'
         }}>
           {/* Playful Floating Speech Bubble Popup */}
           {speechText && (
@@ -198,34 +186,30 @@ export function HeroWelcome({
           {/* Active status indicator only during actual busy / processing states */}
           {avatarState !== 'idle' && avatarState !== 'success' && (
             <div style={{
-              marginTop: '10px',
-              fontSize: '11px',
-              fontWeight: 600,
-              padding: '3px 12px',
-              borderRadius: '14px',
-              backgroundColor: avatarState === 'sleeping' ? '#e2e8f0' : (avatarState === 'error' ? '#fee2e2' : '#fce7eb'),
-              color: avatarState === 'sleeping' ? '#64748b' : (avatarState === 'error' ? '#dc2626' : '#7a1c30'),
-              transition: 'all 0.25s ease',
-              display: 'inline-flex',
+              position: 'absolute',
+              bottom: '-6px',
+              right: '-6px',
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              backgroundColor: '#ffffff',
+              display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              justifyContent: 'center',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
             }}>
-              <span style={{
-                width: '6px',
-                height: '6px',
+              <div style={{
+                width: '10px',
+                height: '10px',
                 borderRadius: '50%',
-                backgroundColor: avatarState === 'sleeping' ? '#94a3b8' : (avatarState === 'error' ? '#ef4444' : '#7a1c30')
+                backgroundColor: avatarState === 'thinking' ? '#f59e0b' : THEME.burgundy,
+                animation: 'pulse 1.5s infinite'
               }} />
-              {avatarState === 'sleeping' && 'Resting (Zzz...)'}
-              {avatarState === 'thinking' && 'Analyzing question & routing...'}
-              {avatarState === 'searching' && 'Searching vector docs & live web...'}
-              {avatarState === 'generating' && 'Synthesizing response...'}
-              {avatarState === 'error' && 'Error encountered'}
             </div>
           )}
         </div>
 
-        {/* Elegant Serif Heading & Subtitle */}
+        {/* Editorial Greeting Header */}
         <h1 style={{
           fontFamily: "'Newsreader', Georgia, serif",
           fontSize: '32px',
@@ -246,177 +230,8 @@ export function HeroWelcome({
           Ask questions, search through your documents, or browse the web
         </p>
 
-        {/* Onboarding Card for First Launch */}
-        {showOnboarding && (
-          <div style={{
-            width: '100%',
-            maxWidth: '680px',
-            backgroundColor: '#ffffff',
-            borderRadius: '14px',
-            border: `1px solid ${THEME.beigeBorderDark}`,
-            boxShadow: '0 4px 16px rgba(122, 28, 48, 0.04)',
-            padding: '14px 18px',
-            marginBottom: '18px',
-            textAlign: 'left'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '6px',
-                  backgroundColor: THEME.burgundySubtle,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: THEME.burgundy
-                }}>
-                  <Compass size={14} />
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 650, color: THEME.slateDark }}>
-                    Quick Start Onboarding
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '11px', color: THEME.slateMuted }}>
-                    Set up your workspace tools or jump straight in with an example query
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleDismissOnboarding}
-                title="Dismiss onboarding card"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: THEME.slateMuted,
-                  padding: '4px',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-              gap: '10px'
-            }}>
-              {/* Step 1: Connect Google */}
-              <div 
-                onClick={onOpenGoogleConnect}
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  backgroundColor: THEME.beigeBg,
-                  border: `1px solid ${THEME.beigeBorder}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = THEME.burgundyBorder;
-                  e.currentTarget.style.backgroundColor = THEME.burgundySubtle;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = THEME.beigeBorder;
-                  e.currentTarget.style.backgroundColor = THEME.beigeBg;
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '10.5px', fontWeight: 650, color: THEME.burgundy, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                    1. Connect Google
-                  </span>
-                  {googleConnected ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: '#16a34a', fontWeight: 600 }}>
-                      <Check size={11} /> Connected
-                    </span>
-                  ) : (
-                    <Mail size={12} color={THEME.slateMuted} />
-                  )}
-                </div>
-                <div style={{ fontSize: '11px', color: THEME.slateMuted, lineHeight: '1.3' }}>
-                  {googleConnected ? 'Gmail & Calendar ready' : 'Connect Gmail & Calendar'}
-                </div>
-              </div>
-
-              {/* Step 2: Upload Doc */}
-              <div 
-                onClick={onTriggerFileUpload}
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  backgroundColor: THEME.beigeBg,
-                  border: `1px solid ${THEME.beigeBorder}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = THEME.burgundyBorder;
-                  e.currentTarget.style.backgroundColor = THEME.burgundySubtle;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = THEME.beigeBorder;
-                  e.currentTarget.style.backgroundColor = THEME.beigeBg;
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '10.5px', fontWeight: 650, color: THEME.burgundy, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                    2. Upload Doc
-                  </span>
-                  {docsCount > 0 ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: '#16a34a', fontWeight: 600 }}>
-                      <Check size={11} /> {docsCount} Indexed
-                    </span>
-                  ) : (
-                    <UploadCloud size={12} color={THEME.slateMuted} />
-                  )}
-                </div>
-                <div style={{ fontSize: '11px', color: THEME.slateMuted, lineHeight: '1.3' }}>
-                  Index PDF, DOCX, or link
-                </div>
-              </div>
-
-              {/* Step 3: Try Example Query */}
-              <div 
-                onClick={() => onSelectPrompt('What can you do? Show me how you search emails, check calendar, and manage tasks.')}
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  backgroundColor: THEME.beigeBg,
-                  border: `1px solid ${THEME.beigeBorder}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = THEME.burgundyBorder;
-                  e.currentTarget.style.backgroundColor = THEME.burgundySubtle;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = THEME.beigeBorder;
-                  e.currentTarget.style.backgroundColor = THEME.beigeBg;
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '10.5px', fontWeight: 650, color: THEME.burgundy, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                    3. Try Query
-                  </span>
-                  <ArrowRight size={12} color={THEME.slateMuted} />
-                </div>
-                <div style={{ fontSize: '11px', color: THEME.slateMuted, lineHeight: '1.3' }}>
-                  Test agent capabilities
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Hero Composer Box */}
-        <div style={{ width: '100%', marginBottom: '22px' }}>
+        <div style={{ width: '100%', marginBottom: '20px' }}>
           {children}
         </div>
 
@@ -426,13 +241,9 @@ export function HeroWelcome({
           flexWrap: 'wrap', 
           gap: '10px', 
           justifyContent: 'center',
-          marginTop: '4px'
+          marginTop: '2px'
         }}>
-          {[
-            { text: "Hello! What can you do?", icon: <MessageSquare size={13} color={THEME.burgundy} /> },
-            { text: "Search Agentic AI breakthroughs", icon: <Globe size={13} color={THEME.burgundy} /> },
-            { text: "What is Corrective RAG?", icon: <BookOpen size={13} color={THEME.burgundy} /> }
-          ].map((item, idx) => (
+          {suggestions.map((item, idx) => (
             <button
               key={idx}
               type="button"
@@ -477,4 +288,3 @@ export function HeroWelcome({
     </div>
   );
 }
-

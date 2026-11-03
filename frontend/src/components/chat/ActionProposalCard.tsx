@@ -56,7 +56,9 @@ export const ActionProposalCard: React.FC<ActionProposalCardProps> = ({
   const isCalendar = proposal.action_type === 'create_calendar_event';
 
   return (
-    <div style={{
+    <div 
+      className="action-proposal-card"
+      style={{
       marginTop: '12px',
       borderRadius: '12px',
       border: `1.5px solid ${THEME.burgundyBorder}`,

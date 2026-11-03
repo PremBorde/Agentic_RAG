@@ -484,3 +484,176 @@ button,
 }
 
 
+
+/* Smooth Thinking & Editorial Entrance Animations */
+@keyframes thinkingBubbleFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.thinking-indicator-pill {
+  animation: thinkingBubbleFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.2s ease;
+}
+
+@keyframes messageBubbleEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-message-row {
+  animation: messageBubbleEntrance 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes editorialItemSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes editorialCardFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Editorial Typography & Greeting Showcase */
+.editorial-greeting-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 620px;
+  padding: 4px 2px;
+  animation: editorialCardFadeIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.editorial-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94253e;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.editorial-title {
+  font-family: 'Newsreader', 'Georgia', 'Playfair Display', serif;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: #5c1020;
+  margin: 0;
+}
+
+.editorial-lead {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #4a5568;
+  margin: 0;
+}
+
+.editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.editorial-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #ebdcd3;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(122, 28, 48, 0.03);
+  transition: all 0.18s ease;
+  animation: editorialItemSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.editorial-grid .editorial-item:nth-child(1) { animation-delay: 0.05s; }
+.editorial-grid .editorial-item:nth-child(2) { animation-delay: 0.12s; }
+.editorial-grid .editorial-item:nth-child(3) { animation-delay: 0.19s; }
+.editorial-grid .editorial-item:nth-child(4) { animation-delay: 0.26s; }
+
+.editorial-item:hover {
+  border-color: #d89aa8;
+  box-shadow: 0 3px 8px rgba(122, 28, 48, 0.08);
+  transform: translateY(-1px);
+}
+
+.editorial-num {
+  font-family: 'Newsreader', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #94253e;
+  background: #fdf2f4;
+  border-radius: 6px;
+  padding: 2px 6px;
+  line-height: 1.2;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.editorial-item-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1e242a;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.editorial-item-desc {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.editorial-footer {
+  font-size: 13px;
+  font-style: italic;
+  color: #64748b;
+  font-family: 'Newsreader', 'Georgia', serif;
+  margin-top: 2px;
+}
+
+/* Action Proposal Card Entrance Animation */
+.action-proposal-card {
+  animation: proposalSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes proposalSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
