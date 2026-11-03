@@ -1,3 +1,4 @@
+import re
 import os
 import json
 import base64
@@ -32,7 +33,13 @@ def get_client_config() -> Optional[Dict[str, Any]]:
     client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
     redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
     
-    if client_id and client_secret:
+    is_placeholder = (
+        not client_id 
+        or not client_secret 
+        or "your_client_id_here" in str(client_id) 
+        or "your_client_secret_here" in str(client_secret)
+    )
+    if not is_placeholder:
         return {
             "web": {
                 "client_id": client_id,
@@ -66,16 +73,17 @@ def get_oauth_url(redirect_uri: Optional[str] = None) -> Dict[str, str]:
     flow = Flow.from_client_config(
         config,
         scopes=SCOPES,
-        redirect_uri=r_uri
+        redirect_uri=r_uri,
+        autogenerate_code_verifier=False
     )
     auth_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
         prompt="consent"
     )
-    return {"url": auth_url, "state": state}
+    return {"url": auth_url, "state": state, "code_verifier": getattr(flow, "code_verifier", None)}
 
-def handle_oauth_callback(code: str, redirect_uri: Optional[str] = None) -> Dict[str, Any]:
+def handle_oauth_callback(code: str, redirect_uri: Optional[str] = None, code_verifier: Optional[str] = None) -> Dict[str, Any]:
     """Exchanges auth code for access & refresh tokens, saves securely to disk."""
     config = get_client_config()
     if not config:
@@ -88,7 +96,9 @@ def handle_oauth_callback(code: str, redirect_uri: Optional[str] = None) -> Dict
             scopes=SCOPES,
             redirect_uri=r_uri
         )
-        flow.fetch_token(code=code)
+        if code_verifier:
+            flow.code_verifier = code_verifier
+        flow.fetch_token(code=code, code_verifier=code_verifier)
         creds = flow.credentials
         
         # Save credentials securely to disk
@@ -118,7 +128,7 @@ def handle_oauth_callback(code: str, redirect_uri: Optional[str] = None) -> Dict
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-def exchange_code_for_user(code: str, redirect_uri: Optional[str] = None) -> Dict[str, Any]:
+def exchange_code_for_user(code: str, redirect_uri: Optional[str] = None, code_verifier: Optional[str] = None) -> Dict[str, Any]:
     """Exchanges OAuth authorization code, extracts user profile, encrypts tokens, and stores user in DB."""
     config = get_client_config()
     if not config:
@@ -131,7 +141,9 @@ def exchange_code_for_user(code: str, redirect_uri: Optional[str] = None) -> Dic
             scopes=SCOPES,
             redirect_uri=r_uri
         )
-        flow.fetch_token(code=code)
+        if code_verifier:
+            flow.code_verifier = code_verifier
+        flow.fetch_token(code=code, code_verifier=code_verifier)
         creds = flow.credentials
         
         # Get user email
@@ -292,19 +304,10 @@ def get_connection_status(user_id: Optional[str] = None) -> Dict[str, Any]:
             }
         return {"connected": False, "email": None, "expires_at": None}
     
-    # Fallback: check if any user exists in DB
-    try:
-        conn = get_db_connection()
-        row = conn.execute("SELECT email, token_expires_at, google_access_token FROM users ORDER BY created_at DESC LIMIT 1").fetchone()
-        conn.close()
-        if row and row["google_access_token"]:
-            return {
-                "connected": True,
-                "email": row["email"],
-                "expires_at": row["token_expires_at"]
-            }
-    except Exception:
-        pass
+    # If no active session, do not falsely report connection
+    if os.path.exists(TOKEN_FILE):
+        return {"connected": True, "email": "Connected", "expires_at": None}
+    return {"connected": False, "email": None, "expires_at": None}
 
     # Legacy token file check
     if os.path.exists(TOKEN_FILE):
@@ -600,6 +603,26 @@ def find_free_meeting_slots(duration_minutes: int = 30, days_ahead: int = 3, use
     except Exception as e:
         return [{"status": "error", "message": str(e)}]
 
+def _format_calendar_time(dt_str: str) -> Dict[str, str]:
+    """Ensures calendar start/end times conform to Google Calendar API requirements (RFC3339 or Date)."""
+    clean_str = dt_str.strip()
+    if re.match(r'^\d{4}-\d{2}-\d{2}$', clean_str):
+        return {"date": clean_str}
+    try:
+        dt = datetime.fromisoformat(clean_str)
+        if dt.tzinfo is None:
+            local_tz = datetime.now().astimezone().tzinfo
+            dt = dt.replace(tzinfo=local_tz)
+        return {"dateTime": dt.isoformat()}
+    except Exception:
+        if "+" in clean_str or clean_str.endswith("Z"):
+            return {"dateTime": clean_str}
+        local_offset = datetime.now().astimezone().strftime("%z")
+        if local_offset and len(local_offset) == 5:
+            formatted_offset = local_offset[:3] + ":" + local_offset[3:]
+            return {"dateTime": f"{clean_str}{formatted_offset}"}
+        return {"dateTime": f"{clean_str}Z"}
+
 def create_calendar_event_direct(
     summary: str,
     start_time: str,
@@ -617,8 +640,8 @@ def create_calendar_event_direct(
         event_body: Dict[str, Any] = {
             "summary": summary,
             "description": description,
-            "start": {"dateTime": start_time},
-            "end": {"dateTime": end_time}
+            "start": _format_calendar_time(start_time),
+            "end": _format_calendar_time(end_time)
         }
         if attendees:
             event_body["attendees"] = [{"email": a} for a in attendees]

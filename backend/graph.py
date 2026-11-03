@@ -5,6 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 from backend.config import get_llm
 from backend.embeddings import safe_str
 from backend.vector_store import vector_store, retriever, format_docs
+from backend.services.router import classify_query, QueryIntent
 from backend.tools import (
     web_search_tool,
     is_conversational_query,
@@ -287,40 +288,26 @@ def generate_node(state: AgentState) -> dict:
 # Router from START
 def route_start(state: AgentState) -> str:
     question = state["question"].strip()
+    doc_count = len(vector_store.index_to_docstore_id)
+    decision = classify_query(question, doc_count=doc_count, has_history=bool(state.get("chat_history")))
     
-    # 1. Greetings & Small talk
-    if is_conversational_query(question):
+    if decision.intent == QueryIntent.CONVERSATIONAL:
         return "conversation"
-        
-    # 1.5 Multi-intent Orchestration
-    if detect_multi_intent(question):
+    if decision.intent == QueryIntent.MULTI_STEP:
         return "orchestrate"
-        
-    # 2. Gmail intent
-    if detect_gmail_intent(question):
+    if decision.intent == QueryIntent.GMAIL:
         return "gmail"
-        
-    # 3. Calendar intent
-    if detect_calendar_intent(question):
+    if decision.intent == QueryIntent.CALENDAR:
         return "calendar"
-        
-    # 4. Task intent
-    if detect_task_intent(question):
+    if decision.intent == QueryIntent.TASK:
         return "tasks"
-        
-    # 5. Memory intent
-    if detect_memory_intent(question):
+    if decision.intent == QueryIntent.MEMORY:
         return "memory"
-        
-    # 6. Explicit web search
-    if is_explicit_web_search(question):
+    if decision.intent == QueryIntent.WEB_SEARCH:
         return "web_search"
-        
-    # 7. Document search if documents indexed
-    if len(vector_store.index_to_docstore_id) > 0:
+    if decision.intent == QueryIntent.DOCUMENT_RAG:
         return "retrieve"
-        
-    return "conversation"
+    return "generate"
 
 # Build StateGraph
 workflow = StateGraph(AgentState)

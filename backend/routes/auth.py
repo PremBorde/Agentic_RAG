@@ -63,24 +63,44 @@ def save_config(req: GoogleConfigRequest):
         
     return {"success": True, "message": "Google OAuth credentials saved securely."}
 
+_oauth_verifier_cache = {}
+
 @router.get("/google/login")
 @router.get("/login")
-def login(redirect_uri: Optional[str] = None):
+def login(request: Request, redirect_uri: Optional[str] = None):
     """Builds the Google OAuth login URL and redirects the user directly to Google."""
     r_uri = redirect_uri or os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
     result = get_oauth_url(r_uri)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
+        
+    state = result.get("state")
+    code_verifier = result.get("code_verifier")
+    if state and code_verifier:
+        _oauth_verifier_cache[state] = code_verifier
+    if hasattr(request, "session") and code_verifier:
+        request.session["code_verifier"] = code_verifier
+        request.session["oauth_state"] = state
+
     return RedirectResponse(url=result["url"])
 
 @router.get("/google/url")
 @router.get("/url")
-def get_auth_url(redirect_uri: Optional[str] = None):
+def get_auth_url(request: Request, redirect_uri: Optional[str] = None):
     """Returns the Google OAuth authorization URL as JSON."""
     r_uri = redirect_uri or os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
     result = get_oauth_url(r_uri)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
+        
+    state = result.get("state")
+    code_verifier = result.get("code_verifier")
+    if state and code_verifier:
+        _oauth_verifier_cache[state] = code_verifier
+    if hasattr(request, "session") and code_verifier:
+        request.session["code_verifier"] = code_verifier
+        request.session["oauth_state"] = state
+
     return result
 
 @router.get("/google/callback")
@@ -91,7 +111,14 @@ def oauth_callback(request: Request, code: str, state: Optional[str] = None, red
     persists the user in the database, and creates a secure session.
     """
     r_uri = redirect_uri or os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
-    res = exchange_code_for_user(code, r_uri)
+    
+    code_verifier = None
+    if state and state in _oauth_verifier_cache:
+        code_verifier = _oauth_verifier_cache.pop(state)
+    elif hasattr(request, "session"):
+        code_verifier = request.session.get("code_verifier")
+
+    res = exchange_code_for_user(code, r_uri, code_verifier=code_verifier)
     if not res.get("success"):
         raise HTTPException(status_code=400, detail=res.get("error", "OAuth code exchange failed"))
 
@@ -122,17 +149,14 @@ def status(request: Request):
 @router.get("/logout")
 @router.get("/google/logout")
 @router.post("/logout")
-def logout(request: Request):
-    """Clears the session and redirects back home."""
-    if hasattr(request, "session"):
-        request.session.clear()
-    return RedirectResponse(url="/?disconnected=true")
-
 @router.post("/google/disconnect")
 @router.post("/disconnect")
-def disconnect(request: Request):
-    """Disconnects Google account and clears session."""
+def logout_or_disconnect(request: Request):
+    """Clears the session, clears DB tokens, and returns JSON or redirect."""
+    user_id = get_current_user_id(request)
+    disconnect_google(user_id)
     if hasattr(request, "session"):
         request.session.clear()
-    disconnect_google()
-    return {"success": True, "message": "Logged out and disconnected."}
+    if request.method == "POST":
+        return {"success": True, "connected": False, "message": "Successfully signed out."}
+    return RedirectResponse(url="/?disconnected=true")

@@ -70,3 +70,10 @@ def delete_conversation(thread_id: str):
         raise HTTPException(status_code=404, detail="Conversation not found or already deleted.")
     return {"status": "success", "message": f"Conversation '{thread_id}' deleted."}
 
+threads_router = APIRouter(prefix="/api/threads", tags=["threads"])
+
+@threads_router.delete("/{thread_id}")
+def delete_thread_legacy(thread_id: str):
+    delete_conversation_thread(thread_id)
+    return {"status": "success", "message": f"Thread '{thread_id}' deleted."}
+

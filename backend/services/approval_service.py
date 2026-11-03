@@ -36,11 +36,13 @@ def execute_approved_action(action_id: str) -> Dict[str, Any]:
     result: Dict[str, Any] = {}
     
     try:
+        action_user_id = payload.get("user_id")
         if action_type == "send_email":
             result = send_email_direct(
                 to=payload.get("to", ""),
                 subject=payload.get("subject", ""),
-                body=payload.get("body", "")
+                body=payload.get("body", ""),
+                user_id=action_user_id
             )
         elif action_type == "create_calendar_event":
             result = create_calendar_event_direct(
@@ -48,7 +50,8 @@ def execute_approved_action(action_id: str) -> Dict[str, Any]:
                 start_time=payload.get("start_time", ""),
                 end_time=payload.get("end_time", ""),
                 description=payload.get("description", ""),
-                attendees=payload.get("attendees")
+                attendees=payload.get("attendees"),
+                user_id=action_user_id
             )
         elif action_type == "update_calendar_event":
             result = update_calendar_event_direct(
