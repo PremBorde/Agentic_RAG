@@ -11,6 +11,9 @@ from backend.tools import (
     detect_task_intent,
     detect_memory_intent,
     is_explicit_web_search,
+    is_web_search_continuation,
+    extract_web_search_query_and_timeframe,
+    detect_image_search_intent,
     is_followup_query,
 )
 
@@ -30,6 +33,7 @@ class QueryIntent(str, Enum):
     TASK = "task"
     MEMORY = "memory"
     WEB_SEARCH = "web_search"
+    IMAGE_SEARCH = "image_search"
     MULTI_STEP = "multi_step"
     GENERAL_KNOWLEDGE = "general_knowledge"
     UNKNOWN = "unknown"
@@ -86,9 +90,16 @@ EXACT_DECLINATIONS = {
 # Substantive trigger words that must NEVER be treated as small talk (Rule B)
 DOCUMENT_KEYWORDS = {
     "document", "documents", "doc", "docs", "pdf", "pdfs", "file", "files",
-    "note", "notes", "transcript", "transcripts", "youtube", "practical", "practicals",
-    "exam", "exams", "test", "tests", "syllabus", "assignment", "assignments",
-    "lab", "chapter", "chapters", "slide", "slides", "coursework", "lp3", "lp-3"
+    "docx", "csv", "json", "note", "notes", "transcript", "transcripts", "youtube",
+    "chapter", "chapters", "slide", "slides", "section", "sections", "page", "pages",
+    "paper", "papers", "report", "reports", "article", "articles", "manual", "handbook",
+    "contract", "contracts", "agreement", "agreements", "policy", "policies",
+    "record", "records", "table", "dataset", "corpus", "uploaded", "attachment", "attachments",
+    "coursework", "syllabus", "assignment", "assignments", "guideline", "guidelines",
+    "question", "questions", "exam", "exams", "endsem", "midsem", "test", "tests",
+    "quiz", "quizzes", "study", "curriculum", "module", "modules", "unit", "units",
+    "revision", "imp", "important", "problem", "problems", "exercise", "exercises",
+    "solution", "solutions", "summary", "summaries", "qa", "qna"
 }
 
 SUBSTANTIVE_ACTION_VERBS = {
@@ -203,6 +214,22 @@ def classify_query(
         return decision
 
     # Step 3b: Check Post-Connection / Action Continuation & Confirmation Queries
+    # Check Web Search Confirmation & Follow-up Execution (e.g. "Yes please search and send me the answer", "Search and send me the answer")
+    if is_web_search_continuation(effective_text, chat_history_str=chat_history_str) or is_web_search_continuation(query_clean, chat_history_str=chat_history_str):
+        resolved_q, resolved_tf = extract_web_search_query_and_timeframe(query_clean, chat_history_str=chat_history_str)
+        decision = RoutingDecision(
+            intent=QueryIntent.WEB_SEARCH,
+            sub_action="web_search_followup",
+            params={"query": resolved_q, "timeframe": resolved_tf, "is_continuation": True},
+            is_fast_path=False,
+            is_welcome_card=False,
+            reason=f"User confirmed execution of pending web search for '{resolved_q}' (timeframe: {resolved_tf})",
+            selected_path="web_search",
+            rag_invoked=False,
+            tools_selected=["web_search"]
+        )
+        _log_routing(query, decision)
+        return decision
     t_query = query_clean.lower()
 
     # Check confirmation follow-ups (e.g. "Yes sure", "Yes please", "Sure", "Go ahead", "Confirm", "Yes")
@@ -233,7 +260,7 @@ def classify_query(
         "fetch now", "read now", "do it now", "check please", "please check now"
     ]
     is_continuation = any(p in t_query for p in continuation_patterns) or (
-        any(w in t_query for w in ["connect", "link", "done", "check"]) and any(w in t_query for w in ["now", "check", "had", "have", "again"])
+        any(w in t_query for w in ["connect", "link", "done"]) and any(w in t_query for w in ["now", "had", "have", "again"])
     )
 
     if is_continuation:
@@ -343,11 +370,15 @@ def classify_query(
 
     # 4e. Explicit Web Search Intent
     if is_explicit_web_search(effective_text) or is_explicit_web_search(query_clean):
+        q_target = effective_text if is_explicit_web_search(effective_text) else query_clean
+        clean_q, tf = extract_web_search_query_and_timeframe(q_target, chat_history_str=chat_history_str)
         decision = RoutingDecision(
             intent=QueryIntent.WEB_SEARCH,
+            sub_action="web_search",
+            params={"query": clean_q, "timeframe": tf},
             is_fast_path=False,
             is_welcome_card=False,
-            reason="User explicitly requested live web/internet search",
+            reason=f"User explicitly requested live web/internet search for '{clean_q}' (timeframe: {tf})",
             selected_path="web_search",
             rag_invoked=False,
             tools_selected=["web_search"]
@@ -355,21 +386,64 @@ def classify_query(
         _log_routing(query, decision)
         return decision
 
+    # 4f. Web Image Search Intent
+    img_intent = detect_image_search_intent(effective_text, chat_history_str=chat_history_str) or detect_image_search_intent(query_clean, chat_history_str=chat_history_str)
+    if img_intent:
+        action_name, img_params = img_intent
+        reason_str = f"Image search requires entity clarification for '{img_params.get('pronoun')}'" if img_params.get("needs_clarification") else f"User requested images/diagrams/visuals: '{img_params.get('search_query')}'"
+        decision = RoutingDecision(
+            intent=QueryIntent.IMAGE_SEARCH,
+            sub_action=action_name,
+            params=img_params,
+            is_fast_path=False,
+            is_welcome_card=False,
+            reason=reason_str,
+            selected_path="web_image_search",
+            rag_invoked=False,
+            tools_selected=["image_search"]
+        )
+        _log_routing(query, decision)
+        return decision
+
     # Step 5: Check Document & Knowledge RAG Requests
     has_doc_keyword = bool(effective_set & DOCUMENT_KEYWORDS)
     
-    # Phrases explicitly pointing to uploaded files or notes
+    # Phrases explicitly pointing to uploaded files or notes (domain-agnostic)
     explicit_doc_triggers = [
         "in the document", "from my document", "in the pdf", "from the pdf",
-        "in my notes", "from my notes", "in the syllabus", "uploaded file",
-        "uploaded doc", "indexed doc", "according to the doc", "my coursework",
-        "lp3 practical", "lp-3 practical", "dijkstra", "knapsack", "bellman",
-        "fractional knapsack", "0/1 knapsack", "blockchain practical"
+        "in my notes", "from my notes", "in the file", "from the file",
+        "uploaded file", "uploaded doc", "indexed doc", "according to the doc",
+        "according to the document", "according to the file", "in section",
+        "on page", "in chapter", "from the report", "in the contract",
+        "in the table", "from the dataset", "in the article", "from the notes"
     ]
     has_doc_phrase = any(p in effective_norm for p in explicit_doc_triggers)
-    is_doc_followup = bool(doc_count > 0 and is_followup_query(effective_text) and chat_history_str and any(k in chat_history_str.lower() for k in ["document", "pdf", "practical", "notes"]))
+    is_doc_followup = bool(doc_count > 0 and is_followup_query(effective_text) and chat_history_str and any(k in chat_history_str.lower() for k in ["document", "pdf", "notes", "file", "chunk", "page", "source"]))
 
-    if (has_doc_keyword or has_doc_phrase or is_doc_followup) and doc_count > 0:
+    # Dynamic matching against active document filenames in the user's Knowledge Base
+    matches_indexed_doc = False
+    if doc_count > 0:
+        try:
+            from backend.vector_store import indexed_documents
+            q_low = effective_norm.lower()
+            q_tokens = set(re.findall(r'[a-zA-Z0-9_\-]+', q_low))
+            STOP_TOKENS = {"and", "the", "for", "with", "from", "list", "detail", "details", "merged", "pdf", "docx", "txt", "md", "csv", "json"}
+            for idoc in indexed_documents:
+                t = idoc.get("title", "").strip().lower()
+                if not t:
+                    continue
+                base_name = os.path.splitext(t)[0]
+                if t in q_low or (len(base_name) > 3 and base_name in q_low):
+                    matches_indexed_doc = True
+                    break
+                doc_tokens = [tok for tok in re.findall(r'[a-zA-Z0-9_\-]+', base_name) if len(tok) >= 3 and tok not in STOP_TOKENS]
+                if any(dt in q_tokens or any(dt in qt for qt in q_tokens if len(dt) >= 4) for dt in doc_tokens):
+                    matches_indexed_doc = True
+                    break
+        except Exception:
+            pass
+
+    if (has_doc_keyword or has_doc_phrase or is_doc_followup or matches_indexed_doc) and doc_count > 0:
         decision = RoutingDecision(
             intent=QueryIntent.DOCUMENT_RAG,
             is_fast_path=False,
@@ -432,27 +506,49 @@ def classify_query(
         return decision
 
     # Step 7: Fallback for Unknown / Follow-up / General Queries
-    # Route to RAG only if it is an actual follow-up referencing documents or previous study context
-    if doc_count > 0 and is_followup_query(query_clean):
-        decision = RoutingDecision(
-            intent=QueryIntent.DOCUMENT_RAG,
-            is_fast_path=False,
-            is_welcome_card=False,
-            reason="Follow-up query routed to RAG with active index",
-            selected_path="faiss_document_rag",
-            rag_invoked=True,
-            tools_selected=["retriever"]
-        )
-    else:
-        decision = RoutingDecision(
-            intent=QueryIntent.GENERAL_KNOWLEDGE,
-            is_fast_path=False,
-            is_welcome_card=False,
-            reason="General knowledge query routed to conversational LLM",
-            selected_path="general_llm_assistant",
-            rag_invoked=False,
-            tools_selected=[]
-        )
+    if is_followup_query(query_clean):
+        hist_lower = chat_history_str.lower() if chat_history_str else ""
+        # 7a. Follow-up to prior image search (e.g. "What about Soul Mortal ?", "show more pics")
+        if any(w in hist_lower for w in ["image_search", "web_image_search", "image", "images", "photo", "photos", "diagram", "diagrams"]):
+            clean_sub = re.sub(r'^(?:what\s+about|how\s+about|and|show|show\s+me)\s+', '', query_clean, flags=re.IGNORECASE).strip(' ?.!').strip()
+            if clean_sub:
+                decision = RoutingDecision(
+                    intent=QueryIntent.IMAGE_SEARCH,
+                    sub_action="image_search",
+                    params={"search_query": clean_sub, "is_diagram": False},
+                    is_fast_path=False,
+                    is_welcome_card=False,
+                    reason=f"Follow-up image search referencing prior visual context: '{clean_sub}'",
+                    selected_path="web_image_search",
+                    rag_invoked=False,
+                    tools_selected=["image_search"]
+                )
+                _log_routing(query, decision)
+                return decision
+
+        # 7b. Follow-up referencing active documents
+        if doc_count > 0:
+            decision = RoutingDecision(
+                intent=QueryIntent.DOCUMENT_RAG,
+                is_fast_path=False,
+                is_welcome_card=False,
+                reason="Follow-up query routed to RAG with active index",
+                selected_path="faiss_document_rag",
+                rag_invoked=True,
+                tools_selected=["retriever"]
+            )
+            _log_routing(query, decision)
+            return decision
+
+    decision = RoutingDecision(
+        intent=QueryIntent.GENERAL_KNOWLEDGE,
+        is_fast_path=False,
+        is_welcome_card=False,
+        reason="General knowledge query routed to conversational LLM",
+        selected_path="general_llm_assistant",
+        rag_invoked=False,
+        tools_selected=[]
+    )
     _log_routing(query, decision)
     return decision
 

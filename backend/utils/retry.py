@@ -46,49 +46,71 @@ def execute_with_backoff(request: Any, max_retries: int = 3, initial_delay: floa
     if last_exception:
         raise last_exception
 
-def is_retryable_llm_error(exc: Exception) -> bool:
-    """Checks if an LLM exception is a rate-limit (429) or transient backend error."""
+def is_quota_exhausted_error(exc: Exception) -> bool:
+    """Detects hard quota or resource exhaustion errors that must fail fast to save quota."""
     msg = str(exc).lower()
-    return any(k in msg for k in ["429", "resource_exhausted", "resourceexhausted", "quota", "overloaded", "503", "500"])
+    return any(k in msg for k in ["429", "resource_exhausted", "resourceexhausted", "exhausted", "quota exceeded", "quota_exceeded", "daily limit", "per_minute_quota", "quota"])
+
+def is_retryable_llm_error(exc: Exception) -> bool:
+    """Checks if an LLM exception is a transient network hiccup (503, connection dropped)."""
+    if is_quota_exhausted_error(exc):
+        return False
+    msg = str(exc).lower()
+    return any(k in msg for k in ["503", "overloaded", "server disconnected", "connection reset", "remoteprotocolerror", "timeout", "timed out"])
 
 async def astream_with_backoff(
     llm: Any,
     prompt_val: Any,
-    max_retries: int = 2,
-    initial_delay: float = 1.0,
-    factor: float = 2.0,
+    max_retries: int = 1,
+    initial_delay: float = 0.8,
+    factor: float = 1.5,
     allow_fallback: bool = True
 ) -> AsyncGenerator[Any, None]:
     """
-    Streams chunks from an LLM with exponential backoff on transient errors (429/503),
-    and automatic resilient failover to the active fallback model (gemini-2.5-flash-lite)
-    if the requested model encounters deprecation (404), demand spikes, or quota limits.
+    Streams chunks from an LLM safely with controlled single-retry and fast-fail on quota exhaustion.
+    Guarantees:
+    1. Zero duplicate stream re-generation if tokens have already been yielded.
+    2. Fast fail on hard quota exhaustion (no redundant retries burning quota).
+    3. Failover model uses high-throughput, low-latency 'gemini-2.5-flash-lite'.
     """
     delay = initial_delay
     last_exc = None
+    yielded_any = False
 
     for attempt in range(1, max_retries + 1):
         try:
             async for chunk in llm.astream(prompt_val):
+                yielded_any = True
                 yield chunk
             return
         except Exception as exc:
             last_exc = exc
+            # If tokens were already partially yielded to the client, never retry from start
+            # to prevent duplicate text in UI and redundant quota consumption
+            if yielded_any:
+                logger.error(f"LLM stream failed mid-generation after tokens were already delivered: {exc}")
+                raise exc
+
+            # Fast fail on hard quota limits
+            if is_quota_exhausted_error(exc):
+                logger.warning(f"Gemini API quota exhausted: {exc}. Failing fast to avoid burning quota.")
+                raise exc
+
             if is_retryable_llm_error(exc) and attempt < max_retries:
-                jitter = random.uniform(0.1, 0.4)
+                jitter = random.uniform(0.05, 0.2)
                 sleep_time = (delay * (factor ** (attempt - 1))) + jitter
-                logger.warning(f"Gemini LLM stream transient error (attempt {attempt}/{max_retries}). Retrying in {sleep_time:.2f}s...")
+                logger.warning(f"Transient LLM network glitch (attempt {attempt}/{max_retries}). Retrying in {sleep_time:.2f}s...")
                 await asyncio.sleep(sleep_time)
             else:
                 break
 
-    # Resilient Automatic Failover
+    # Resilient Automatic Failover to lowest-latency model if no tokens were yielded yet
     current_model = getattr(llm, "model", "")
-    if allow_fallback and current_model != "gemini-3.5-flash-lite":
+    if allow_fallback and not yielded_any and not is_quota_exhausted_error(last_exc) and current_model != "gemini-2.5-flash-lite":
         try:
             from backend.config import get_llm
-            logger.warning(f"Primary model '{current_model}' encountered issue: {last_exc}. Automatically failing over to gemini-3.5-flash-lite...")
-            fallback_llm = get_llm("gemini-3.5-flash-lite")
+            logger.warning(f"Primary model '{current_model}' encountered transient issue: {last_exc}. Resilient failover to gemini-2.5-flash-lite...")
+            fallback_llm = get_llm("gemini-2.5-flash-lite")
             async for chunk in fallback_llm.astream(prompt_val):
                 yield chunk
             return

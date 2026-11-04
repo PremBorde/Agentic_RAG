@@ -5,35 +5,39 @@ from typing import Optional
 
 load_dotenv()
 
+# Ensure GOOGLE_API_KEY uses the authentic Gemini API key if set as GEMINI_API_KEY
+if os.getenv("GEMINI_API_KEY") and not (os.getenv("GOOGLE_API_KEY", "").startswith("AIzaSy")):
+    os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
+
 # Multi-Model Cache for dynamic Gemini model selection
 _llm_cache = {}
 
 AVAILABLE_MODELS = [
-    {"id": "gemini-3.5-flash-lite", "label": "Gemini 3.5 Flash Lite (Recommended)"},
-    {"id": "gemini-3-flash-preview", "label": "Gemini 3 Flash"},
-    {"id": "gemini-flash-latest", "label": "Gemini Flash (Latest)"}
+    {"id": "gemini-2.5-flash", "label": "Gemini 2.5 Flash (Ultra Fast & Recommended)"},
+    {"id": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash Lite (Lowest Latency)"},
+    {"id": "gemini-3.5-flash-lite", "label": "Gemini 3.5 Flash Lite (Deep Reasoning)"}
 ]
 
-DEFAULT_MODEL = "gemini-3.5-flash-lite"
+DEFAULT_MODEL = "gemini-2.5-flash"
 
 def get_llm(model_name: Optional[str] = None):
     """Returns a cached LangChain LLM instance for the specified Gemini model."""
-    # Map deprecated, 404, or zero-quota models directly to the active, supported Google model
-    deprecated_or_unsupported = {
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-1.5-flash",
-        "gemini-2.0-flash",
-        "gemini-3.1-pro-preview",
-        "gemini-3.8-flash"
+    # Map deprecated, 404, or legacy models to high-speed stable models
+    alias_map = {
+        "gemini-1.5-flash": "gemini-2.5-flash",
+        "gemini-2.0-flash": "gemini-2.5-flash",
+        "gemini-3-flash-preview": "gemini-2.5-flash",
+        "gemini-flash-latest": "gemini-2.5-flash"
     }
-    if not model_name or model_name in deprecated_or_unsupported:
+    if model_name in alias_map:
+        model_name = alias_map[model_name]
+    elif not model_name:
         model_name = DEFAULT_MODEL
 
     if model_name not in _llm_cache:
         _llm_cache[model_name] = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=0.2,
-            max_retries=2
+            max_retries=1
         )
     return _llm_cache[model_name]
