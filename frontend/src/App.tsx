@@ -1386,8 +1386,7 @@ export default function App() {
                 flex: 1,
                 overflowY: 'auto',
                 overflowAnchor: 'auto',
-                padding: '24px 20px',
-                contain: 'layout style'
+                padding: '24px 20px'
               }}
             >
               <div style={{

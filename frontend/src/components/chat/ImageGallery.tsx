@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ExternalLink, 
   Maximize2, 
@@ -245,6 +246,17 @@ function ImageCard({ img, index, onSelect }: ImageCardProps) {
 export function ImageGallery({ images }: ImageGalleryProps) {
   const [selectedImg, setSelectedImg] = useState<ImageItem | null>(null);
 
+  // Lock body scroll when modal is active
+  useEffect(() => {
+    if (selectedImg) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [selectedImg]);
+
   // Close modal on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -300,8 +312,10 @@ export function ImageGallery({ images }: ImageGalleryProps) {
       {/* Responsive Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))',
-        gap: '10px',
+        gridTemplateColumns: images.length === 1 
+          ? 'minmax(240px, 360px)' 
+          : 'repeat(auto-fill, minmax(190px, 1fr))',
+        gap: '12px',
         width: '100%'
       }}>
         {images.map((img, idx) => (
@@ -329,15 +343,16 @@ export function ImageGallery({ images }: ImageGalleryProps) {
         </span>
       </div>
 
-      {/* Fullscreen Lightbox Modal */}
-      {selectedImg && (
+      {/* Fullscreen Lightbox Modal rendered via Portal outside chat scroll containment */}
+      {selectedImg && typeof document !== 'undefined' && createPortal(
         <div 
           style={{
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(15, 23, 42, 0.78)',
-            backdropFilter: 'blur(8px)',
-            zIndex: 99999,
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            zIndex: 999999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -350,13 +365,13 @@ export function ImageGallery({ images }: ImageGalleryProps) {
             style={{
               backgroundColor: '#ffffff',
               borderRadius: '16px',
-              maxWidth: '820px',
+              maxWidth: '740px',
               width: '100%',
-              maxHeight: '92vh',
+              maxHeight: '86vh',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: '0 20px 45px rgba(0,0,0,0.3)',
+              boxShadow: '0 25px 60px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.08)',
               position: 'relative'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -407,12 +422,12 @@ export function ImageGallery({ images }: ImageGalleryProps) {
 
             {/* Modal Image Display Area */}
             <div style={{
-              backgroundColor: '#111827',
+              backgroundColor: '#090d16',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: '260px',
-              maxHeight: '62vh',
+              minHeight: '220px',
+              maxHeight: '52vh',
               overflow: 'hidden'
             }}>
               <img
@@ -421,8 +436,11 @@ export function ImageGallery({ images }: ImageGalleryProps) {
                 referrerPolicy="no-referrer"
                 style={{
                   maxWidth: '100%',
-                  maxHeight: '60vh',
-                  objectFit: 'contain'
+                  maxHeight: '52vh',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block'
                 }}
               />
             </div>
@@ -518,7 +536,8 @@ export function ImageGallery({ images }: ImageGalleryProps) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
