@@ -88,13 +88,36 @@ from backend.services.google_service import (
     find_free_meeting_slots
 )
 
+
+def sanitize_citations(text: str) -> str:
+    """
+    Cleans up malformed LLM citation strings, e.g. '([2 [6263] -81])' -> '[2]'.
+    Ensures citations are strictly formatted as simple [1], [2].
+    """
+    if not text:
+        return text
+    # Pattern 1: ([2 [6263] -81]) or ([2, 62-81])
+    text = re.sub(r'\(\s*\[([0-9]{1,2})\b[^\)]*\]\s*\)', r'[\1]', text)
+    # Pattern 2: ([2] [6263]-81)
+    text = re.sub(r'\(\s*\[([0-9]{1,2})\]\s*(?:\[\d+\][^\)]*|[^\)]*)\)', r'[\1]', text)
+    # Pattern 3: ([1])
+    text = re.sub(r'\(\s*\[([0-9]{1,2})\]\s*\)', r'[\1]', text)
+    return text
+
 async def stream_chat_events(
     question: str, 
     model_name: str, 
     thread_id: str,
-    user_id: Optional[str] = None
+    user_id: Optional[str] = None,
+    doc_id: Optional[str] = None,
+    doc_ids: Optional[list[str]] = None,
+    message_id: Optional[str] = None,
+    assistant_message_id: Optional[str] = None
 ) -> AsyncGenerator[str, None]:
     """Generates Server-Sent Events (SSE) for streaming responses with tool orchestration & action proposals."""
+    # Immediately flush SSE connection handshake to client to prevent any network blocking
+    yield 'data: {"type":"stage","stage":"thinking"}\n\n'
+
     chat_hist = get_thread_context_str(thread_id)
     memories = get_relevant_memories_text()
     conn_info = get_connection_status(user_id)
@@ -110,7 +133,6 @@ async def stream_chat_events(
     proposal = None
 
     try:
-        yield 'data: {"type":"stage","stage":"thinking"}\n\n'
         
         # Lazy LLM loader so greetings and local operations never touch external LLM APIs
         _active_llm = None
@@ -664,70 +686,209 @@ async def stream_chat_events(
             yield 'data: {"type":"stage","stage":"generating"}\n\n'
             yield f"data: {_json.dumps({'type':'token','text':msg})}\n\n"
             answer_parts.append(msg)
-
-        # ── 6. EXPLICIT WEB SEARCH ───────────────────────────────────
+# ── 6. EXPLICIT WEB SEARCH ─────────────────────────────────────
         elif decision.intent == QueryIntent.WEB_SEARCH:
             source = "Web Search"
             yield 'data: {"type":"stage","stage":"searching_web"}\n\n'
             
-            clean_search_query = question
-            for prefix in [
-                "for web search", "web search for", "web search", "search the web for",
-                "search the web", "search web for", "search web", "search online for",
-                "search online", "browse the web for", "browse the web", "browse web for",
-                "google for", "google", "search for", "search"
-            ]:
-                if clean_search_query.lower().startswith(prefix):
-                    clean_search_query = clean_search_query[len(prefix):].strip(": ,-")
-                    break
-            if not clean_search_query.strip():
-                clean_search_query = question
+            search_query = decision.params.get("query")
+            timeframe = decision.params.get("timeframe")
+            if not search_query:
+                from backend.tools import extract_web_search_query_and_timeframe
+                search_query, timeframe = extract_web_search_query_and_timeframe(question, chat_history_str=chat_hist)
 
-            try:
-                context = await asyncio.wait_for(
-                    asyncio.to_thread(web_search_tool.invoke, clean_search_query),
-                    timeout=3.5
+            from backend.services.web_search_service import search_web_structured_async, format_web_search_context
+            search_result = await search_web_structured_async(
+                search_query, 
+                timeframe=timeframe,
+                max_results=5,
+                timeout=6.0
+            )
+
+            if search_result.get("status") == "error" or not search_result.get("results"):
+                # Honest error handling as mandated: never claim search was performed if it failed or returned nothing
+                tf_label = search_result.get("timeframe_label")
+                tf_suffix = f" ({tf_label})" if tf_label else ""
+                err_msg = (
+                    f'I attempted to perform a live web search for **"{search_query}"**{tf_suffix}, '
+                    f"but the search provider returned no results or timed out. Please try refining your query or check back shortly."
                 )
-                docs_meta = [{"content": context, "source": "Web Search", "doc_id": "web-search"}]
-            except asyncio.TimeoutError:
-                context = f"Live search completed for '{clean_search_query}'."
+                yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[]})}\n\n'
+                yield 'data: {"type":"stage","stage":"generating"}\n\n'
+                answer_parts.append(err_msg)
+                yield f"data: {_json.dumps({'type':'token','text':err_msg})}\n\n"
+            else:
+                results = search_result.get("results", [])
                 docs_meta = []
-            except Exception:
-                context = "No search results available."
-                docs_meta = []
+                for idx, r in enumerate(results, start=1):
+                    docs_meta.append({
+                        "content": r["snippet"],
+                        "source": f"{r['source']}" + (f" • {r['date']}" if r.get("date") else ""),
+                        "doc_id": f"web-{idx}",
+                        "title": r["title"],
+                        "url": r["url"]
+                    })
+                
+                context = format_web_search_context(search_result)
+                yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":docs_meta})}\n\n'
+                yield 'data: {"type":"stage","stage":"generating"}\n\n'
 
-            yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":docs_meta})}\n\n'
-            yield 'data: {"type":"stage","stage":"generating"}\n\n'
-            prompt_val = gen_prompt.invoke({
-                "memories": memories,
-                "chat_history": chat_hist,
-                "context": context,
-                "question": question
-            })
-            async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
-                token = safe_str(chunk.content)
-                if token:
-                    answer_parts.append(token)
-                    yield f"data: {_json.dumps({'type':'token','text':token})}\n\n"
+                prompt_val = gen_prompt.invoke({
+                    "memories": memories,
+                    "chat_history": chat_hist,
+                    "context": context,
+                    "question": question
+                })
+                async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
+                    token = safe_str(chunk.content)
+                    if token:
+                        answer_parts.append(token)
+                        yield f"data: {_json.dumps({'type':'token','text':token})}\n\n"
 
-        # ── 7. DOCUMENT RETRIEVAL (FAISS) ────────────────────────────
+
+
+        # ── 6b. WEB IMAGE SEARCH ─────────────────────────────────────
+        elif decision.intent == QueryIntent.IMAGE_SEARCH:
+            source = "Image Search"
+
+            search_query = decision.params.get("search_query")
+            is_diagram = decision.params.get("is_diagram", False)
+            needs_clarification = decision.params.get("needs_clarification", False)
+
+            from backend.tools import FORBIDDEN_SEARCH_TERMS
+            if not search_query or search_query.lower() in FORBIDDEN_SEARCH_TERMS or needs_clarification:
+                # Do NOT execute external image search on ambiguous pronouns or missing subjects
+                clarify_msg = "Could you please clarify who or what you would like to see an image of?"
+                yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[],"images":[]})}\n\n'
+                yield 'data: {"type":"stage","stage":"generating"}\n\n'
+                answer_parts.append(clarify_msg)
+                yield f"data: {_json.dumps({'type':'token','text':clarify_msg})}\n\n"
+            else:
+                yield 'data: {"type":"stage","stage":"searching_images"}\n\n'
+                from backend.services.image_search_service import search_web_images_async
+                img_result = await search_web_images_async(
+                    search_query,
+                    max_results=6,
+                    prefer_diagrams=is_diagram,
+                    timeout=6.0
+                )
+                images_list = img_result.get("images", [])
+                images_meta = images_list
+
+                yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":[],"images":images_list})}\n\n'
+                yield f'data: {_json.dumps({"type":"images","images":images_list,"query":search_query,"provider":img_result.get("provider")})}\n\n'
+                yield 'data: {"type":"stage","stage":"generating"}\n\n'
+
+                has_substantive_prompt = any(w in question.lower() for w in [
+                    "explain", "how does", "why is", "tell me about", "what is", "describe", "compare", "summary", "summarize"
+                ]) and len(question.split()) > 7
+
+                if has_substantive_prompt:
+                    context_summary = f"Retrieved {len(images_list)} visual references for '{search_query}'."
+                    prompt_val = gen_prompt.invoke({
+                        "memories": memories,
+                        "chat_history": chat_hist,
+                        "context": context_summary,
+                        "question": question
+                    })
+                    async for chunk in astream_with_backoff(get_active_llm(), prompt_val):
+                        token = safe_str(chunk.content)
+                        if token:
+                            answer_parts.append(token)
+                            yield f"data: {_json.dumps({'type':'token','text':token})}\n\n"
+                else:
+                    diag_label = "diagrams and visual references" if is_diagram else "images"
+                    if images_list:
+                        intro_text = (
+                            f"Here are the top {diag_label} retrieved for **{search_query}**:\n\n"
+                            f"*Click on any image to open a high-resolution preview or visit the original source website.*"
+                        )
+                    else:
+                        intro_text = (
+                            f"I searched for images of **{search_query}**, but no visual results could be retrieved right now. "
+                            f"You can try refining the keywords or conducting a broader web search."
+                        )
+                    answer_parts.append(intro_text)
+                    yield f"data: {_json.dumps({'type':'token','text':intro_text})}\n\n"
+
+        # ── 7. DOCUMENT RETRIEVAL (FAISS + BM25 + RRF + OKF) ────────────
         elif decision.intent == QueryIntent.DOCUMENT_RAG:
             source = "Document Search"
             yield 'data: {"type":"stage","stage":"searching_docs"}\n\n'
-            last_q = get_last_user_query(thread_id)
-            search_query = f"{last_q} {question}".strip() if last_q and is_followup_query(question) else question
             
-            docs = await asyncio.to_thread(retriever.invoke, search_query)
+            from backend.services.query_processor import resolve_contextual_query, extract_document_filter
+            from backend.services.hybrid_retriever import hybrid_retriever, determine_retrieval_k
+            from backend.vector_store import indexed_documents
+            
+            last_q = get_last_user_query(thread_id)
+            search_query = resolve_contextual_query(question, chat_history_str=chat_hist, last_query=last_q or "")
+            
+            # Universal document filter resolution (supports API parameter or natural query mention)
+            available_doc_titles = [d.get("title", "") for d in indexed_documents if d.get("title")]
+            extracted_doc = extract_document_filter(question, available_doc_titles) if available_doc_titles else None
+            effective_doc_filter = doc_id or extracted_doc
+            
+            # Dynamic retrieval depth based on query complexity
+            target_k = determine_retrieval_k(search_query)
+            
+            docs = await asyncio.to_thread(
+                hybrid_retriever.hybrid_search,
+                query=search_query,
+                k=target_k,
+                dense_k=max(target_k * 2, 12),
+                bm25_k=max(target_k * 2, 12),
+                doc_filter=effective_doc_filter,
+                doc_ids=doc_ids
+            )
+            
             if not docs and last_q:
-                docs = await asyncio.to_thread(retriever.invoke, last_q)
+                docs = await asyncio.to_thread(
+                    hybrid_retriever.hybrid_search,
+                    query=last_q,
+                    k=target_k,
+                    doc_filter=effective_doc_filter,
+                    doc_ids=doc_ids
+                )
 
-            docs_meta = [
-                {"content": safe_str(d.page_content),
-                 "source": d.metadata.get("source", "Indexed Document"),
-                 "doc_id": d.metadata.get("doc_id", "unknown")}
-                for d in docs
-            ]
+            docs_meta = []
+            for d in docs:
+                m = d.metadata or {}
+                docs_meta.append({
+                    "content": safe_str(d.page_content),
+                    "source": m.get("document_name") or m.get("source") or "Indexed Document",
+                    "doc_id": m.get("doc_id", "unknown"),
+                    "chunk_id": m.get("chunk_id", ""),
+                    "page_number": m.get("page_number", 1),
+                    "section_heading": m.get("section_heading", "General"),
+                    "source_location": m.get("source_location", f"Page {m.get('page_number', 1)}")
+                })
+            
             context = format_docs(docs)
+
+            # ── OKF Knowledge Graph Integration (Relational & Multi-hop Traversal) ──
+            from backend.services.okf_retriever import is_relational_or_multihop_query, retrieve_okf_concepts, format_okf_context
+            if is_relational_or_multihop_query(question) or is_relational_or_multihop_query(search_query):
+                okf_concepts = await asyncio.to_thread(
+                    retrieve_okf_concepts,
+                    search_query,
+                    user_id=user_id or "default_user",
+                    max_concepts=2,
+                    max_depth=1
+                )
+                if okf_concepts:
+                    okf_block = format_okf_context(okf_concepts)
+                    context = f"{context}\n\n{okf_block}" if context else okf_block
+                    for c in okf_concepts:
+                        first_src = c.get("sources", [{}])[0] if c.get("sources") else {}
+                        docs_meta.append({
+                            "content": c["description"],
+                            "source": f"OKF: {c['title']} (Graph Concept)",
+                            "doc_id": f"okf-{c['slug']}",
+                            "chunk_id": c["slug"],
+                            "page_number": first_src.get("page_number", 1),
+                            "section_heading": c["title"],
+                            "source_location": f"OKF Concept ({c['status'].upper()})"
+                        })
             yield f'data: {_json.dumps({"type":"meta","source":source,"retrieved_docs":docs_meta})}\n\n'
             yield 'data: {"type":"stage","stage":"generating"}\n\n'
 
@@ -763,22 +924,23 @@ async def stream_chat_events(
         yield 'data: {"type":"stage","stage":"success"}\n\n'
         yield 'data: {"type":"done"}\n\n'
 
-        full_answer = "".join(safe_str(p) for p in answer_parts)
+        full_answer = sanitize_citations("".join(safe_str(p) for p in answer_parts))
         if thread_id:
             record_thread_turn(thread_id, "user", question)
             record_thread_turn(thread_id, "assistant", full_answer)
             try:
                 import uuid
-                u_msg_id = f"msg_{uuid.uuid4().hex[:10]}"
-                a_msg_id = f"msg_{uuid.uuid4().hex[:10]}"
-                save_conversation_message(thread_id, u_msg_id, "user", question)
+                u_msg_id = message_id or f"msg_{uuid.uuid4().hex[:10]}"
+                a_msg_id = assistant_message_id or f"msg_{uuid.uuid4().hex[:10]}"
+                save_conversation_message(thread_id, u_msg_id, "user", question, user_id=user_id)
                 save_conversation_message(
                     thread_id, 
                     a_msg_id, 
                     "assistant", 
                     full_answer, 
                     source=source,
-                    metadata={"retrievedDocs": docs_meta, "proposal": proposal}
+                    metadata={"retrievedDocs": docs_meta, "proposal": proposal},
+                    user_id=user_id
                 )
             except Exception as db_err:
                 pass

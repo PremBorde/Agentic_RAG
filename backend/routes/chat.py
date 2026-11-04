@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -14,8 +14,23 @@ router = APIRouter(prefix="/api", tags=["chat"])
 
 class QueryRequest(BaseModel):
     message: str
-    model: Optional[str] = "gemini-3.5-flash-lite"
+    model: Optional[str] = "gemini-2.5-flash"
     thread_id: Optional[str] = None
+    doc_id: Optional[str] = None
+    doc_ids: Optional[list[str]] = None
+    message_id: Optional[str] = None
+    assistant_message_id: Optional[str] = None
+
+
+@router.get("/images/search")
+async def search_images_endpoint(
+    q: str = Query(..., min_length=1, description="Image search query"),
+    limit: int = Query(6, ge=1, le=20, description="Maximum images to return"),
+    diagrams: bool = Query(False, description="Prefer technical/scientific diagrams")
+):
+    """Direct web image search endpoint with primary and fallback providers."""
+    from backend.services.image_search_service import search_web_images_async
+    return await search_web_images_async(q, max_results=limit, prefer_diagrams=diagrams)
 
 @router.get("/models")
 def get_available_models():
@@ -76,7 +91,16 @@ async def chat_streaming(req: QueryRequest, request: Request):
     user_id = get_current_user_id(request)
 
     return StreamingResponse(
-        stream_chat_events(question, model_name, req.thread_id or "", user_id=user_id),
+        stream_chat_events(
+            question, 
+            model_name, 
+            req.thread_id or "", 
+            user_id=user_id,
+            doc_id=req.doc_id,
+            doc_ids=req.doc_ids,
+            message_id=req.message_id,
+            assistant_message_id=req.assistant_message_id
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

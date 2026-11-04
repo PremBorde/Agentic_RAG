@@ -2,6 +2,8 @@ import sqlite3
 import json
 import os
 import uuid
+import hashlib
+import secrets
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -52,6 +54,37 @@ def init_db():
     columns = [row[1] for row in cursor.fetchall()]
     if "user_id" not in columns:
         cursor.execute("ALTER TABLE tasks ADD COLUMN user_id TEXT REFERENCES users(id)")
+
+    # Migration: check and add missing columns to users
+    cursor.execute("PRAGMA table_info(users)")
+    u_cols = [row[1] for row in cursor.fetchall()]
+    if "display_name" not in u_cols:
+        cursor.execute("ALTER TABLE users ADD COLUMN display_name TEXT")
+    if "password_hash" not in u_cols:
+        cursor.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+    if "updated_at" not in u_cols:
+        cursor.execute("ALTER TABLE users ADD COLUMN updated_at TEXT")
+
+    # Migration: check and add missing columns to conversations
+    cursor.execute("PRAGMA table_info(conversations)")
+    c_cols = [row[1] for row in cursor.fetchall()]
+    if "last_message_at" not in c_cols:
+        cursor.execute("ALTER TABLE conversations ADD COLUMN last_message_at TEXT")
+    if "archived_at" not in c_cols:
+        cursor.execute("ALTER TABLE conversations ADD COLUMN archived_at TEXT")
+
+    # Migration: check and add missing columns to messages
+    cursor.execute("PRAGMA table_info(messages)")
+    m_cols = [row[1] for row in cursor.fetchall()]
+    if "user_id" not in m_cols:
+        cursor.execute("ALTER TABLE messages ADD COLUMN user_id TEXT")
+    if "message_type" not in m_cols:
+        cursor.execute("ALTER TABLE messages ADD COLUMN message_type TEXT DEFAULT 'text'")
+
+    # Normalized indexes for performance & isolation
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_updated ON conversations(user_id, updated_at DESC)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON messages(conversation_id, created_at ASC)")
 
     # Long-Term Memories & User Preferences
     cursor.execute("""
@@ -154,12 +187,104 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
     conn.close()
     return dict(row) if row else None
 
-def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+def get_user_by_email_raw(email: str) -> Optional[Dict[str, Any]]:
     """Retrieves a user profile by Email."""
     conn = get_db_connection()
     row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     conn.close()
     return dict(row) if row else None
+
+get_user_by_email = get_user_by_email_raw
+
+def hash_password(password: str) -> str:
+    """Hashes a password using PBKDF2-HMAC-SHA256 with a unique random salt."""
+    salt = secrets.token_hex(16)
+    derived = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000).hex()
+    return f"pbkdf2_sha256$100000${salt}${derived}"
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    """Verifies a plaintext password against a stored PBKDF2 hash using constant-time comparison."""
+    if not hashed_password or not hashed_password.startswith("pbkdf2_sha256$"):
+        return False
+    try:
+        parts = hashed_password.split("$")
+        if len(parts) != 4:
+            return False
+        _, iterations_str, salt, stored_hash = parts
+        iterations = int(iterations_str)
+        computed_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), iterations).hex()
+        return secrets.compare_digest(computed_hash, stored_hash)
+    except Exception:
+        return False
+
+def sanitize_user_dict(user: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Removes sensitive credentials before returning user dictionary to API callers."""
+    if not user:
+        return None
+    d = dict(user)
+    d.pop("password_hash", None)
+    d.pop("google_access_token", None)
+    d.pop("google_refresh_token", None)
+    d["has_google_connected"] = bool(user.get("google_refresh_token") or user.get("google_access_token"))
+    return d
+
+def register_user(email: str, password: str, display_name: Optional[str] = None) -> Dict[str, Any]:
+    """Registers a new user with password authentication."""
+    clean_email = email.strip().lower()
+    if not clean_email or "@" not in clean_email or "." not in clean_email:
+        raise ValueError("A valid email address is required.")
+    if not password or len(password) < 6:
+        raise ValueError("Password must be at least 6 characters long.")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, password_hash FROM users WHERE email = ?", (clean_email,))
+    existing = cursor.fetchone()
+
+    now = datetime.utcnow().isoformat()
+    hashed = hash_password(password)
+    clean_name = display_name.strip() if display_name else clean_email.split("@")[0].title()
+
+    if existing:
+        if existing["password_hash"]:
+            conn.close()
+            raise ValueError("An account with this email already exists. Please log in.")
+        user_id = existing["id"]
+        cursor.execute("""
+            UPDATE users
+            SET password_hash = ?, display_name = COALESCE(display_name, ?), updated_at = ?
+            WHERE id = ?
+        """, (hashed, clean_name, now, user_id))
+    else:
+        user_id = str(uuid.uuid4())
+        cursor.execute("""
+            INSERT INTO users (id, email, password_hash, display_name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (user_id, clean_email, hashed, clean_name, now, now))
+
+    conn.commit()
+    conn.close()
+
+    user = get_user_by_id(user_id)
+    return sanitize_user_dict(user)
+
+def authenticate_user(email: str, password: str) -> Optional[Dict[str, Any]]:
+    """Authenticates user credentials and returns sanitized profile if valid."""
+    clean_email = email.strip().lower()
+    user = get_user_by_email_raw(clean_email)
+    if not user or not user.get("password_hash"):
+        return None
+
+    if not verify_password(password, user["password_hash"]):
+        return None
+
+    conn = get_db_connection()
+    conn.execute("UPDATE users SET updated_at = ? WHERE id = ?", (datetime.utcnow().isoformat(), user["id"]))
+    conn.commit()
+    conn.close()
+
+    return sanitize_user_dict(user)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Task & Reminder CRUD
@@ -433,28 +558,36 @@ def save_conversation_message(
     text: str,
     source: Optional[str] = None,
     metadata: Optional[Dict[str, Any]] = None,
-    created_at: Optional[str] = None
+    created_at: Optional[str] = None,
+    user_id: Optional[str] = None,
+    message_type: str = "text"
 ) -> Dict[str, Any]:
     now = created_at or datetime.utcnow().isoformat()
     meta_json = json.dumps(metadata or {})
     conn = get_db_connection()
-    # Ensure conversation exists
+    # Ensure conversation exists with proper user_id binding
     conn.execute(
-        "INSERT OR IGNORE INTO conversations (id, user_id, title, model, created_at, updated_at) VALUES (?, NULL, ?, 'gemini-3.5-flash-lite', ?, ?)",
-        (thread_id, text[:40].strip() or "New Conversation", now, now)
+        """INSERT INTO conversations (id, user_id, title, model, created_at, updated_at, last_message_at)
+           VALUES (?, ?, ?, 'gemini-3.5-flash-lite', ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             updated_at = excluded.updated_at,
+             last_message_at = excluded.last_message_at,
+             user_id = COALESCE(conversations.user_id, excluded.user_id)""",
+        (thread_id, user_id, text[:40].strip() or "New Conversation", now, now, now)
     )
-    # Insert or update message
+    # Insert or update message with user_id and message_type
     conn.execute(
-        """INSERT INTO messages (id, conversation_id, sender, text, source, metadata_json, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)
+        """INSERT INTO messages (id, conversation_id, user_id, sender, text, source, message_type, metadata_json, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              text = excluded.text,
              source = excluded.source,
+             message_type = excluded.message_type,
              metadata_json = excluded.metadata_json""",
-        (msg_id, thread_id, sender, text, source, meta_json, now)
+        (msg_id, thread_id, user_id, sender, text, source, message_type, meta_json, now)
     )
-    # Update conversation's updated_at
-    conn.execute("UPDATE conversations SET updated_at = ? WHERE id = ?", (now, thread_id))
+    # Update conversation's updated_at and last_message_at
+    conn.execute("UPDATE conversations SET updated_at = ?, last_message_at = ? WHERE id = ?", (now, now, thread_id))
     conn.commit()
     conn.close()
     return {"id": msg_id, "conversation_id": thread_id, "sender": sender, "text": text}
@@ -511,4 +644,26 @@ def delete_conversation_thread(thread_id: str) -> bool:
     conn.close()
     return deleted
 
+
+
+def get_recent_messages_for_context(thread_id: str, limit: int = 12) -> List[Dict[str, Any]]:
+    """Retrieves recent thread turns from SQLite to restore context across backend restarts."""
+    conn = get_db_connection()
+    rows = conn.execute(
+        "SELECT sender, text, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT ?",
+        (thread_id, limit)
+    ).fetchall()
+    conn.close()
+    turns = []
+    for r in reversed(rows):
+        role = "user" if r["sender"].lower() == "user" else "assistant"
+        turns.append({"role": role, "content": r["text"], "timestamp": r["created_at"]})
+    return turns
+
+def get_conversation_owner(thread_id: str) -> Optional[str]:
+    """Returns the user_id associated with a conversation thread."""
+    conn = get_db_connection()
+    row = conn.execute("SELECT user_id FROM conversations WHERE id = ?", (thread_id,)).fetchone()
+    conn.close()
+    return row["user_id"] if row else None
 
