@@ -22,6 +22,10 @@ The user interface follows a modern, warm burgundy-and-cream editorial aesthetic
 - **LLM**: Google Gemini API via `langchain-google-genai` (`gemini-3.5-flash-lite`, `gemini-3-flash-preview`, `gemini-flash-latest`)
 - **Embeddings**: `fastembed` (`BAAI/bge-small-en-v1.5`, 384-dimensional ONNX embeddings running locally on CPU)
 - **Vector Store**: FAISS (`IndexFlatL2` with `InMemoryDocstore`) with disk persistence in `data/vector_store/`
+- **Lexical Retrieval**: BM25 (`rank-bm25` `BM25Okapi`) with disk-persisted corpus in `data/vector_store/bm25_store.json`
+- **Reranker**: FlashRank (`ms-marco-TinyBERT-L-2-v2`, 3.2MB local ONNX model)
+- **Hybrid Fusion**: Reciprocal Rank Fusion (RRF, $k=60$)
+- **Document Parsers**: PyPDF (`pypdf`), Word DOCX (`python-docx`), CSV/JSON, Plain Text & Markdown, YouTube Transcript API
 - **Web Search**: DuckDuckGo Search (`DuckDuckGoSearchRun`)
 - **Database**: SQLite3 (`data/agent_studio.db`) with RowFactory
 - **Security & Token Encryption**: `cryptography.fernet.Fernet`
@@ -109,9 +113,14 @@ d:\AGENTIC AI\LangChain\Projects\
 │   ├── services/
 │   │   ├── approval_service.py    # Pending action proposal, execution, and cancellation
 │   │   ├── chat_service.py        # Central SSE stream generator with priority routing
+│   │   ├── chunking.py            # Sentence-boundary preserving structural chunker & metadata
 │   │   ├── database.py            # SQLite schema initialization and CRUD helper methods
-│   │   ├── document_service.py    # Text chunking, extraction, and vector indexing logic
-│   │   └── google_service.py      # Gmail & Calendar API client calls with Fernet encryption
+│   │   ├── document_service.py    # Multi-format ingestion, dedup, and dual FAISS+BM25 indexing
+│   │   ├── google_service.py      # Gmail & Calendar API client calls with Fernet encryption
+│   │   ├── hybrid_retriever.py    # Dual FAISS dense + BM25Okapi lexical with RRF & FlashRank
+│   │   ├── parsers.py             # Multi-format parsers (PDF, DOCX, CSV, JSON, Markdown/TXT)
+│   │   ├── query_processor.py     # Noise cleaning, follow-up expansion, and document filtering
+│   │   └── router.py              # Central deterministic query intent classification
 │   └── utils/
 │       ├── auth.py                # Session-based user ID extraction helper
 │       ├── crypto.py              # Fernet symmetric encryption / decryption helpers
