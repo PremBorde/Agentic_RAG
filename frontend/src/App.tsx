@@ -85,6 +85,7 @@ export default function App() {
   const [taskManagerOpen, setTaskManagerOpen] = useState(false);
   const [googleConnectOpen, setGoogleConnectOpen] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState<string | null>(null);
 
   // Modal Input states
   const [docTitle, setDocTitle] = useState('');
@@ -229,11 +230,19 @@ export default function App() {
       const res = await fetch('/api/auth/status');
       if (res.ok) {
         const data = await res.json();
-        setGoogleConnected(Boolean(data.connected));
+        const isConn = Boolean(data.connected);
+        setGoogleConnected(isConn);
+        if (data.email) {
+          setGoogleEmail(data.email);
+        } else if (!isConn) {
+          setGoogleEmail(null);
+        }
+        return data;
       }
     } catch {
       // Ignored
     }
+    return null;
   };
 
   useEffect(() => {
@@ -424,7 +433,12 @@ export default function App() {
     if (connectedParam === 'true') {
       showToast('success', 'Google account successfully connected.');
       setGoogleConnected(true);
-      checkGoogleStatus();
+      checkGoogleStatus().then((status) => {
+        const email = (status && status.email) || 'Google User';
+        setTimeout(() => {
+          injectGoogleConnectedMessage(email, targetThreadId || currentThreadId);
+        }, 400);
+      });
     } else if (disconnectedParam === 'true') {
       showToast('info', 'Google account disconnected.');
       setGoogleConnected(false);
@@ -825,6 +839,43 @@ export default function App() {
   const handleUploadFile = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
+
+  // Inject Google Workspace Connected Confirmation into active conversation
+  const injectGoogleConnectedMessage = (email: string, targetThread?: string | null) => {
+    const activeThread = targetThread || currentThreadId || `thread_${Date.now()}`;
+    const text = [
+      `### ✦ Google Workspace Connected Successfully`,
+      `Your account is now authenticated as **${email}**. Full access to your Gmail inbox, Google Calendar events, and Tasks has been enabled.`,
+      `You can now ask me to:`,
+      `- 📬 *"Read my recent 5 emails"*`,
+      `- 📅 *"What is on my calendar today?"*`,
+      `- ✍️ *"Draft a reply to my latest email"*`,
+      `- 🔍 *"Find free meeting slots this week"*`
+    ].join('\n\n');
+
+    setMessages((prev) => {
+      if (prev.some((m) => m.source === 'Google Workspace' && m.text.includes(email))) {
+        return prev;
+      }
+      const connMsg: Message = {
+        id: `msg_ai_connected_${Date.now()}`,
+        sender: 'assistant',
+        text,
+        source: 'Google Workspace',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      const updated = [...prev, connMsg];
+      fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thread_id: activeThread,
+          messages: updated
+        })
+      }).catch(() => {});
+      return updated;
+    });
+  };
 
   // Ingestion helpers
   const injectDocUploadMessage = (
@@ -1401,6 +1452,8 @@ export default function App() {
                   <ChatMessage
                     key={msg.id || `msg-${index}`}
                     msg={msg}
+                    isGoogleConnected={googleConnected}
+                    googleEmail={googleEmail}
                     isLatest={index === messages.length - 1}
                     streamingMsgId={streamingMsgId}
                     avatarState={avatarState}

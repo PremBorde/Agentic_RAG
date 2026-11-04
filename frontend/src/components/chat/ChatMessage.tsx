@@ -13,7 +13,8 @@ import {
   Video, 
   ChevronDown, 
   ChevronUp,
-  Mail 
+  Mail,
+  CheckCircle2
 } from 'lucide-react';
 import { Message, AvatarState } from '../../types';
 import { THEME } from '../../constants/theme';
@@ -27,6 +28,8 @@ interface ChatMessageProps {
   msg: Message;
   isLatest: boolean;
   streamingMsgId: string | null;
+  isGoogleConnected?: boolean;
+  googleEmail?: string | null;
   avatarState: AvatarState;
   copiedMsgId: string | null;
   likedMsgId: Record<string, boolean>;
@@ -68,7 +71,9 @@ function ChatMessageComponent({
   onOpenTaskManager,
   onUploadFile,
   currentStage,
-  currentThreadId
+  currentThreadId,
+  isGoogleConnected,
+  googleEmail
 }: ChatMessageProps) {
   // System Document Ingestion Notification Card
   if (msg.sender === 'system' && msg.source === 'Document Indexed') {
@@ -427,7 +432,7 @@ function ChatMessageComponent({
               <ActionProposalCard proposal={msg.proposal} />
             )}
 
-            {/* Inline Sign in with Google Button inside chat message bubble */}
+            {/* Inline Google Workspace Connection Status or Sign In Button */}
             {(msg.requiresGoogleAuth || (msg.sender === 'assistant' && (
               msg.text.includes("don't have access to your Gmail") ||
               msg.text.includes("haven't connected it or authenticated your session") ||
@@ -440,51 +445,101 @@ function ChatMessageComponent({
               msg.text.includes("connect your Google account") ||
               msg.text.includes("connect your Gmail account")
             ))) && (
-              <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onOpenGoogleConnect) {
-                      onOpenGoogleConnect();
-                    } else {
-                      const params = new URLSearchParams();
-                      if (currentThreadId) {
-                        params.set('thread_id', currentThreadId);
-                        params.set('return_to', `/?thread_id=${encodeURIComponent(currentThreadId)}`);
-                        try {
-                          sessionStorage.setItem('oauth_return_thread_id', currentThreadId);
-                        } catch {}
-                      }
-                      const qs = params.toString();
-                      window.location.href = `/api/auth/google/login${qs ? `?${qs}` : ''}`;
-                    }
-                  }}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '9px 16px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    backgroundColor: THEME.burgundy,
-                    color: '#ffffff',
-                    fontSize: '13px',
-                    fontWeight: 650,
-                    cursor: 'pointer',
-                    boxShadow: '0 3px 8px rgba(122, 28, 48, 0.25)',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = THEME.burgundyHover}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = THEME.burgundy}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24">
-                    <path fill="#ffffff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path fill="#ffffff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="#ffffff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                    <path fill="#ffffff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                  </svg>
-                  <span>Sign in with Google</span>
-                </button>
+              <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {isGoogleConnected ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    backgroundColor: '#ecfdf5',
+                    border: '1px solid #a7f3d0'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CheckCircle2 size={16} color="#059669" strokeWidth={2.5} />
+                      <span style={{ fontSize: '13px', fontWeight: 650, color: '#065f46' }}>
+                        Connected as {googleEmail || 'Google User'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#047857', lineHeight: '1.4' }}>
+                      Your Google Workspace is active and authenticated. Click an action below or ask me directly:
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
+                      <button
+                        type="button"
+                        className="followup-chip"
+                        onClick={() => onSendFollowup("Read my recent 5 emails")}
+                        style={{ fontSize: '11px', padding: '5px 11px', backgroundColor: '#ffffff', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 600 }}
+                      >
+                        📬 Read recent emails
+                      </button>
+                      <button
+                        type="button"
+                        className="followup-chip"
+                        onClick={() => onSendFollowup("What is on my calendar today?")}
+                        style={{ fontSize: '11px', padding: '5px 11px', backgroundColor: '#ffffff', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 600 }}
+                      >
+                        📅 Check today's calendar
+                      </button>
+                      <button
+                        type="button"
+                        className="followup-chip"
+                        onClick={() => onSendFollowup("Find free meeting slots this week")}
+                        style={{ fontSize: '11px', padding: '5px 11px', backgroundColor: '#ffffff', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 600 }}
+                      >
+                        🔍 Find meeting slots
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onOpenGoogleConnect) {
+                          onOpenGoogleConnect();
+                        } else {
+                          const params = new URLSearchParams();
+                          if (currentThreadId) {
+                            params.set('thread_id', currentThreadId);
+                            params.set('return_to', `/?thread_id=${encodeURIComponent(currentThreadId)}`);
+                            try {
+                              sessionStorage.setItem('oauth_return_thread_id', currentThreadId);
+                            } catch {}
+                          }
+                          const qs = params.toString();
+                          window.location.href = `/api/auth/google/login${qs ? `?${qs}` : ''}`;
+                        }
+                      }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '9px 16px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        backgroundColor: THEME.burgundy,
+                        color: '#ffffff',
+                        fontSize: '13px',
+                        fontWeight: 650,
+                        cursor: 'pointer',
+                        boxShadow: '0 3px 8px rgba(122, 28, 48, 0.25)',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = THEME.burgundyHover}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = THEME.burgundy}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24">
+                        <path fill="#ffffff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#ffffff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#ffffff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                        <path fill="#ffffff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                      </svg>
+                      <span>Sign in with Google</span>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
