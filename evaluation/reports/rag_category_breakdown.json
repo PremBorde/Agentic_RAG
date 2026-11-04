@@ -1,0 +1,181 @@
+{
+  "timestamp": "2026-11-03T20:56:38Z",
+  "categories": {
+    "Improved FAISS Dense": {
+      "exact_keyword": {
+        "count": 35,
+        "mrr": 0.9381,
+        "p1": 0.8857,
+        "p4": 0.4,
+        "recall": 0.9429
+      },
+      "acronym": {
+        "count": 30,
+        "mrr": 0.9833,
+        "p1": 0.9667,
+        "p4": 0.475,
+        "recall": 0.9667
+      },
+      "semantic": {
+        "count": 45,
+        "mrr": 0.9333,
+        "p1": 0.8667,
+        "p4": 0.4222,
+        "recall": 0.9778
+      },
+      "follow_up": {
+        "count": 30,
+        "mrr": 0.7861,
+        "p1": 0.6667,
+        "p4": 0.325,
+        "recall": 0.9167
+      },
+      "multi_document": {
+        "count": 30,
+        "mrr": 0.9833,
+        "p1": 0.9667,
+        "p4": 0.6583,
+        "recall": 0.9667
+      },
+      "out_of_corpus": {
+        "count": 35,
+        "mrr": 0.0,
+        "p1": 0.0,
+        "p4": 0.0,
+        "recall": 1.0
+      }
+    },
+    "Pure BM25 Lexical": {
+      "exact_keyword": {
+        "count": 35,
+        "mrr": 1.0,
+        "p1": 1.0,
+        "p4": 0.3357,
+        "recall": 0.9143
+      },
+      "acronym": {
+        "count": 30,
+        "mrr": 0.95,
+        "p1": 0.9333,
+        "p4": 0.425,
+        "recall": 0.95
+      },
+      "semantic": {
+        "count": 45,
+        "mrr": 0.9889,
+        "p1": 0.9778,
+        "p4": 0.4278,
+        "recall": 0.9778
+      },
+      "follow_up": {
+        "count": 30,
+        "mrr": 0.8917,
+        "p1": 0.8333,
+        "p4": 0.3,
+        "recall": 0.95
+      },
+      "multi_document": {
+        "count": 30,
+        "mrr": 0.9583,
+        "p1": 0.9333,
+        "p4": 0.6167,
+        "recall": 0.9833
+      },
+      "out_of_corpus": {
+        "count": 35,
+        "mrr": 0.0,
+        "p1": 0.0,
+        "p4": 0.0,
+        "recall": 1.0
+      }
+    },
+    "Hybrid FAISS + BM25 (RRF)": {
+      "exact_keyword": {
+        "count": 35,
+        "mrr": 0.9857,
+        "p1": 0.9714,
+        "p4": 0.4286,
+        "recall": 0.9571
+      },
+      "acronym": {
+        "count": 30,
+        "mrr": 0.9667,
+        "p1": 0.9667,
+        "p4": 0.4833,
+        "recall": 0.9667
+      },
+      "semantic": {
+        "count": 45,
+        "mrr": 0.9778,
+        "p1": 0.9556,
+        "p4": 0.4444,
+        "recall": 1.0
+      },
+      "follow_up": {
+        "count": 30,
+        "mrr": 0.9056,
+        "p1": 0.8667,
+        "p4": 0.3167,
+        "recall": 0.95
+      },
+      "multi_document": {
+        "count": 30,
+        "mrr": 0.9833,
+        "p1": 0.9667,
+        "p4": 0.6583,
+        "recall": 1.0
+      },
+      "out_of_corpus": {
+        "count": 35,
+        "mrr": 0.0,
+        "p1": 0.0,
+        "p4": 0.0,
+        "recall": 1.0
+      }
+    },
+    "Hybrid + FlashRank Reranker": {
+      "exact_keyword": {
+        "count": 35,
+        "mrr": 0.9857,
+        "p1": 0.9714,
+        "p4": 0.4071,
+        "recall": 0.9429
+      },
+      "acronym": {
+        "count": 30,
+        "mrr": 0.9444,
+        "p1": 0.9,
+        "p4": 0.475,
+        "recall": 0.9833
+      },
+      "semantic": {
+        "count": 45,
+        "mrr": 0.9778,
+        "p1": 0.9556,
+        "p4": 0.4556,
+        "recall": 0.9778
+      },
+      "follow_up": {
+        "count": 30,
+        "mrr": 0.9,
+        "p1": 0.8333,
+        "p4": 0.3333,
+        "recall": 0.95
+      },
+      "multi_document": {
+        "count": 30,
+        "mrr": 0.9611,
+        "p1": 0.9333,
+        "p4": 0.7,
+        "recall": 0.9833
+      },
+      "out_of_corpus": {
+        "count": 35,
+        "mrr": 0.0,
+        "p1": 0.0,
+        "p4": 0.0,
+        "recall": 1.0
+      }
+    }
+  }
+}

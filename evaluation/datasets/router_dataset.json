@@ -1,0 +1,302 @@
+[
+  {
+    "query": "Hello",
+    "expected_intent": "conversational",
+    "category": "greeting",
+    "doc_count": 1
+  },
+  {
+    "query": "Hi there!",
+    "expected_intent": "conversational",
+    "category": "greeting",
+    "doc_count": 1
+  },
+  {
+    "query": "Good morning",
+    "expected_intent": "conversational",
+    "category": "greeting",
+    "doc_count": 1
+  },
+  {
+    "query": "Heyy",
+    "expected_intent": "conversational",
+    "category": "greeting",
+    "doc_count": 1
+  },
+  {
+    "query": "Thank you so much",
+    "expected_intent": "conversational",
+    "category": "gratitude",
+    "doc_count": 1
+  },
+  {
+    "query": "Thanks a lot",
+    "expected_intent": "conversational",
+    "category": "gratitude",
+    "doc_count": 1
+  },
+  {
+    "query": "Goodbye",
+    "expected_intent": "conversational",
+    "category": "farewell",
+    "doc_count": 1
+  },
+  {
+    "query": "See you later",
+    "expected_intent": "conversational",
+    "category": "farewell",
+    "doc_count": 1
+  },
+  {
+    "query": "What can you do?",
+    "expected_intent": "conversational",
+    "category": "capability",
+    "doc_count": 1
+  },
+  {
+    "query": "Who are you?",
+    "expected_intent": "conversational",
+    "category": "capability",
+    "doc_count": 1
+  },
+  {
+    "query": "Hi, search my uploaded PDF.",
+    "expected_intent": "document_rag",
+    "category": "greeting_prefixed_rag",
+    "doc_count": 1
+  },
+  {
+    "query": "Now prepare my practicals.",
+    "expected_intent": "document_rag",
+    "category": "regression_study",
+    "doc_count": 1
+  },
+  {
+    "query": "Explain practical 2 from LP3",
+    "expected_intent": "document_rag",
+    "category": "coursework",
+    "doc_count": 1
+  },
+  {
+    "query": "Notice the important points in my PDF.",
+    "expected_intent": "document_rag",
+    "category": "regression_doc",
+    "doc_count": 1
+  },
+  {
+    "query": "Summarize the uploaded file",
+    "expected_intent": "document_rag",
+    "category": "document",
+    "doc_count": 1
+  },
+  {
+    "query": "What is Dijkstra algorithm according to the document?",
+    "expected_intent": "document_rag",
+    "category": "study_query",
+    "doc_count": 1
+  },
+  {
+    "query": "What does my notes say about dynamic programming?",
+    "expected_intent": "document_rag",
+    "category": "notes",
+    "doc_count": 1
+  },
+  {
+    "query": "Explain fractional knapsack from syllabus",
+    "expected_intent": "document_rag",
+    "category": "syllabus",
+    "doc_count": 1
+  },
+  {
+    "query": "Check my recent emails",
+    "expected_intent": "gmail",
+    "category": "gmail_search",
+    "doc_count": 1
+  },
+  {
+    "query": "Find emails from Rahul about the project",
+    "expected_intent": "gmail",
+    "category": "gmail_search",
+    "doc_count": 1
+  },
+  {
+    "query": "Search for unread messages",
+    "expected_intent": "gmail",
+    "category": "gmail_search",
+    "doc_count": 1
+  },
+  {
+    "query": "Send an email to prembordesn4@gmail.com regarding Diwali Wishes plz",
+    "expected_intent": "gmail",
+    "category": "gmail_send",
+    "doc_count": 1
+  },
+  {
+    "query": "Draft an email to client about project delay",
+    "expected_intent": "gmail",
+    "category": "gmail_draft",
+    "doc_count": 1
+  },
+  {
+    "query": "Do you have access to my mail?",
+    "expected_intent": "gmail",
+    "category": "gmail_access",
+    "doc_count": 1
+  },
+  {
+    "query": "Summarize email thread regarding budget update",
+    "expected_intent": "gmail",
+    "category": "gmail_summarize",
+    "doc_count": 1
+  },
+  {
+    "query": "What is on my calendar today?",
+    "expected_intent": "calendar",
+    "category": "calendar_list",
+    "doc_count": 1
+  },
+  {
+    "query": "Schedule a meeting tomorrow at 2 PM with Rahul",
+    "expected_intent": "calendar",
+    "category": "calendar_create",
+    "doc_count": 1
+  },
+  {
+    "query": "Now Add an note on my calender that today i am focusing in RAG project",
+    "expected_intent": "calendar",
+    "category": "calendar_create_typo",
+    "doc_count": 1
+  },
+  {
+    "query": "Find a free 30-minute slot tomorrow afternoon",
+    "expected_intent": "calendar",
+    "category": "calendar_slots",
+    "doc_count": 1
+  },
+  {
+    "query": "Check calendar availability for Friday morning",
+    "expected_intent": "calendar",
+    "category": "calendar_availability",
+    "doc_count": 1
+  },
+  {
+    "query": "Do you have access to my google calendar?",
+    "expected_intent": "calendar",
+    "category": "calendar_access",
+    "doc_count": 1
+  },
+  {
+    "query": "Create a task to finish the RAG report by Friday with high priority",
+    "expected_intent": "task",
+    "category": "task_create",
+    "doc_count": 1
+  },
+  {
+    "query": "Add a to-do to buy groceries tomorrow",
+    "expected_intent": "task",
+    "category": "task_create",
+    "doc_count": 1
+  },
+  {
+    "query": "Show my tasks",
+    "expected_intent": "task",
+    "category": "task_list",
+    "doc_count": 1
+  },
+  {
+    "query": "What are my overdue tasks?",
+    "expected_intent": "task",
+    "category": "task_overdue",
+    "doc_count": 1
+  },
+  {
+    "query": "Mark task 1 as completed",
+    "expected_intent": "task",
+    "category": "task_complete",
+    "doc_count": 1
+  },
+  {
+    "query": "Remember that my preferred language is Python",
+    "expected_intent": "memory",
+    "category": "memory_add",
+    "doc_count": 1
+  },
+  {
+    "query": "What do you remember about my preferences?",
+    "expected_intent": "memory",
+    "category": "memory_list",
+    "doc_count": 1
+  },
+  {
+    "query": "Remember that I prefer morning meetings",
+    "expected_intent": "memory",
+    "category": "memory_add",
+    "doc_count": 1
+  },
+  {
+    "query": "For web search today top 5 news",
+    "expected_intent": "web_search",
+    "category": "web_search_news",
+    "doc_count": 1
+  },
+  {
+    "query": "Search the web for latest Agentic AI breakthroughs",
+    "expected_intent": "web_search",
+    "category": "web_search_direct",
+    "doc_count": 1
+  },
+  {
+    "query": "Browse online for stock price of NVIDIA",
+    "expected_intent": "web_search",
+    "category": "web_search_direct",
+    "doc_count": 1
+  },
+  {
+    "query": "Latest tech news headlines today",
+    "expected_intent": "web_search",
+    "category": "web_search_news",
+    "doc_count": 1
+  },
+  {
+    "query": "What is the weather today in Pune?",
+    "expected_intent": "web_search",
+    "category": "web_search_weather",
+    "doc_count": 1
+  },
+  {
+    "query": "Find the email from Rahul, summarize it, and schedule a meeting for tomorrow at 3 PM",
+    "expected_intent": "multi_step",
+    "category": "multistep_email_cal",
+    "doc_count": 1
+  },
+  {
+    "query": "Search emails for client feedback and create high priority tasks",
+    "expected_intent": "multi_step",
+    "category": "multistep_email_task",
+    "doc_count": 1
+  },
+  {
+    "query": "Write a python script to reverse a singly linked list",
+    "expected_intent": "general_knowledge",
+    "category": "coding",
+    "doc_count": 1
+  },
+  {
+    "query": "What is the capital of France?",
+    "expected_intent": "general_knowledge",
+    "category": "general_knowledge",
+    "doc_count": 1
+  },
+  {
+    "query": "How does TCP 3-way handshake work?",
+    "expected_intent": "general_knowledge",
+    "category": "technical",
+    "doc_count": 1
+  },
+  {
+    "query": "Compare merge sort and quick sort algorithms",
+    "expected_intent": "general_knowledge",
+    "category": "technical_comparison",
+    "doc_count": 1
+  }
+]

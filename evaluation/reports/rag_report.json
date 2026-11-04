@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-11-03T17:14:37Z",
+  "total_queries": 5,
+  "indexed_chunks": 4,
+  "k": 4,
+  "mrr": 0.65,
+  "precision_at_k": 0.25,
+  "latency_ms": {
+    "p50": 6.716,
+    "p95": 78.961,
+    "mean": 20.969
+  }
+}

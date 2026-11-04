@@ -1,0 +1,247 @@
+{
+  "timestamp": "2026-11-03T20:56:38Z",
+  "results": [
+    {
+      "configuration": "Existing FAISS Baseline",
+      "queries_tested": 205,
+      "mrr": 0.65,
+      "precision_at_1": 0.44,
+      "precision_at_3": 0.32,
+      "precision_at_4": 0.25,
+      "recall_at_4": 0.35,
+      "ndcg_at_4": 0.485,
+      "latency_p50_ms": 83.06,
+      "latency_p95_ms": 86.15,
+      "peak_memory_mb": 12.4,
+      "categories": {}
+    },
+    {
+      "configuration": "Improved FAISS Dense",
+      "queries_tested": 205,
+      "mrr": 0.7679,
+      "precision_at_1": 0.722,
+      "precision_at_3": 0.4569,
+      "precision_at_4": 0.3744,
+      "recall_at_4": 0.9634,
+      "ndcg_at_4": 0.9411,
+      "latency_p50_ms": 288.7,
+      "latency_p95_ms": 506.55,
+      "peak_memory_mb": 0.11,
+      "categories": {
+        "exact_keyword": {
+          "count": 35,
+          "mrr": 0.9381,
+          "p1": 0.8857,
+          "p4": 0.4,
+          "recall": 0.9429
+        },
+        "acronym": {
+          "count": 30,
+          "mrr": 0.9833,
+          "p1": 0.9667,
+          "p4": 0.475,
+          "recall": 0.9667
+        },
+        "semantic": {
+          "count": 45,
+          "mrr": 0.9333,
+          "p1": 0.8667,
+          "p4": 0.4222,
+          "recall": 0.9778
+        },
+        "follow_up": {
+          "count": 30,
+          "mrr": 0.7861,
+          "p1": 0.6667,
+          "p4": 0.325,
+          "recall": 0.9167
+        },
+        "multi_document": {
+          "count": 30,
+          "mrr": 0.9833,
+          "p1": 0.9667,
+          "p4": 0.6583,
+          "recall": 0.9667
+        },
+        "out_of_corpus": {
+          "count": 35,
+          "mrr": 0.0,
+          "p1": 0.0,
+          "p4": 0.0,
+          "recall": 1.0
+        }
+      }
+    },
+    {
+      "configuration": "Pure BM25 Lexical",
+      "queries_tested": 205,
+      "mrr": 0.7976,
+      "precision_at_1": 0.7805,
+      "precision_at_3": 0.439,
+      "precision_at_4": 0.3476,
+      "recall_at_4": 0.9634,
+      "ndcg_at_4": 0.9664,
+      "latency_p50_ms": 11.57,
+      "latency_p95_ms": 28.27,
+      "peak_memory_mb": 0.06,
+      "categories": {
+        "exact_keyword": {
+          "count": 35,
+          "mrr": 1.0,
+          "p1": 1.0,
+          "p4": 0.3357,
+          "recall": 0.9143
+        },
+        "acronym": {
+          "count": 30,
+          "mrr": 0.95,
+          "p1": 0.9333,
+          "p4": 0.425,
+          "recall": 0.95
+        },
+        "semantic": {
+          "count": 45,
+          "mrr": 0.9889,
+          "p1": 0.9778,
+          "p4": 0.4278,
+          "recall": 0.9778
+        },
+        "follow_up": {
+          "count": 30,
+          "mrr": 0.8917,
+          "p1": 0.8333,
+          "p4": 0.3,
+          "recall": 0.95
+        },
+        "multi_document": {
+          "count": 30,
+          "mrr": 0.9583,
+          "p1": 0.9333,
+          "p4": 0.6167,
+          "recall": 0.9833
+        },
+        "out_of_corpus": {
+          "count": 35,
+          "mrr": 0.0,
+          "p1": 0.0,
+          "p4": 0.0,
+          "recall": 1.0
+        }
+      }
+    },
+    {
+      "configuration": "Hybrid FAISS + BM25 (RRF)",
+      "queries_tested": 205,
+      "mrr": 0.8008,
+      "precision_at_1": 0.7854,
+      "precision_at_3": 0.4846,
+      "precision_at_4": 0.3841,
+      "recall_at_4": 0.9805,
+      "ndcg_at_4": 0.9659,
+      "latency_p50_ms": 260.72,
+      "latency_p95_ms": 533.13,
+      "peak_memory_mb": 0.08,
+      "categories": {
+        "exact_keyword": {
+          "count": 35,
+          "mrr": 0.9857,
+          "p1": 0.9714,
+          "p4": 0.4286,
+          "recall": 0.9571
+        },
+        "acronym": {
+          "count": 30,
+          "mrr": 0.9667,
+          "p1": 0.9667,
+          "p4": 0.4833,
+          "recall": 0.9667
+        },
+        "semantic": {
+          "count": 45,
+          "mrr": 0.9778,
+          "p1": 0.9556,
+          "p4": 0.4444,
+          "recall": 1.0
+        },
+        "follow_up": {
+          "count": 30,
+          "mrr": 0.9056,
+          "p1": 0.8667,
+          "p4": 0.3167,
+          "recall": 0.95
+        },
+        "multi_document": {
+          "count": 30,
+          "mrr": 0.9833,
+          "p1": 0.9667,
+          "p4": 0.6583,
+          "recall": 1.0
+        },
+        "out_of_corpus": {
+          "count": 35,
+          "mrr": 0.0,
+          "p1": 0.0,
+          "p4": 0.0,
+          "recall": 1.0
+        }
+      }
+    },
+    {
+      "configuration": "Hybrid + FlashRank Reranker",
+      "queries_tested": 205,
+      "mrr": 0.7935,
+      "precision_at_1": 0.7659,
+      "precision_at_3": 0.4829,
+      "precision_at_4": 0.3902,
+      "recall_at_4": 0.9732,
+      "ndcg_at_4": 0.965,
+      "latency_p50_ms": 705.01,
+      "latency_p95_ms": 1562.67,
+      "peak_memory_mb": 0.18,
+      "categories": {
+        "exact_keyword": {
+          "count": 35,
+          "mrr": 0.9857,
+          "p1": 0.9714,
+          "p4": 0.4071,
+          "recall": 0.9429
+        },
+        "acronym": {
+          "count": 30,
+          "mrr": 0.9444,
+          "p1": 0.9,
+          "p4": 0.475,
+          "recall": 0.9833
+        },
+        "semantic": {
+          "count": 45,
+          "mrr": 0.9778,
+          "p1": 0.9556,
+          "p4": 0.4556,
+          "recall": 0.9778
+        },
+        "follow_up": {
+          "count": 30,
+          "mrr": 0.9,
+          "p1": 0.8333,
+          "p4": 0.3333,
+          "recall": 0.95
+        },
+        "multi_document": {
+          "count": 30,
+          "mrr": 0.9611,
+          "p1": 0.9333,
+          "p4": 0.7,
+          "recall": 0.9833
+        },
+        "out_of_corpus": {
+          "count": 35,
+          "mrr": 0.0,
+          "p1": 0.0,
+          "p4": 0.0,
+          "recall": 1.0
+        }
+      }
+    }
+  ]
+}

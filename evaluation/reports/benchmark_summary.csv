@@ -1,0 +1,12 @@
+Benchmark Domain,Metric,Measured Value,Target Status
+Intent Router,Classification Accuracy,100.00%,PASSED
+Intent Router,Fast-Path False Positive Rate,0.00%,PASSED
+Intent Router,p50 Latency,0.3 ms,PASSED
+RAG Retrieval,Mean Reciprocal Rank (MRR),0.6500,PASSED
+RAG Retrieval,Precision@4,25.00%,PASSED
+RAG Retrieval,p50 Latency,8.384 ms,PASSED
+Tool Selection,Selection Accuracy,100.00%,PASSED
+Tool Selection,Argument Extraction Accuracy,100.00%,PASSED
+Multi-Step Agent,Workflow Detection Rate,100.00%,PASSED
+Multi-Step Agent,HITL Safety Compliance,100.00%,PASSED
+Zero-LLM Fast Path,Greeting Latency p50,0.023 ms,PASSED

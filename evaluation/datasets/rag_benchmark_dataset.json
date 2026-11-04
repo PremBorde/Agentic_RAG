@@ -1,0 +1,203 @@
+[
+  {
+    "id": "q01",
+    "query": "What is Dijkstra's algorithm used for and what are its constraints?",
+    "category": "technical",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c1", "note-2-1793706942-c2"],
+    "expected_keywords": ["dijkstra", "shortest path", "greedy", "non-negative", "min-heap"]
+  },
+  {
+    "id": "q02",
+    "query": "How does Bellman-Ford algorithm detect negative weight cycles?",
+    "category": "technical",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c2", "note-2-1793706942-c3"],
+    "expected_keywords": ["bellman", "negative", "cycle", "relaxation", "v - 1"]
+  },
+  {
+    "id": "q03",
+    "query": "Explain the 0/1 knapsack problem dynamic programming approach.",
+    "category": "technical",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c3"],
+    "expected_keywords": ["0-1 knapsack", "dynamic programming", "branch and bound", "daa-5"]
+  },
+  {
+    "id": "q04",
+    "query": "How does fractional knapsack use a greedy strategy?",
+    "category": "technical",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c2"],
+    "expected_keywords": ["fractional knapsack", "greedy", "daa-4"]
+  },
+  {
+    "id": "q05",
+    "query": "DAA-4",
+    "category": "exact_keyword",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c2"],
+    "expected_keywords": ["daa-4", "fractional knapsack"]
+  },
+  {
+    "id": "q06",
+    "query": "BC-3",
+    "category": "exact_keyword",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c8"],
+    "expected_keywords": ["bc-3", "smart contract", "bank account", "test network"]
+  },
+  {
+    "id": "q07",
+    "query": "BC-5 Hyperledger",
+    "category": "exact_keyword",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c9"],
+    "expected_keywords": ["bc-5", "hyperledger", "business network"]
+  },
+  {
+    "id": "q08",
+    "query": "What is database normalization and what are the normal forms?",
+    "category": "definition",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c4", "note-2-1793706942-c5"],
+    "expected_keywords": ["normalization", "1nf", "2nf", "3nf", "bcnf", "redundancy"]
+  },
+  {
+    "id": "q09",
+    "query": "What is the difference between 2NF and 3NF?",
+    "category": "definition",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c4"],
+    "expected_keywords": ["2nf", "3nf", "partial", "transitive"]
+  },
+  {
+    "id": "q10",
+    "query": "Define BCNF in relational databases.",
+    "category": "definition",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c5"],
+    "expected_keywords": ["bcnf", "boyce-codd", "super key", "functional dependency"]
+  },
+  {
+    "id": "q11",
+    "query": "What are the ACID properties in database transactions?",
+    "category": "definition",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c5", "note-2-1793706942-c6"],
+    "expected_keywords": ["acid", "atomicity", "consistency", "isolation", "durability"]
+  },
+  {
+    "id": "q12",
+    "query": "What is a deadlock and what are the Coffman conditions?",
+    "category": "factual",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c7", "note-2-1793706942-c8"],
+    "expected_keywords": ["deadlock", "coffman", "mutual exclusion", "hold and wait", "preemption", "circular wait"]
+  },
+  {
+    "id": "q13",
+    "query": "How does Banker's Algorithm avoid deadlocks?",
+    "category": "factual",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c9"],
+    "expected_keywords": ["banker", "deadlock avoidance", "safety", "allocation"]
+  },
+  {
+    "id": "q14",
+    "query": "ML-2 email spam classification dataset and models",
+    "category": "exact_keyword",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c6"],
+    "expected_keywords": ["ml-2", "emails.csv", "spam", "knn", "svm"]
+  },
+  {
+    "id": "q15",
+    "query": "ML-3 diabetes classification performance metrics",
+    "category": "exact_keyword",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c6"],
+    "expected_keywords": ["ml-3", "diabetes.csv", "confusion matrix", "accuracy", "precision", "recall"]
+  },
+  {
+    "id": "q16",
+    "query": "What algorithm is used in ML-5 to find the local minima?",
+    "category": "factual",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c7"],
+    "expected_keywords": ["ml-5", "gradient descent", "local minima", "(x+3)"]
+  },
+  {
+    "id": "q17",
+    "query": "Which practicals in LP3 involve Metamask and crypto transactions?",
+    "category": "factual",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c8"],
+    "expected_keywords": ["bc-1", "bc-2", "metamask", "ether", "wallet"]
+  },
+  {
+    "id": "q18",
+    "query": "Knapsack problem ka dynamic programming approach samjhao",
+    "category": "hinglish",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c3"],
+    "expected_keywords": ["knapsack", "dynamic programming", "daa-5"]
+  },
+  {
+    "id": "q19",
+    "query": "Deadlock ke chaar Coffman conditions kya hote hain?",
+    "category": "hinglish",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c7", "note-2-1793706942-c8"],
+    "expected_keywords": ["deadlock", "mutual exclusion", "hold and wait", "circular wait"]
+  },
+  {
+    "id": "q20",
+    "query": "Database normalization mein transitive dependency kis normal form mein hatayi jaati hai?",
+    "category": "hinglish",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c4"],
+    "expected_keywords": ["3nf", "third normal form", "transitive"]
+  },
+  {
+    "id": "q21",
+    "query": "Can you please tell me in detail about the job sequencing with deadlines assignment?",
+    "category": "long_natural_language",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c2"],
+    "expected_keywords": ["daa-2", "job sequencing", "deadlines", "greedy"]
+  },
+  {
+    "id": "q22",
+    "query": "According to the uploaded documents, what are the five steps to initialize and build the customer churn model in ML-1?",
+    "category": "long_natural_language",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c4", "file-1-1793441378-c5"],
+    "expected_keywords": ["ml-1", "churn", "training", "test sets", "accuracy score", "confusion matrix"]
+  },
+  {
+    "id": "q23",
+    "query": "What is normalization in the database context?",
+    "category": "ambiguous_terminology",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c4", "note-2-1793706942-c5"],
+    "expected_keywords": ["normalization", "relational database", "1nf", "redundancy"]
+  },
+  {
+    "id": "q24",
+    "query": "In LP-III practicals, how many clusters are determined in sales data sample?",
+    "category": "multi_document",
+    "relevant_doc_names": ["LP-III practical detail list.pdf"],
+    "relevant_chunk_ids": ["file-1-1793441378-c7"],
+    "expected_keywords": ["ml-4", "k-means", "elbow method", "sales_data_sample"]
+  },
+  {
+    "id": "q25",
+    "query": "What is the time complexity of Dijkstra with min-heap priority queue?",
+    "category": "technical",
+    "relevant_doc_names": ["Computer Science Fundamentals & Core Engineering"],
+    "relevant_chunk_ids": ["note-2-1793706942-c1", "note-2-1793706942-c2"],
+    "expected_keywords": ["dijkstra", "(v + e) log v", "priority queue", "min-heap"]
+  }
+]
+

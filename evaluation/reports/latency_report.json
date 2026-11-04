@@ -1,0 +1,13 @@
+{
+  "iterations": 50,
+  "router_latency_ms": {
+    "p50": 0.411,
+    "p95": 5.513,
+    "mean": 0.991
+  },
+  "zero_llm_greeting_latency_ms": {
+    "p50": 0.018,
+    "p95": 0.043,
+    "mean": 0.024
+  }
+}

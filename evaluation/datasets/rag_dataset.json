@@ -1,0 +1,28 @@
+[
+  {
+    "question": "What is Dijkstra's algorithm used for?",
+    "expected_keywords": ["shortest path", "graph", "single source", "dijkstra", "vertex", "vertices", "weight", "distance"],
+    "expected_source": "LP-III"
+  },
+  {
+    "question": "Explain the 0/1 knapsack problem dynamic programming approach.",
+    "expected_keywords": ["knapsack", "capacity", "weight", "value", "profit", "dynamic programming", "optimal", "subset"],
+    "expected_source": "LP-III"
+  },
+  {
+    "question": "How does fractional knapsack use greedy algorithm?",
+    "expected_keywords": ["greedy", "fractional", "knapsack", "ratio", "value", "weight", "fraction"],
+    "expected_source": "LP-III"
+  },
+  {
+    "question": "What is smart contract in blockchain?",
+    "expected_keywords": ["blockchain", "contract", "ethereum", "solidity", "code", "transaction", "decentralized"],
+    "expected_source": "LP-III"
+  },
+  {
+    "question": "What is Bellman-Ford algorithm?",
+    "expected_keywords": ["negative", "cycle", "shortest path", "bellman", "edges", "relaxation"],
+    "expected_source": "LP-III"
+  }
+]
+

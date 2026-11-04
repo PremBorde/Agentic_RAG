@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-11-03T17:31:27Z",
+  "total_samples": 50,
+  "correct_samples": 50,
+  "accuracy": 1.0,
+  "fast_path_count": 10,
+  "fast_path_false_positives": 0,
+  "fast_path_fp_rate": 0.0,
+  "api_calls_avoided": 10,
+  "latency_ms": {
+    "p50": 0.316,
+    "p95": 1.055,
+    "mean": 0.424
+  },
+  "per_class_metrics": {
+    "conversational": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 10
+    },
+    "document_rag": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 8
+    },
+    "gmail": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 7
+    },
+    "calendar": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 6
+    },
+    "task": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 5
+    },
+    "memory": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 3
+    },
+    "web_search": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 5
+    },
+    "multi_step": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 2
+    },
+    "general_knowledge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 4
+    }
+  },
+  "confusion_matrix": {
+    "conversational": {
+      "conversational": 10
+    },
+    "document_rag": {
+      "document_rag": 8
+    },
+    "gmail": {
+      "gmail": 7
+    },
+    "calendar": {
+      "calendar": 6
+    },
+    "task": {
+      "task": 5
+    },
+    "memory": {
+      "memory": 3
+    },
+    "web_search": {
+      "web_search": 5
+    },
+    "multi_step": {
+      "multi_step": 2
+    },
+    "general_knowledge": {
+      "general_knowledge": 4
+    }
+  }
+}

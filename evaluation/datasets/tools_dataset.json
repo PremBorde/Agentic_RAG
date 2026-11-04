@@ -1,0 +1,33 @@
+[
+  {
+    "instruction": "Send an email to prembordesn4@gmail.com regarding Diwali Wishes",
+    "expected_tool": "gmail:send_email",
+    "expected_args": {"to": "prembordesn4@gmail.com", "subject": "Diwali Wishes"}
+  },
+  {
+    "instruction": "Check my unread emails",
+    "expected_tool": "gmail:search_emails",
+    "expected_args": {"query": "is:unread"}
+  },
+  {
+    "instruction": "Add an note on my calender that today i am focusing in RAG project",
+    "expected_tool": "calendar:create_event",
+    "expected_args": {"summary_contains": "RAG project"}
+  },
+  {
+    "instruction": "Find a free 30-minute slot tomorrow afternoon",
+    "expected_tool": "calendar:check_availability",
+    "expected_args": {}
+  },
+  {
+    "instruction": "Create a task to finish the presentation by Friday with high priority",
+    "expected_tool": "tasks:create_task",
+    "expected_args": {"title_contains": "presentation"}
+  },
+  {
+    "instruction": "For web search today top 5 news",
+    "expected_tool": "web_search",
+    "expected_args": {"query_contains": "top 5 news"}
+  }
+]
+

@@ -1,0 +1,3041 @@
+[
+  {
+    "id": "q_001",
+    "query": "DAA-1",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "daa-1",
+      "fibonacci",
+      "recursive"
+    ]
+  },
+  {
+    "id": "q_002",
+    "query": "DAA-2",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "daa-2",
+      "job sequencing",
+      "deadlines",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_003",
+    "query": "DAA-3",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "daa-3",
+      "huffman encoding",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_004",
+    "query": "DAA-4",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "daa-4",
+      "fractional knapsack",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_005",
+    "query": "DAA-5",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "daa-5",
+      "0-1 knapsack",
+      "dynamic programming"
+    ]
+  },
+  {
+    "id": "q_006",
+    "query": "ML-1",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1",
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "ml-1",
+      "customer churn",
+      "classifier"
+    ]
+  },
+  {
+    "id": "q_007",
+    "query": "ML-2",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "ml-2",
+      "emails",
+      "spam",
+      "knn",
+      "svm"
+    ]
+  },
+  {
+    "id": "q_008",
+    "query": "ML-3",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "ml-3",
+      "diabetes.csv",
+      "knn",
+      "confusion matrix"
+    ]
+  },
+  {
+    "id": "q_009",
+    "query": "ML-4",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "ml-4",
+      "k-means",
+      "sales_data_sample.csv",
+      "elbow method"
+    ]
+  },
+  {
+    "id": "q_010",
+    "query": "ML-5",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "ml-5",
+      "gradient descent",
+      "local minima",
+      "y = (x+3)"
+    ]
+  },
+  {
+    "id": "q_011",
+    "query": "BC-1",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "bc-1",
+      "metamask",
+      "ether"
+    ]
+  },
+  {
+    "id": "q_012",
+    "query": "BC-2",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "bc-2",
+      "wallet",
+      "metamask"
+    ]
+  },
+  {
+    "id": "q_013",
+    "query": "BC-3",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "bc-3",
+      "smart contract",
+      "bank account"
+    ]
+  },
+  {
+    "id": "q_014",
+    "query": "BC-4",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "bc-4",
+      "survey report",
+      "blockchains"
+    ]
+  },
+  {
+    "id": "q_015",
+    "query": "BC-5",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "bc-5",
+      "hyperledger",
+      "business network"
+    ]
+  },
+  {
+    "id": "q_016",
+    "query": "1NF",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "1nf",
+      "first normal form",
+      "atomic"
+    ]
+  },
+  {
+    "id": "q_017",
+    "query": "2NF",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "2nf",
+      "second normal form",
+      "partial functional"
+    ]
+  },
+  {
+    "id": "q_018",
+    "query": "3NF",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "3nf",
+      "third normal form",
+      "transitive"
+    ]
+  },
+  {
+    "id": "q_019",
+    "query": "BCNF",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "bcnf",
+      "boyce-codd",
+      "super key"
+    ]
+  },
+  {
+    "id": "q_020",
+    "query": "ACID",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5",
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "acid",
+      "atomicity",
+      "consistency",
+      "isolation",
+      "durability"
+    ]
+  },
+  {
+    "id": "q_021",
+    "query": "Coffman conditions",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c7",
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "coffman",
+      "mutual exclusion",
+      "hold and wait",
+      "circular wait"
+    ]
+  },
+  {
+    "id": "q_022",
+    "query": "Banker's Algorithm",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c9"
+    ],
+    "expected_keywords": [
+      "banker's",
+      "deadlock avoidance",
+      "safety"
+    ]
+  },
+  {
+    "id": "q_023",
+    "query": "emails.csv",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "emails.csv",
+      "spam",
+      "kaggle"
+    ]
+  },
+  {
+    "id": "q_024",
+    "query": "diabetes.csv",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "diabetes.csv",
+      "knn",
+      "accuracy"
+    ]
+  },
+  {
+    "id": "q_025",
+    "query": "sales_data_sample.csv",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "sales_data_sample.csv",
+      "k-means"
+    ]
+  },
+  {
+    "id": "q_026",
+    "query": "y = (x+3)^2",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "gradient descent",
+      "local minima",
+      "x = 2"
+    ]
+  },
+  {
+    "id": "q_027",
+    "query": "Hyperledger",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "hyperledger",
+      "business network"
+    ]
+  },
+  {
+    "id": "q_028",
+    "query": "Metamask",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "metamask",
+      "ether",
+      "wallet"
+    ]
+  },
+  {
+    "id": "q_029",
+    "query": "O((V + E) log V)",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1",
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "o((v + e) log v)",
+      "dijkstra",
+      "priority queue"
+    ]
+  },
+  {
+    "id": "q_030",
+    "query": "O(V * E)",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c2",
+      "note-2-1793706942-c3"
+    ],
+    "expected_keywords": [
+      "o(v * e)",
+      "bellman-ford",
+      "relaxing"
+    ]
+  },
+  {
+    "id": "q_031",
+    "query": "min-heap",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1",
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "min-heap",
+      "priority queue",
+      "dijkstra"
+    ]
+  },
+  {
+    "id": "q_032",
+    "query": "Fibonacci numbers",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "fibonacci",
+      "recursive",
+      "non-recursive"
+    ]
+  },
+  {
+    "id": "q_033",
+    "query": "Huffman Encoding",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "huffman encoding",
+      "greedy strategy"
+    ]
+  },
+  {
+    "id": "q_034",
+    "query": "Job sequencing with deadlines",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "job sequencing",
+      "deadlines",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_035",
+    "query": "Circular Wait",
+    "category": "exact_keyword",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "circular wait",
+      "coffman",
+      "closed chain"
+    ]
+  },
+  {
+    "id": "q_036",
+    "query": "What is SVM in machine learning practicals?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "svm",
+      "support vector machine",
+      "ml-2"
+    ]
+  },
+  {
+    "id": "q_037",
+    "query": "Which assignment uses KNN algorithm?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "knn",
+      "k-nearest neighbors",
+      "ml-2",
+      "ml-3"
+    ]
+  },
+  {
+    "id": "q_038",
+    "query": "Explain DBMS normalization forms",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c3",
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "dbms",
+      "normalization",
+      "relational"
+    ]
+  },
+  {
+    "id": "q_039",
+    "query": "What is BCNF and how does it relate to 3NF?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4",
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "bcnf",
+      "3nf",
+      "super key"
+    ]
+  },
+  {
+    "id": "q_040",
+    "query": "What does 1NF require?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "1nf",
+      "atomic",
+      "primary key"
+    ]
+  },
+  {
+    "id": "q_041",
+    "query": "What does 2NF eliminate?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "2nf",
+      "partial functional dependencies"
+    ]
+  },
+  {
+    "id": "q_042",
+    "query": "What does 3NF eliminate?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "3nf",
+      "transitive dependencies"
+    ]
+  },
+  {
+    "id": "q_043",
+    "query": "Define ACID atomicity",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "atomicity",
+      "rollback",
+      "transaction"
+    ]
+  },
+  {
+    "id": "q_044",
+    "query": "Define ACID consistency",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "consistency",
+      "schema constraints"
+    ]
+  },
+  {
+    "id": "q_045",
+    "query": "Define ACID isolation",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "isolation",
+      "concurrent"
+    ]
+  },
+  {
+    "id": "q_046",
+    "query": "Define ACID durability",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "durability",
+      "committed",
+      "crash"
+    ]
+  },
+  {
+    "id": "q_047",
+    "query": "What is DAA Group A about?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "daa",
+      "group a",
+      "design and analysis of algorithms"
+    ]
+  },
+  {
+    "id": "q_048",
+    "query": "What is Group B Machine Learning?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1",
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "group b",
+      "machine learning"
+    ]
+  },
+  {
+    "id": "q_049",
+    "query": "What is Group C Blockchain?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "group c",
+      "blockchain technology"
+    ]
+  },
+  {
+    "id": "q_050",
+    "query": "What does ML-1 churn dataset have?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "ml-1",
+      "kaggle",
+      "10,000 samples",
+      "14 features"
+    ]
+  },
+  {
+    "id": "q_051",
+    "query": "CreditScore and Geography in ML-1",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "creditscore",
+      "geography",
+      "customerid"
+    ]
+  },
+  {
+    "id": "q_052",
+    "query": "What is the confusion matrix in ML-3?",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "confusion matrix",
+      "accuracy",
+      "error rate",
+      "precision",
+      "recall"
+    ]
+  },
+  {
+    "id": "q_053",
+    "query": "Elbow method in ML-4",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "elbow method",
+      "k-means",
+      "clusters"
+    ]
+  },
+  {
+    "id": "q_054",
+    "query": "Gradient descent local minima formula",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "gradient descent",
+      "local minima",
+      "y = (x+3)"
+    ]
+  },
+  {
+    "id": "q_055",
+    "query": "Metamask wallet in BC-2",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "metamask",
+      "wallet",
+      "crypto transactions"
+    ]
+  },
+  {
+    "id": "q_056",
+    "query": "Solidity deposit withdraw in BC-3",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "deposit money",
+      "withdraw money",
+      "show balance"
+    ]
+  },
+  {
+    "id": "q_057",
+    "query": "Survey report on blockchains BC-4",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "survey report",
+      "types of blockchains"
+    ]
+  },
+  {
+    "id": "q_058",
+    "query": "Hyperledger network in BC-5",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "hyperledger",
+      "business network"
+    ]
+  },
+  {
+    "id": "q_059",
+    "query": "Shortest path algorithm with non-negative weights",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1"
+    ],
+    "expected_keywords": [
+      "dijkstra",
+      "non-negative",
+      "shortest path"
+    ]
+  },
+  {
+    "id": "q_060",
+    "query": "Shortest path with negative edge weights",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "bellman-ford",
+      "negative numbers"
+    ]
+  },
+  {
+    "id": "q_061",
+    "query": "Detect negative weight cycle",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c3"
+    ],
+    "expected_keywords": [
+      "bellman-ford",
+      "negative-weight cycles"
+    ]
+  },
+  {
+    "id": "q_062",
+    "query": "Deadlock hold and wait condition",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c7",
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "hold and wait",
+      "resource"
+    ]
+  },
+  {
+    "id": "q_063",
+    "query": "Deadlock no preemption condition",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "no preemption",
+      "voluntarily"
+    ]
+  },
+  {
+    "id": "q_064",
+    "query": "Deadlock mutual exclusion condition",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c7"
+    ],
+    "expected_keywords": [
+      "mutual exclusion",
+      "non-shareable"
+    ]
+  },
+  {
+    "id": "q_065",
+    "query": "Banker's Algorithm safety simulation",
+    "category": "acronym",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c9"
+    ],
+    "expected_keywords": [
+      "banker's algorithm",
+      "safety",
+      "s-state check"
+    ]
+  },
+  {
+    "id": "q_066",
+    "query": "How does greedy choice property solve fractional knapsack?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "fractional knapsack",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_067",
+    "query": "Explain the difference between recursive and non-recursive Fibonacci",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "fibonacci",
+      "non-recursive",
+      "recursive",
+      "time and space"
+    ]
+  },
+  {
+    "id": "q_068",
+    "query": "How are deadlines scheduled in job sequencing?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "job sequencing",
+      "deadlines",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_069",
+    "query": "What data compression method uses a greedy tree in DAA?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "huffman encoding",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_070",
+    "query": "Why is dynamic programming used for 0/1 knapsack instead of greedy?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "0-1 knapsack",
+      "dynamic programming",
+      "branch and bound"
+    ]
+  },
+  {
+    "id": "q_071",
+    "query": "How is customer churn modeled with a neural network?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1",
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "customer churn",
+      "neural network",
+      "classifier"
+    ]
+  },
+  {
+    "id": "q_072",
+    "query": "What are the steps to preprocess bank customer churn data?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "normalize",
+      "training and test",
+      "feature and target"
+    ]
+  },
+  {
+    "id": "q_073",
+    "query": "How to compare KNN and SVM for spam classification?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "knn",
+      "svm",
+      "spam",
+      "analyze their performance"
+    ]
+  },
+  {
+    "id": "q_074",
+    "query": "What evaluation metrics are computed on the diabetes dataset?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "confusion matrix",
+      "accuracy",
+      "error rate",
+      "precision",
+      "recall"
+    ]
+  },
+  {
+    "id": "q_075",
+    "query": "How does the elbow method determine optimal k in clustering?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "elbow method",
+      "number of clusters",
+      "k-means"
+    ]
+  },
+  {
+    "id": "q_076",
+    "query": "Find the local minima of a convex function using gradient steps",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "gradient descent",
+      "local minima",
+      "y = (x+3)"
+    ]
+  },
+  {
+    "id": "q_077",
+    "query": "How does a crypto user spend Ether in Metamask?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "metamask",
+      "spending ether"
+    ]
+  },
+  {
+    "id": "q_078",
+    "query": "How to create a test network smart contract for banking?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "smart contract",
+      "bank account",
+      "deposit",
+      "withdraw"
+    ]
+  },
+  {
+    "id": "q_079",
+    "query": "What are real-time applications of enterprise blockchains?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "types of blockchains",
+      "real-time use cases"
+    ]
+  },
+  {
+    "id": "q_080",
+    "query": "How to build permissioned business networks using Hyperledger?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "business network",
+      "hyperledger"
+    ]
+  },
+  {
+    "id": "q_081",
+    "query": "Why does Dijkstra require edge weights to be non-negative?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1"
+    ],
+    "expected_keywords": [
+      "dijkstra",
+      "non-negative"
+    ]
+  },
+  {
+    "id": "q_082",
+    "query": "How does Dijkstra maintain tentative shortest distances?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1"
+    ],
+    "expected_keywords": [
+      "tentative distance",
+      "visited vertices",
+      "min-heap"
+    ]
+  },
+  {
+    "id": "q_083",
+    "query": "Explain edge relaxation in the Bellman-Ford algorithm",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "relaxing all edges",
+      "v - 1",
+      "bellman-ford"
+    ]
+  },
+  {
+    "id": "q_084",
+    "query": "Why can Bellman-Ford find negative weight cycles?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c3"
+    ],
+    "expected_keywords": [
+      "negative-weight cycles",
+      "relaxed after v - 1"
+    ]
+  },
+  {
+    "id": "q_085",
+    "query": "Explain how functional dependencies determine normal forms",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4",
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "functional dependency",
+      "normal form",
+      "primary key"
+    ]
+  },
+  {
+    "id": "q_086",
+    "query": "Why are partial dependencies prohibited in 2NF?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "partial functional dependencies",
+      "2nf"
+    ]
+  },
+  {
+    "id": "q_087",
+    "query": "How does 3NF eliminate transitive functional dependencies?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "transitive dependencies",
+      "3nf"
+    ]
+  },
+  {
+    "id": "q_088",
+    "query": "What makes BCNF stricter than standard third normal form?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "bcnf",
+      "stricter",
+      "super key"
+    ]
+  },
+  {
+    "id": "q_089",
+    "query": "How does database transaction rollback maintain atomicity?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "atomicity",
+      "rolled back completely"
+    ]
+  },
+  {
+    "id": "q_090",
+    "query": "How does consistency enforce relational integrity constraints?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "consistency",
+      "valid state",
+      "schema constraints"
+    ]
+  },
+  {
+    "id": "q_091",
+    "query": "Why does isolation require concurrent transactions to mirror serial execution?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "isolation",
+      "concurrent execution",
+      "sequentially"
+    ]
+  },
+  {
+    "id": "q_092",
+    "query": "How does durability protect data during unexpected power failures?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "durability",
+      "committed",
+      "power outage"
+    ]
+  },
+  {
+    "id": "q_093",
+    "query": "What causes a concurrent process group to enter deadlock?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c7"
+    ],
+    "expected_keywords": [
+      "deadlock",
+      "waiting for another member",
+      "releasing a lock"
+    ]
+  },
+  {
+    "id": "q_094",
+    "query": "How does circular wait form a closed dependency chain?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "circular wait",
+      "closed chain of processes"
+    ]
+  },
+  {
+    "id": "q_095",
+    "query": "How does Banker's algorithm test for safe state allocation?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c9"
+    ],
+    "expected_keywords": [
+      "banker's algorithm",
+      "safe",
+      "s-state check",
+      "maximum possible"
+    ]
+  },
+  {
+    "id": "q_096",
+    "query": "Hinglish: Knapsack problem greedy se kaise solve karte hai?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "fractional knapsack",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_097",
+    "query": "Hinglish: Fibonacci non-recursive program ka practical DAA-1",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "fibonacci",
+      "daa-1"
+    ]
+  },
+  {
+    "id": "q_098",
+    "query": "Hinglish: Customer churn neural network model training steps",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "customer churn",
+      "normalize",
+      "accuracy score"
+    ]
+  },
+  {
+    "id": "q_099",
+    "query": "Hinglish: Email spam binary classification KNN and SVM",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "spam",
+      "knn",
+      "svm"
+    ]
+  },
+  {
+    "id": "q_100",
+    "query": "Hinglish: Metamask wallet create karke Ether spend kaise kare?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "metamask",
+      "wallet",
+      "ether"
+    ]
+  },
+  {
+    "id": "q_101",
+    "query": "Hinglish: Smart contract me deposit withdraw balance ka assignment",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "deposit money",
+      "withdraw money",
+      "show balance"
+    ]
+  },
+  {
+    "id": "q_102",
+    "query": "Hinglish: Hyperledger me business network kaise banaye?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "hyperledger",
+      "business network"
+    ]
+  },
+  {
+    "id": "q_103",
+    "query": "Hinglish: Dijkstra shortest path algorithm ka time complexity kya hai?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1",
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "dijkstra",
+      "o((v + e) log v)"
+    ]
+  },
+  {
+    "id": "q_104",
+    "query": "Hinglish: Bellman-Ford negative edge weights ko kaise handle karta hai?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c2",
+      "note-2-1793706942-c3"
+    ],
+    "expected_keywords": [
+      "bellman-ford",
+      "negative"
+    ]
+  },
+  {
+    "id": "q_105",
+    "query": "Hinglish: Database normalization me 1NF 2NF 3NF kya hote hai?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "normalization",
+      "1nf",
+      "2nf",
+      "3nf"
+    ]
+  },
+  {
+    "id": "q_106",
+    "query": "Hinglish: BCNF aur 3NF me kya difference hota hai?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4",
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "bcnf",
+      "3nf",
+      "super key"
+    ]
+  },
+  {
+    "id": "q_107",
+    "query": "Hinglish: Database ACID properties ka meaning kya hai?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5",
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "acid",
+      "atomicity",
+      "consistency"
+    ]
+  },
+  {
+    "id": "q_108",
+    "query": "Hinglish: Operating system me deadlock ke char conditions kaun se hai?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c7",
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "deadlock",
+      "coffman"
+    ]
+  },
+  {
+    "id": "q_109",
+    "query": "Hinglish: Banker's algorithm deadlock avoid kaise karta hai?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c9"
+    ],
+    "expected_keywords": [
+      "banker's algorithm",
+      "safety"
+    ]
+  },
+  {
+    "id": "q_110",
+    "query": "Hinglish: Diabetes dataset par confusion matrix kaise calculate kare?",
+    "category": "semantic",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "diabetes",
+      "confusion matrix",
+      "accuracy"
+    ]
+  },
+  {
+    "id": "q_111",
+    "query": "What is its time complexity?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "o((v + e) log v)",
+      "time complexity"
+    ]
+  },
+  {
+    "id": "q_112",
+    "query": "How does it handle negative weights?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "bellman-ford",
+      "negative numbers"
+    ]
+  },
+  {
+    "id": "q_113",
+    "query": "Which dataset does it use?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "dataset",
+      "kaggle",
+      "samples"
+    ]
+  },
+  {
+    "id": "q_114",
+    "query": "Explain step 3 of the process",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "normalize",
+      "train and test data"
+    ]
+  },
+  {
+    "id": "q_115",
+    "query": "What are the 4 conditions required for it to occur?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c7",
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "coffman conditions",
+      "mutual exclusion",
+      "hold and wait"
+    ]
+  },
+  {
+    "id": "q_116",
+    "query": "How is the optimal number of clusters determined in it?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "elbow method",
+      "clusters"
+    ]
+  },
+  {
+    "id": "q_117",
+    "query": "What operations can a customer perform on it?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "deposit money",
+      "withdraw money",
+      "show balance"
+    ]
+  },
+  {
+    "id": "q_118",
+    "query": "Which network is used for deploying it?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "test network",
+      "smart contract"
+    ]
+  },
+  {
+    "id": "q_119",
+    "query": "How does it simulate safe state allocation?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c9"
+    ],
+    "expected_keywords": [
+      "safety",
+      "banker's algorithm",
+      "s-state"
+    ]
+  },
+  {
+    "id": "q_120",
+    "query": "What anomalies does this eliminate?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c3"
+    ],
+    "expected_keywords": [
+      "insertion",
+      "update",
+      "deletion anomalies"
+    ]
+  },
+  {
+    "id": "q_121",
+    "query": "Why must non-key attributes be fully dependent on it?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "2nf",
+      "functional dependent",
+      "primary key"
+    ]
+  },
+  {
+    "id": "q_122",
+    "query": "Why are transitive dependencies disallowed in this form?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "3nf",
+      "transitive dependent"
+    ]
+  },
+  {
+    "id": "q_123",
+    "query": "What is the super key requirement for X in this form?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "bcnf",
+      "super key",
+      "functional dependency"
+    ]
+  },
+  {
+    "id": "q_124",
+    "query": "What happens if a failure occurs during execution?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "atomicity",
+      "rolled back"
+    ]
+  },
+  {
+    "id": "q_125",
+    "query": "How does it guarantee durability after a crash?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "durability",
+      "committed",
+      "system crash"
+    ]
+  },
+  {
+    "id": "q_126",
+    "query": "What starting value of x is used for it?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "starting from x = 2",
+      "local minima"
+    ]
+  },
+  {
+    "id": "q_127",
+    "query": "Which two classification models are compared in it?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "knn",
+      "svm",
+      "k-nearest neighbors"
+    ]
+  },
+  {
+    "id": "q_128",
+    "query": "What features are included in the Kaggle churn dataset?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "customerid",
+      "creditscore",
+      "geography",
+      "gender"
+    ]
+  },
+  {
+    "id": "q_129",
+    "query": "How many samples does the churn dataset contain?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "10,000 samples",
+      "14 features"
+    ]
+  },
+  {
+    "id": "q_130",
+    "query": "How many points are assigned for the accuracy score?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "accuracy score",
+      "5 points"
+    ]
+  },
+  {
+    "id": "q_131",
+    "query": "How many iterations does Bellman-Ford run?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c2",
+      "note-2-1793706942-c3"
+    ],
+    "expected_keywords": [
+      "v - 1 times",
+      "iterations"
+    ]
+  },
+  {
+    "id": "q_132",
+    "query": "Which data structure optimizes Dijkstra search?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1",
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "priority queue",
+      "min-heap"
+    ]
+  },
+  {
+    "id": "q_133",
+    "query": "What strategy does job sequencing use?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "greedy method",
+      "job sequencing"
+    ]
+  },
+  {
+    "id": "q_134",
+    "query": "What strategy does Huffman encoding use?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "greedy strategy",
+      "huffman"
+    ]
+  },
+  {
+    "id": "q_135",
+    "query": "What strategies can be used for 0-1 knapsack?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "dynamic programming",
+      "branch and bound"
+    ]
+  },
+  {
+    "id": "q_136",
+    "query": "Which wallet is installed for crypto transactions?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "metamask",
+      "crypto transactions"
+    ]
+  },
+  {
+    "id": "q_137",
+    "query": "Which framework is used for building the business network?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "hyperledger",
+      "business network"
+    ]
+  },
+  {
+    "id": "q_138",
+    "query": "What resource property makes it non-shareable in Coffman?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c7"
+    ],
+    "expected_keywords": [
+      "mutual exclusion",
+      "non-shareable"
+    ]
+  },
+  {
+    "id": "q_139",
+    "query": "How can resources be released under the third condition?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "no preemption",
+      "voluntarily"
+    ]
+  },
+  {
+    "id": "q_140",
+    "query": "What check is performed in Banker's algorithm?",
+    "category": "follow_up",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c9"
+    ],
+    "expected_keywords": [
+      "s-state check",
+      "test for possible activities"
+    ]
+  },
+  {
+    "id": "q_141",
+    "query": "Compare greedy methods in fractional knapsack with Dijkstra shortest path",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf",
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1",
+      "note-2-1793706942-c1"
+    ],
+    "expected_keywords": [
+      "greedy",
+      "fractional knapsack",
+      "dijkstra"
+    ]
+  },
+  {
+    "id": "q_142",
+    "query": "Compare dynamic programming in 0/1 knapsack with Bellman-Ford edge relaxation",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf",
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1",
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "dynamic programming",
+      "0-1 knapsack",
+      "bellman-ford"
+    ]
+  },
+  {
+    "id": "q_143",
+    "query": "How do blockchain transactions differ from relational database ACID transactions?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf",
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4",
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "blockchain",
+      "acid",
+      "smart contract",
+      "transactions"
+    ]
+  },
+  {
+    "id": "q_144",
+    "query": "Compare Dijkstra's shortest path algorithm with Dijkstra's Banker's algorithm",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1",
+      "note-2-1793706942-c9"
+    ],
+    "expected_keywords": [
+      "dijkstra",
+      "shortest path",
+      "banker's algorithm"
+    ]
+  },
+  {
+    "id": "q_145",
+    "query": "Which topics in algorithms use priority queues or heaps?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1",
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "priority queue",
+      "min-heap",
+      "dijkstra"
+    ]
+  },
+  {
+    "id": "q_146",
+    "query": "Compare customer churn neural network with SVM spam classification",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "churn",
+      "neural network",
+      "svm",
+      "spam"
+    ]
+  },
+  {
+    "id": "q_147",
+    "query": "What clustering and classification algorithms are present in the practicals?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "knn",
+      "svm",
+      "k-means",
+      "neural network"
+    ]
+  },
+  {
+    "id": "q_148",
+    "query": "Compare greedy job sequencing with fractional knapsack in DAA",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1"
+    ],
+    "expected_keywords": [
+      "job sequencing",
+      "fractional knapsack",
+      "greedy"
+    ]
+  },
+  {
+    "id": "q_149",
+    "query": "How do Metamask wallet operations compare to bank account operations in BC-3?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "metamask",
+      "wallet",
+      "smart contract",
+      "bank account"
+    ]
+  },
+  {
+    "id": "q_150",
+    "query": "What graph algorithms are detailed in the computer science fundamentals?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1",
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "dijkstra",
+      "bellman-ford",
+      "shortest path"
+    ]
+  },
+  {
+    "id": "q_151",
+    "query": "Compare single-source shortest path algorithms: Dijkstra vs Bellman-Ford",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c1",
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "dijkstra",
+      "bellman-ford",
+      "non-negative",
+      "negative numbers"
+    ]
+  },
+  {
+    "id": "q_152",
+    "query": "What normal forms address partial and transitive dependencies?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4"
+    ],
+    "expected_keywords": [
+      "2nf",
+      "3nf",
+      "partial",
+      "transitive"
+    ]
+  },
+  {
+    "id": "q_153",
+    "query": "Compare 3NF and BCNF requirements for functional dependencies",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c4",
+      "note-2-1793706942-c5"
+    ],
+    "expected_keywords": [
+      "3nf",
+      "bcnf",
+      "super key"
+    ]
+  },
+  {
+    "id": "q_154",
+    "query": "Which properties ensure transactional safety and concurrency control in DBMS?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5",
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "acid",
+      "atomicity",
+      "consistency",
+      "isolation",
+      "durability"
+    ]
+  },
+  {
+    "id": "q_155",
+    "query": "How do deadlock conditions compare with deadlock avoidance using Banker's?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c7",
+      "note-2-1793706942-c9"
+    ],
+    "expected_keywords": [
+      "coffman",
+      "banker's algorithm",
+      "deadlock avoidance"
+    ]
+  },
+  {
+    "id": "q_156",
+    "query": "What datasets are used across all machine learning practicals?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "bank customer churn",
+      "emails.csv",
+      "diabetes.csv",
+      "sales_data_sample.csv"
+    ]
+  },
+  {
+    "id": "q_157",
+    "query": "Compare Kaggle churn dataset features with diabetes dataset features",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "churn",
+      "creditscore",
+      "diabetes",
+      "dataset"
+    ]
+  },
+  {
+    "id": "q_158",
+    "query": "What optimization methods are used: Gradient Descent vs Dynamic Programming?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "gradient descent",
+      "dynamic programming",
+      "0-1 knapsack"
+    ]
+  },
+  {
+    "id": "q_159",
+    "query": "Compare supervised classification and unsupervised clustering assignments",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "classification",
+      "k-means",
+      "knn",
+      "clustering"
+    ]
+  },
+  {
+    "id": "q_160",
+    "query": "What platforms are used for blockchain assignments: Metamask vs Hyperledger?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "metamask",
+      "hyperledger",
+      "blockchain"
+    ]
+  },
+  {
+    "id": "q_161",
+    "query": "How does smart contract state balance compare to ACID durability?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf",
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c4",
+      "note-2-1793706942-c6"
+    ],
+    "expected_keywords": [
+      "smart contract",
+      "balance",
+      "durability",
+      "committed"
+    ]
+  },
+  {
+    "id": "q_162",
+    "query": "Compare negative cycle detection with circular wait in operating systems",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c3",
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "negative cycle",
+      "circular wait",
+      "closed chain"
+    ]
+  },
+  {
+    "id": "q_163",
+    "query": "How are time complexities expressed for Dijkstra and Bellman-Ford?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c2"
+    ],
+    "expected_keywords": [
+      "o((v + e) log v)",
+      "o(v * e)"
+    ]
+  },
+  {
+    "id": "q_164",
+    "query": "What assignments in LP-3 involve Kaggle dataset links?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "kaggle",
+      "churn",
+      "emails.csv",
+      "diabetes.csv"
+    ]
+  },
+  {
+    "id": "q_165",
+    "query": "Which assignments require computing a confusion matrix?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2",
+      "file-1-1793441378-c3"
+    ],
+    "expected_keywords": [
+      "confusion matrix",
+      "ml-1",
+      "ml-3"
+    ]
+  },
+  {
+    "id": "q_166",
+    "query": "Compare binary classification of emails with customer churn prediction",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c2"
+    ],
+    "expected_keywords": [
+      "binary classification",
+      "churn",
+      "leave or not"
+    ]
+  },
+  {
+    "id": "q_167",
+    "query": "Which algorithms use greedy strategies in algorithms and graphs?",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf",
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1",
+      "note-2-1793706942-c1"
+    ],
+    "expected_keywords": [
+      "greedy",
+      "knapsack",
+      "dijkstra",
+      "huffman"
+    ]
+  },
+  {
+    "id": "q_168",
+    "query": "Compare resource preemption in deadlocks with transaction rollback in ACID",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c5",
+      "note-2-1793706942-c8"
+    ],
+    "expected_keywords": [
+      "no preemption",
+      "atomicity",
+      "rollback"
+    ]
+  },
+  {
+    "id": "q_169",
+    "query": "Compare isolation in databases with mutual exclusion in OS concurrency",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "Computer Science Fundamentals & Core Engineering"
+    ],
+    "relevant_chunk_ids": [
+      "note-2-1793706942-c6",
+      "note-2-1793706942-c7"
+    ],
+    "expected_keywords": [
+      "isolation",
+      "mutual exclusion",
+      "concurrent"
+    ]
+  },
+  {
+    "id": "q_170",
+    "query": "Summarize all practical assignments under Group A, B, and C",
+    "category": "multi_document",
+    "relevant_doc_names": [
+      "LP-III practical detail list.pdf"
+    ],
+    "relevant_chunk_ids": [
+      "file-1-1793441378-c1",
+      "file-1-1793441378-c4"
+    ],
+    "expected_keywords": [
+      "group a",
+      "group b",
+      "group c",
+      "daa",
+      "ml",
+      "bc"
+    ]
+  },
+  {
+    "id": "q_171",
+    "query": "What is quantum key distribution in cryptography?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_172",
+    "query": "Explain photosynthesis light reactions in C3 and C4 plants",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_173",
+    "query": "Who was the first emperor of the Roman Empire?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_174",
+    "query": "How do React Server Components work in Next.js 15?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_175",
+    "query": "Explain Docker swarm overlay networking configuration",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_176",
+    "query": "What is the current stock price of Tesla on NASDAQ?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_177",
+    "query": "What is the capital city of Australia?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_178",
+    "query": "How does mRNA vaccine delivery work in human cells?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_179",
+    "query": "Explain the causes and timeline of the French Revolution",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_180",
+    "query": "How to configure Kubernetes ingress controller with Let's Encrypt TLS?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_181",
+    "query": "What is the chemical composition of volcanic basalt rock?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_182",
+    "query": "Explain the rules of cricket and the lbw dismissal criteria",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_183",
+    "query": "Who wrote the novel Crime and Punishment?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_184",
+    "query": "What are the thermodynamic laws governing black hole radiation?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_185",
+    "query": "How does CRISPR-Cas9 perform targeted gene editing?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_186",
+    "query": "What is the recipe and temperature for baking French sourdough bread?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_187",
+    "query": "Explain the difference between Keynesian and Austrian economics",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_188",
+    "query": "What is the highest mountain peak in South America?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_189",
+    "query": "How do transformer multi-head attention weights get calculated in GPT-4?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_190",
+    "query": "What is the function of mitochondria in eukaryotic cellular respiration?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_191",
+    "query": "How to tune guitar strings to open D tuning?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_192",
+    "query": "What caused the collapse of the Bronze Age civilizations in 1200 BCE?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_193",
+    "query": "How do airplanes generate lift using Bernoulli's principle and airfoil camber?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_194",
+    "query": "Explain the difference between supervised fine-tuning and RLHF in LLMs",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_195",
+    "query": "What is the legal difference between common law and civil law systems?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_196",
+    "query": "How to implement a Red-Black tree self-balancing rotation in Rust?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_197",
+    "query": "What is the atomic mass and electron configuration of Titanium?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_198",
+    "query": "Explain the plot summary of Shakespeare's Macbeth",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_199",
+    "query": "What are the symptoms and treatments of acute Lyme disease?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_200",
+    "query": "How does a four-stroke internal combustion engine work?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_201",
+    "query": "What is the monetary policy function of the Federal Reserve in controlling inflation?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_202",
+    "query": "How to brew specialty pour-over coffee with a V60 dripper?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_203",
+    "query": "What is dark matter and how do astronomers infer its gravitational presence?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_204",
+    "query": "Explain the architectural difference between RISC-V and ARM instruction sets",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  },
+  {
+    "id": "q_205",
+    "query": "How does optical fiber transmit light through total internal reflection?",
+    "category": "out_of_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_ids": [],
+    "expected_keywords": []
+  }
+]
