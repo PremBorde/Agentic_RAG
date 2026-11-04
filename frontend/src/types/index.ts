@@ -7,6 +7,7 @@ export type AvatarState =
   | 'error' 
   | 'sleeping'
   | 'searching_emails'
+  | 'searching_images'
   | 'checking_calendar'
   | 'organizing_tasks'
   | 'preparing_draft';
@@ -15,6 +16,20 @@ export interface RetrievedDoc {
   content: string;
   source: string;
   doc_id?: string;
+  title?: string;
+  url?: string;
+}
+
+export interface ImageItem {
+  title: string;
+  image: string;
+  thumbnail: string;
+  url: string;
+  source: string;
+  width?: number | string;
+  height?: number | string;
+  license?: string;
+  author?: string;
 }
 
 export interface ActionProposal {
@@ -33,6 +48,7 @@ export interface Message {
   retrievedDocs?: RetrievedDoc[];
   proposal?: ActionProposal;
   requiresGoogleAuth?: boolean;
+  images?: ImageItem[];
   timestamp: string;
   docMeta?: {
     title: string;
@@ -80,6 +96,6 @@ export interface ChatSession {
 }
 
 export interface ToastFeedback {
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'info';
   message: string;
 }

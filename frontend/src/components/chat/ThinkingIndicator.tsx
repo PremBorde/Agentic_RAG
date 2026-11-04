@@ -8,7 +8,7 @@ interface ThinkingIndicatorProps {
   currentStage?: string;
 }
 
-export function ThinkingIndicator({ avatarState, currentStage }: ThinkingIndicatorProps) {
+function ThinkingIndicatorComponent({ avatarState, currentStage }: ThinkingIndicatorProps) {
   const getStageLabel = () => {
     switch (currentStage) {
       case 'greeting':
@@ -18,15 +18,17 @@ export function ThinkingIndicator({ avatarState, currentStage }: ThinkingIndicat
       case 'checking_calendar':
         return 'Checking calendar...';
       case 'searching_docs':
-        return 'Searching documents...';
+        return 'Searching documents & knowledge base...';
       case 'searching_web':
         return 'Searching the web...';
+      case 'searching_images':
+        return 'Searching images & diagrams...';
       case 'organizing_tasks':
         return 'Organizing tasks...';
       case 'preparing_draft':
         return 'Preparing draft...';
       case 'generating':
-        return 'Responding...';
+        return 'Analyzing evidence and composing answer...';
       default:
         return avatarState === 'searching'
           ? 'Searching...'
@@ -37,7 +39,14 @@ export function ThinkingIndicator({ avatarState, currentStage }: ThinkingIndicat
   const label = getStageLabel();
 
   return (
-    <div style={{ display: 'flex', gap: '10px', width: '100%', alignItems: 'flex-start' }}>
+    <div style={{
+      display: 'flex',
+      gap: '10px',
+      width: '100%',
+      alignItems: 'flex-start',
+      minHeight: '42px',
+      overflowAnchor: 'auto'
+    }}>
       <div 
         className="mascot-thinking-container"
         style={{ 
@@ -61,7 +70,9 @@ export function ThinkingIndicator({ avatarState, currentStage }: ThinkingIndicat
         display: 'inline-flex',
         alignItems: 'center',
         gap: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        minHeight: '38px',
+        boxSizing: 'border-box'
       }}>
         <span style={{ fontSize: '13px', color: THEME.slateDark, fontWeight: 550 }}>
           {label}
@@ -73,3 +84,5 @@ export function ThinkingIndicator({ avatarState, currentStage }: ThinkingIndicat
     </div>
   );
 }
+
+export const ThinkingIndicator = React.memo(ThinkingIndicatorComponent);

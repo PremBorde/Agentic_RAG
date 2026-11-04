@@ -17,7 +17,7 @@ export const THEME = {
 };
 
 export const GEMINI_MODELS = [
-  { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite (Recommended)' },
-  { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
-  { id: 'gemini-flash-latest', label: 'Gemini Flash (Latest)' }
+  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Ultra Fast & Recommended)' },
+  { id: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (Lowest Latency)' },
+  { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite (Deep Reasoning)' }
 ];

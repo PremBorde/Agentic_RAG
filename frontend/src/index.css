@@ -514,7 +514,18 @@ button,
 }
 
 .chat-message-row {
-  animation: messageBubbleEntrance 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: messageBubbleEntrance 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  overflow-anchor: auto;
+}
+
+.chat-message-row.is-streaming {
+  animation: none !important;
+}
+
+.scroll-to-bottom-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(122, 28, 48, 0.22) !important;
 }
 
 @keyframes editorialItemSlideUp {
@@ -655,5 +666,22 @@ button,
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+
+/* Studio Floating Toast Badge */
+.studio-toast-banner {
+  animation: toastFloatDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes toastFloatDown {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -14px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
   }
 }

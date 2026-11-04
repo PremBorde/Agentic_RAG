@@ -21,6 +21,7 @@ import { StudioBrandLogo } from '../avatar/StudioBrandLogo';
 import { MarkdownContent, getDisplaySourceBadge } from './MarkdownContent';
 import { RetrievedContext } from './RetrievedContext';
 import { ActionProposalCard } from './ActionProposalCard';
+import { ImageGallery } from './ImageGallery';
 
 interface ChatMessageProps {
   msg: Message;
@@ -43,9 +44,10 @@ interface ChatMessageProps {
   onOpenTaskManager?: () => void;
   onUploadFile?: () => void;
   currentStage?: string;
+  currentThreadId?: string | null;
 }
 
-export function ChatMessage({
+function ChatMessageComponent({
   msg,
   isLatest,
   streamingMsgId,
@@ -65,7 +67,8 @@ export function ChatMessage({
   onOpenDocsPanel,
   onOpenTaskManager,
   onUploadFile,
-  currentStage
+  currentStage,
+  currentThreadId
 }: ChatMessageProps) {
   // System Document Ingestion Notification Card
   if (msg.sender === 'system' && msg.source === 'Document Indexed') {
@@ -184,7 +187,7 @@ export function ChatMessage({
 
   // User & Assistant Chat Messages
   return (
-    <div className="chat-message-row" style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+    <div className={`chat-message-row ${streamingMsgId === msg.id ? 'is-streaming' : ''}`} style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
       <div style={{
         display: 'flex',
         gap: '10px',
@@ -292,6 +295,7 @@ export function ChatMessage({
                    currentStage === 'checking_calendar' ? 'Checking calendar...' :
                    currentStage === 'searching_docs' ? 'Searching documents...' :
                    currentStage === 'searching_web' ? 'Searching the web...' :
+                   currentStage === 'searching_images' ? 'Searching images & diagrams...' :
                    currentStage === 'organizing_tasks' ? 'Organizing tasks...' :
                    currentStage === 'preparing_draft' ? 'Preparing draft...' :
                    currentStage}
@@ -407,8 +411,15 @@ export function ChatMessage({
                 content={msg.text} 
                 isUser={msg.sender === 'user'} 
                 isStreaming={streamingMsgId === msg.id}
+                maxCitationIndex={msg.retrievedDocs ? msg.retrievedDocs.length : 0}
                 onCitationClick={(chunkIdx) => onJumpToChunk(msg.id, chunkIdx)}
               />
+            )}
+
+
+            {/* Responsive React Image & Diagram Gallery */}
+            {msg.images && msg.images.length > 0 && (
+              <ImageGallery images={msg.images} />
             )}
 
             {/* Human-in-the-Loop Action Proposal Card */}
@@ -433,7 +444,20 @@ export function ChatMessage({
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = '/api/auth/google/login';
+                    if (onOpenGoogleConnect) {
+                      onOpenGoogleConnect();
+                    } else {
+                      const params = new URLSearchParams();
+                      if (currentThreadId) {
+                        params.set('thread_id', currentThreadId);
+                        params.set('return_to', `/?thread_id=${encodeURIComponent(currentThreadId)}`);
+                        try {
+                          sessionStorage.setItem('oauth_return_thread_id', currentThreadId);
+                        } catch {}
+                      }
+                      const qs = params.toString();
+                      window.location.href = `/api/auth/google/login${qs ? `?${qs}` : ''}`;
+                    }
                   }}
                   style={{
                     display: 'inline-flex',
@@ -647,4 +671,49 @@ export function ChatMessage({
     </div>
   );
 }
+
+function areChatMessagePropsEqual(prev: ChatMessageProps, next: ChatMessageProps): boolean {
+  // 1. If this message is or was actively streaming, re-render to reflect new tokens/stage
+  const wasStreaming = prev.streamingMsgId === prev.msg.id;
+  const isStreaming = next.streamingMsgId === next.msg.id;
+  if (wasStreaming || isStreaming) {
+    if (prev.msg.text !== next.msg.text) return false;
+    if (prev.currentStage !== next.currentStage) return false;
+    if (prev.avatarState !== next.avatarState) return false;
+    if (prev.streamingMsgId !== next.streamingMsgId) return false;
+    if (prev.msg.images !== next.msg.images) return false;
+    if (prev.msg.proposal !== next.msg.proposal) return false;
+    if (prev.msg.retrievedDocs !== next.msg.retrievedDocs) return false;
+    return false;
+  }
+
+  // 2. Identity or content changed
+  if (prev.msg.id !== next.msg.id) return false;
+  if (prev.msg.text !== next.msg.text) return false;
+  if (prev.msg.sender !== next.msg.sender) return false;
+  if (prev.msg.source !== next.msg.source) return false;
+  if (prev.isLatest !== next.isLatest) return false;
+  if (prev.currentThreadId !== next.currentThreadId) return false;
+
+  // 3. User interactions specific to this message
+  if ((prev.copiedMsgId === prev.msg.id) !== (next.copiedMsgId === next.msg.id)) return false;
+  if (Boolean(prev.likedMsgId[prev.msg.id]) !== Boolean(next.likedMsgId[next.msg.id])) return false;
+  if (Boolean(prev.expandedDocs[prev.msg.id]) !== Boolean(next.expandedDocs[next.msg.id])) return false;
+
+  // 4. Highlighted chunk check
+  const prevChunkMatch = prev.highlightedChunk?.startsWith(`chunk-${prev.msg.id}-`);
+  const nextChunkMatch = next.highlightedChunk?.startsWith(`chunk-${next.msg.id}-`);
+  if (prevChunkMatch !== nextChunkMatch || prev.highlightedChunk !== next.highlightedChunk) {
+    if (prevChunkMatch || nextChunkMatch) return false;
+  }
+
+  // 5. Rich content attachments
+  if (prev.msg.images !== next.msg.images) return false;
+  if (prev.msg.proposal !== next.msg.proposal) return false;
+  if (prev.msg.retrievedDocs !== next.msg.retrievedDocs) return false;
+
+  return true;
+}
+
+export const ChatMessage = React.memo(ChatMessageComponent, areChatMessagePropsEqual);
 

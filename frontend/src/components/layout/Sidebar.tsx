@@ -33,6 +33,7 @@ interface SidebarProps {
   onDeleteThread: (threadId: string) => void;
   onToggleDocsPanel: () => void;
   onClearDocs: () => void;
+  onDeleteDoc?: (docId: string, docTitle?: string) => void;
   onTriggerFileUpload: () => void;
 }
 
@@ -52,6 +53,7 @@ export function Sidebar({
   onDeleteThread,
   onToggleDocsPanel,
   onClearDocs,
+  onDeleteDoc,
   onTriggerFileUpload
 }: SidebarProps) {
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
@@ -396,21 +398,70 @@ export function Sidebar({
                       key={d.id}
                       style={{
                         fontSize: '11px',
-                        padding: '4px 6px',
+                        padding: '5px 7px',
                         backgroundColor: THEME.beigeBg,
-                        borderRadius: '4px',
+                        borderRadius: '6px',
+                        border: `1px solid ${THEME.beigeBorder}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: '6px'
                       }}
                     >
-                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: THEME.slateDark, fontWeight: 500 }}>
-                        {d.title}
-                      </span>
-                      <span style={{ fontSize: '10px', color: THEME.slateMuted, flexShrink: 0 }}>
-                        {d.chunk_count} chunks
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
+                        <FileText size={12} color={THEME.burgundy} style={{ flexShrink: 0 }} />
+                        <span 
+                          title={d.title}
+                          style={{ 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            color: THEME.slateDark, 
+                            fontWeight: 500,
+                            fontSize: '11px'
+                          }}
+                        >
+                          {d.title}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        <span style={{ fontSize: '10px', color: THEME.slateMuted }}>
+                          {d.chunk_count} chunks
+                        </span>
+                        {onDeleteDoc && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteDoc(d.id, d.title);
+                            }}
+                            title={`Delete "${d.title}"`}
+                            aria-label={`Delete "${d.title}"`}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              color: '#94a3b8',
+                              padding: '3px 4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '4px',
+                              transition: 'color 0.15s ease, background-color 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#dc2626';
+                              e.currentTarget.style.backgroundColor = '#fee2e2';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = '#94a3b8';
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}

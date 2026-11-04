@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '@bible-strong/avatar-react/styles.css';
 import { 
   RetrievedDoc, 
@@ -6,10 +6,11 @@ import {
   DocumentItem, 
   ChatSession, 
   AvatarState, 
-  ToastFeedback 
+  ToastFeedback,
+  ImageItem
 } from './types';
 import { THEME } from './constants/theme';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, ChevronDown, CheckCircle2, AlertCircle, LogOut, X } from 'lucide-react';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 import { HeroWelcome } from './components/welcome/HeroWelcome';
@@ -25,6 +26,20 @@ const TaskManagerModal = React.lazy(() =>
 const GoogleConnectModal = React.lazy(() =>
   import('./components/modals/GoogleConnectModal').then((m) => ({ default: m.GoogleConnectModal }))
 );
+
+function deduplicateMessages(msgs: Message[]): Message[] {
+  const seen = new Set<string>();
+  const out: Message[] = [];
+  for (const m of msgs) {
+    if (!m.id) {
+      out.push(m);
+    } else if (!seen.has(m.id)) {
+      seen.add(m.id);
+      out.push(m);
+    }
+  }
+  return out;
+}
 
 export default function App() {
   // Sessions & History
@@ -59,7 +74,7 @@ export default function App() {
   const idleTimerRef = useRef<any>(null);
 
   // Model & Documents State
-  const [selectedModel, setSelectedModel] = useState('gemini-3.5-flash-lite');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [docsPanelOpen, setDocsPanelOpen] = useState(false);
 
@@ -100,6 +115,9 @@ export default function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isNearBottomRef = useRef<boolean>(true);
+  const userScrolledUpRef = useRef<boolean>(false);
+  const scrollRafIdRef = useRef<number | null>(null);
 
   // Sync sessions to localStorage
   useEffect(() => {
@@ -125,14 +143,14 @@ export default function App() {
                   const mRes = await fetch(`/api/conversations/${c.id}`);
                   if (mRes.ok) {
                     const mData = await mRes.json();
-                    msgs = mData.messages || [];
+                    msgs = deduplicateMessages(mData.messages || []);
                   }
                 } catch {}
                 return {
                   thread_id: c.id,
                   title: c.title,
                   messages: msgs,
-                  model: c.model || 'gemini-3.5-flash-lite',
+                  model: c.model || 'gemini-2.5-flash',
                   updatedAt: new Date(c.updated_at).getTime() || Date.now(),
                 };
               })
@@ -222,57 +240,92 @@ export default function App() {
     checkGoogleStatus();
   }, [googleConnectOpen]);
 
-  // Auto scroll to bottom
-  useEffect(() => {
-    if (!userScrolledUp && messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, streamingMsgId, isLoading]);
+  // Jitter-free scroll pinning coordinator using requestAnimationFrame
+  const pinScrollToBottom = useCallback(() => {
+    if (!isNearBottomRef.current) return;
+    if (scrollRafIdRef.current !== null) return;
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    scrollRafIdRef.current = requestAnimationFrame(() => {
+      scrollRafIdRef.current = null;
+      const el = scrollContainerRef.current;
+      if (el && isNearBottomRef.current) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+  }, []);
+
+  // Programmatic scroll to bottom (e.g. user submitted a message or clicked "Scroll to bottom" pill)
+  const scrollToBottom = useCallback((smooth = true) => {
+    isNearBottomRef.current = true;
+    userScrolledUpRef.current = false;
+    setUserScrolledUp(false);
+    const el = scrollContainerRef.current;
+    if (el) {
+      if (smooth) {
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      } else {
+        el.scrollTop = el.scrollHeight;
+      }
+    }
+  }, []);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
     const distanceFromBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
-    setUserScrolledUp(distanceFromBottom > 110);
-  };
+    // Comfortable threshold (140px) to distinguish active reading above vs bottom-docked viewing
+    const isNear = distanceFromBottom <= 140;
+    isNearBottomRef.current = isNear;
+    userScrolledUpRef.current = !isNear;
 
-  const showToast = (type: 'success' | 'error', message: string) => {
+    setUserScrolledUp((prev) => {
+      const next = !isNear;
+      return prev !== next ? next : prev;
+    });
+  }, []);
+
+  const toastTimerRef = useRef<any>(null);
+
+  const showToast = useCallback((type: 'success' | 'error' | 'info', message: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToastFeedback({ type, message });
-    setTimeout(() => setToastFeedback(null), 4000);
-  };
+    toastTimerRef.current = setTimeout(() => {
+      setToastFeedback(null);
+    }, 4000);
+  }, []);
 
-  // Chat Actions
-  const handleCopy = (id: string, text: string) => {
+  // Chat Actions (memoized to eliminate unnecessary re-renders of historical messages)
+  const handleCopy = useCallback((id: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedMsgId(id);
     setTimeout(() => setCopiedMsgId(null), 2000);
-  };
+  }, []);
 
-  const handleLike = (id: string) => {
+  const handleLike = useCallback((id: string) => {
     setLikedMap((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  }, []);
 
-  const handleDislike = (id: string) => {
+  const handleDislike = useCallback((id: string) => {
     setLikedMap((prev) => ({ ...prev, [id]: false }));
-  };
+  }, []);
 
-  const handleToggleDocExpand = (id: string) => {
+  const handleToggleDocExpand = useCallback((id: string) => {
     setExpandedDocs((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  }, []);
 
-  const handleJumpToChunk = (msgId: string, chunkIdx: number) => {
+  const handleJumpToChunk = useCallback((msgId: string, chunkIdx: number) => {
     setExpandedDocs((prev) => ({ ...prev, [msgId]: true }));
     const targetId = `chunk-${msgId}-${chunkIdx}`;
     setHighlightedChunk(targetId);
 
     setTimeout(() => {
       const el = document.getElementById(targetId);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 120);
 
     setTimeout(() => setHighlightedChunk(null), 3200);
-  };
+  }, []);
 
-  const handleStopGeneration = () => {
+  const handleStopGeneration = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -280,16 +333,7 @@ export default function App() {
     setIsLoading(false);
     setStreamingMsgId(null);
     setAvatarState('idle');
-  };
-
-  const handleRegenerate = () => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].sender === 'user') {
-        handleSendMessage(messages[i].text);
-        return;
-      }
-    }
-  };
+  }, []);
 
   const handleStartNewChat = () => {
     setCurrentThreadId(null);
@@ -297,23 +341,115 @@ export default function App() {
     setInputMessage('');
     setPlusMenuOpen(false);
     setActiveModal(null);
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('thread_id')) {
+      params.delete('thread_id');
+      const qs = params.toString();
+      window.history.replaceState({}, '', `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`);
+    }
   };
 
-  const handleSelectThread = (threadId: string) => {
+  const handleSelectThread = async (threadId: string) => {
     const sess = sessions.find((s) => s.thread_id === threadId);
     if (sess) {
       setCurrentThreadId(sess.thread_id);
       setMessages(sess.messages || []);
       if (sess.model) {
-        const validModel = ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-flash-latest'].includes(sess.model)
+        const validModel = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.5-flash-lite'].includes(sess.model)
           ? sess.model
-          : 'gemini-3.5-flash-lite';
+          : 'gemini-2.5-flash';
         setSelectedModel(validModel);
       }
+    } else {
+      setCurrentThreadId(threadId);
     }
     setPlusMenuOpen(false);
     setActiveModal(null);
+
+    // Sync active thread_id into browser URL bar
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('thread_id') !== threadId) {
+      params.set('thread_id', threadId);
+      window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}${window.location.hash}`);
+    }
+
+    // Hydrate fresh message history from backend
+    try {
+      const res = await fetch(`/api/conversations/${threadId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.messages && Array.isArray(data.messages)) {
+          setMessages(deduplicateMessages(data.messages));
+          setSessions((prev) => {
+            const exists = prev.some((s) => s.thread_id === threadId);
+            if (exists) {
+              return prev.map((s) => (s.thread_id === threadId ? { ...s, messages: data.messages } : s));
+            } else {
+              return [
+                {
+                  thread_id: threadId,
+                  title: data.conversation?.title || 'Chat',
+                  messages: data.messages,
+                  model: data.conversation?.model || 'gemini-2.5-flash',
+                  updatedAt: new Date(data.conversation?.updated_at || Date.now()).getTime() || Date.now(),
+                },
+                ...prev
+              ];
+            }
+          });
+        }
+      }
+    } catch {}
   };
+
+  // Restore conversation from URL or sessionStorage (e.g. after OAuth redirect or page refresh)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const threadIdParam = params.get('thread_id');
+    const connectedParam = params.get('connected');
+    const disconnectedParam = params.get('disconnected');
+    const oauthErrorParam = params.get('oauth_error');
+
+    let targetThreadId = threadIdParam;
+    if (!targetThreadId) {
+      try {
+        const stored = sessionStorage.getItem('oauth_return_thread_id');
+        if (stored) targetThreadId = stored;
+      } catch {}
+    }
+    try {
+      sessionStorage.removeItem('oauth_return_thread_id');
+    } catch {}
+
+    if (connectedParam === 'true') {
+      showToast('success', 'Google account successfully connected.');
+      setGoogleConnected(true);
+      checkGoogleStatus();
+    } else if (disconnectedParam === 'true') {
+      showToast('info', 'Google account disconnected.');
+      setGoogleConnected(false);
+      checkGoogleStatus();
+    } else if (oauthErrorParam) {
+      showToast('error', `Google connection failed: ${decodeURIComponent(oauthErrorParam)}`);
+    }
+
+    if (connectedParam !== null || disconnectedParam !== null || oauthErrorParam !== null) {
+      const cleanParams = new URLSearchParams(window.location.search);
+      cleanParams.delete('connected');
+      cleanParams.delete('disconnected');
+      cleanParams.delete('oauth_error');
+      if (targetThreadId) {
+        cleanParams.set('thread_id', targetThreadId);
+      }
+      const qs = cleanParams.toString();
+      const cleanUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+
+    if (targetThreadId) {
+      handleSelectThread(targetThreadId);
+    }
+  }, []);
 
   const handleRenameThread = async (threadId: string, newTitle: string) => {
     setSessions((prev) =>
@@ -342,13 +478,46 @@ export default function App() {
     }
   };
 
-  const handleClearDocs = async () => {
+  const handleDeleteDoc = async (docId: string, docTitle?: string) => {
+    // Optimistic removal from frontend state
+    setDocuments((prev) => prev.filter((d) => d.id !== docId && d.title !== docId));
     try {
-      await fetch('/api/documents/clear', { method: 'POST' });
-      setDocuments([]);
-      showToast('success', 'Vector store cleared.');
+      const res = await fetch(`/api/documents/${encodeURIComponent(docId)}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('success', `Removed "${docTitle || docId}" from Knowledge Base.`);
+      } else {
+        // Fallback: try deleting by docTitle if distinct
+        if (docTitle && docTitle !== docId) {
+          const res2 = await fetch(`/api/documents/${encodeURIComponent(docTitle)}`, { method: 'DELETE' });
+          if (res2.ok) {
+            showToast('success', `Removed "${docTitle}" from Knowledge Base.`);
+            return;
+          }
+        }
+        showToast('error', 'Failed to remove document.');
+        fetchDocs();
+      }
     } catch (e) {
+      console.error('Failed to delete document:', e);
+      showToast('error', 'Failed to remove document.');
+      fetchDocs();
+    }
+  };
+
+  const handleClearDocs = async () => {
+    setDocuments([]);
+    try {
+      const res = await fetch('/api/documents/clear', { method: 'DELETE' });
+      if (res.ok) {
+        showToast('success', 'Vector store cleared.');
+      } else {
+        await fetch('/api/documents/clear', { method: 'POST' });
+        showToast('success', 'Vector store cleared.');
+      }
+    } catch (e) {
+      console.error('Failed to clear documents:', e);
       showToast('error', 'Failed to clear documents.');
+      fetchDocs();
     }
   };
 
@@ -363,10 +532,16 @@ export default function App() {
       activeThreadId = `thread_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       setCurrentThreadId(activeThreadId);
       isBrandNewSession = true;
+      const params = new URLSearchParams(window.location.search);
+      params.set('thread_id', activeThreadId);
+      window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}${window.location.hash}`);
     }
 
+    const userMsgId = `msg_user_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const assistantMsgId = `msg_ai_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
     const userMsg: Message = {
-      id: Date.now().toString(),
+      id: userMsgId,
       sender: 'user',
       text: textToSend,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -376,9 +551,16 @@ export default function App() {
     setMessages(nextMessages);
     setInputMessage('');
     setUserScrolledUp(false);
+    isNearBottomRef.current = true;
+    userScrolledUpRef.current = false;
     setIsLoading(true);
     setAvatarState('thinking');
     setCurrentStage('thinking');
+
+    // Smooth scroll down to reveal new user message and thinking indicator
+    requestAnimationFrame(() => {
+      scrollToBottom(true);
+    });
 
     if (isBrandNewSession) {
       const newTitle = textToSend.trim().slice(0, 36) + (textToSend.trim().length > 36 ? '...' : '');
@@ -400,10 +582,11 @@ export default function App() {
       );
     }
 
-    const assistantMsgId = `ai-${Date.now()}`;
+    // assistantMsgId already generated synchronously
     let streamedText = '';
     let metaSource = 'Assistant';
     let metaDocs: RetrievedDoc[] = [];
+    let metaImages: ImageItem[] = [];
     let metaProposal: any = null;
     let stagedProposal: any = null;
     let metaRequiresGoogleAuth = false;
@@ -419,6 +602,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: textToSend,
+          message_id: userMsgId,
+          assistant_message_id: assistantMsgId,
           model: selectedModel,
           thread_id: activeThreadId
         }),
@@ -452,16 +637,20 @@ export default function App() {
 
           if (evt.type === 'stage') {
             setCurrentStage(evt.stage);
+            pinScrollToBottom();
             if (evt.stage === 'greeting') {
               setAvatarState('thinking');
             } else if (['thinking', 'searching', 'generating', 'success', 'error'].includes(evt.stage)) {
               setAvatarState(evt.stage as AvatarState);
-            } else if (['searching_gmail', 'searching_emails', 'checking_calendar', 'searching_docs', 'searching_web', 'organizing_tasks', 'preparing_draft'].includes(evt.stage)) {
+            } else if (['searching_gmail', 'searching_emails', 'checking_calendar', 'searching_docs', 'searching_web', 'searching_images', 'organizing_tasks', 'preparing_draft'].includes(evt.stage)) {
               setAvatarState('searching');
             }
           } else if (evt.type === 'meta') {
             metaSource = evt.source ?? 'Assistant';
             metaDocs = evt.retrieved_docs ?? [];
+            if (evt.images) {
+              metaImages = evt.images;
+            }
             if (evt.proposal) {
               stagedProposal = evt.proposal;
             }
@@ -470,6 +659,18 @@ export default function App() {
             }
             if (metaDocs.length > 0) {
               setAvatarState('searching');
+            }
+          } else if (evt.type === 'images') {
+            if (evt.images) {
+              metaImages = evt.images;
+              pinScrollToBottom();
+              if (msgInserted) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantMsgId ? { ...m, images: metaImages } : m
+                  )
+                );
+              }
             }
           } else if (evt.type === 'proposal') {
             metaProposal = evt.proposal;
@@ -491,6 +692,7 @@ export default function App() {
                 text: streamedText,
                 source: metaSource,
                 retrievedDocs: metaDocs,
+                images: metaImages,
                 proposal: metaProposal,
                 requiresGoogleAuth: metaRequiresGoogleAuth,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -502,11 +704,12 @@ export default function App() {
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantMsgId
-                    ? { ...m, text: streamedText, source: metaSource, retrievedDocs: metaDocs, proposal: metaProposal, requiresGoogleAuth: metaRequiresGoogleAuth }
+                    ? { ...m, text: streamedText, source: metaSource, retrievedDocs: metaDocs, proposal: metaProposal, images: metaImages, requiresGoogleAuth: metaRequiresGoogleAuth }
                     : m
                 )
               );
             }
+            pinScrollToBottom();
           } else if (evt.type === 'done') {
             if (!metaProposal && stagedProposal) {
               metaProposal = stagedProposal;
@@ -523,13 +726,14 @@ export default function App() {
               source: metaSource,
               retrievedDocs: metaDocs,
               proposal: metaProposal,
+              images: metaImages,
               requiresGoogleAuth: metaRequiresGoogleAuth,
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
-            setMessages((prev) => {
-              const without = prev.filter((m) => m.id !== assistantMsgId);
-              return [...without, finalMsg];
-            });
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantMsgId ? finalMsg : m))
+            );
+            pinScrollToBottom();
             setSessions((prev) =>
               prev.map((s) =>
                 s.thread_id === activeThreadId
@@ -591,6 +795,36 @@ export default function App() {
       abortControllerRef.current = null;
     }
   };
+
+  const handleRegenerate = useCallback(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].sender === 'user') {
+        handleSendMessage(messages[i].text);
+        return;
+      }
+    }
+  }, [messages]);
+
+  const handleSendFollowup = useCallback((q: string) => {
+    handleSendMessage(q);
+  }, []);
+
+  const handleOpenGoogleConnect = useCallback(() => {
+    setGoogleConnectOpen(true);
+  }, []);
+
+  const handleOpenDocsPanel = useCallback(() => {
+    setSidebarOpen(true);
+    setDocsPanelOpen(true);
+  }, []);
+
+  const handleOpenTaskManager = useCallback(() => {
+    setTaskManagerOpen(true);
+  }, []);
+
+  const handleUploadFile = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
 
   // Ingestion helpers
   const injectDocUploadMessage = (
@@ -832,26 +1066,130 @@ export default function App() {
         style={{ display: 'none' }}
       />
 
-      {/* Toast Feedback Notification Banner */}
+      {/* Studio Floating Toast Badge */}
       {toastFeedback && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          right: '24px',
-          zIndex: 9999,
-          padding: '10px 18px',
-          borderRadius: '10px',
-          backgroundColor: toastFeedback.type === 'success' ? '#10b981' : THEME.burgundy,
-          color: '#ffffff',
-          fontSize: '13px',
-          fontWeight: 500,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          animation: 'fadeIn 0.2s ease-out'
-        }}>
-          <span>{toastFeedback.message}</span>
+        <div 
+          className="studio-toast-banner"
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '9px',
+            padding: '6px 14px 6px 8px',
+            borderRadius: '9999px',
+            backgroundColor: 'rgba(255, 255, 255, 0.96)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: toastFeedback.type === 'success' 
+              ? '1px solid rgba(16, 185, 129, 0.35)' 
+              : toastFeedback.type === 'error'
+              ? '1px solid rgba(225, 29, 72, 0.35)'
+              : '1px solid rgba(148, 163, 184, 0.35)',
+            boxShadow: '0 12px 32px -4px rgba(24, 24, 27, 0.12), 0 4px 12px -2px rgba(24, 24, 27, 0.05)',
+            maxWidth: '90vw',
+            pointerEvents: 'auto'
+          }}
+        >
+          {/* Leading Icon Avatar */}
+          <div 
+            style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              backgroundColor: toastFeedback.type === 'success' 
+                ? '#ecfdf5' 
+                : toastFeedback.type === 'error'
+                ? '#fff1f2'
+                : '#f1f5f9'
+            }}
+          >
+            {toastFeedback.type === 'success' ? (
+              <CheckCircle2 size={13} color="#059669" strokeWidth={2.5} />
+            ) : toastFeedback.type === 'error' ? (
+              <AlertCircle size={13} color="#e11d48" strokeWidth={2.5} />
+            ) : (
+              <LogOut size={12} color="#475569" strokeWidth={2.2} />
+            )}
+          </div>
+
+          {/* Badge Label (e.g. Success / Google / Notice) */}
+          <span 
+            style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              padding: '2px 7px',
+              borderRadius: '9999px',
+              backgroundColor: toastFeedback.type === 'success'
+                ? '#d1fae5'
+                : toastFeedback.type === 'error'
+                ? '#ffe4e6'
+                : '#e2e8f0',
+              color: toastFeedback.type === 'success'
+                ? '#047857'
+                : toastFeedback.type === 'error'
+                ? '#be123c'
+                : '#334155',
+              flexShrink: 0
+            }}
+          >
+            {toastFeedback.type === 'success' ? 'Success' : toastFeedback.type === 'error' ? 'Notice' : 'Google'}
+          </span>
+
+          {/* Message Text */}
+          <span 
+            style={{
+              color: '#0f172a',
+              fontSize: '12.5px',
+              fontWeight: 550,
+              letterSpacing: '-0.01em',
+              lineHeight: 1.3,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            {toastFeedback.message}
+          </span>
+
+          {/* Close Dismiss Button */}
+          <button
+            type="button"
+            onClick={() => setToastFeedback(null)}
+            aria-label="Dismiss notification"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#94a3b8',
+              padding: '3px',
+              marginLeft: '2px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 0.15s ease, background-color 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#334155';
+              e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.06)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#94a3b8';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <X size={13} strokeWidth={2.2} />
+          </button>
         </div>
       )}
 
@@ -872,6 +1210,7 @@ export default function App() {
         onDeleteThread={handleDeleteThread}
         onToggleDocsPanel={() => setDocsPanelOpen(!docsPanelOpen)}
         onClearDocs={handleClearDocs}
+        onDeleteDoc={handleDeleteDoc}
         onTriggerFileUpload={() => fileInputRef.current?.click()}
       />
 
@@ -1046,7 +1385,9 @@ export default function App() {
               style={{
                 flex: 1,
                 overflowY: 'auto',
-                padding: '24px 20px'
+                overflowAnchor: 'auto',
+                padding: '24px 20px',
+                contain: 'layout style'
               }}
             >
               <div style={{
@@ -1059,7 +1400,7 @@ export default function App() {
               }}>
                 {messages.map((msg, index) => (
                   <ChatMessage
-                    key={msg.id || index}
+                    key={msg.id || `msg-${index}`}
                     msg={msg}
                     isLatest={index === messages.length - 1}
                     streamingMsgId={streamingMsgId}
@@ -1074,14 +1415,12 @@ export default function App() {
                     onDislike={handleDislike}
                     onToggleDocExpand={handleToggleDocExpand}
                     onJumpToChunk={handleJumpToChunk}
-                    onSendFollowup={(q) => handleSendMessage(q)}
-                    onOpenGoogleConnect={() => setGoogleConnectOpen(true)}
-                    onOpenDocsPanel={() => {
-                      setSidebarOpen(true);
-                      setDocsPanelOpen(true);
-                    }}
-                    onOpenTaskManager={() => setTaskManagerOpen(true)}
-                    onUploadFile={() => fileInputRef.current?.click()}
+                    onSendFollowup={handleSendFollowup}
+                    onOpenGoogleConnect={handleOpenGoogleConnect}
+                    currentThreadId={currentThreadId}
+                    onOpenDocsPanel={handleOpenDocsPanel}
+                    onOpenTaskManager={handleOpenTaskManager}
+                    onUploadFile={handleUploadFile}
                     currentStage={streamingMsgId === msg.id ? currentStage : undefined}
                   />
                 ))}
@@ -1091,9 +1430,41 @@ export default function App() {
                   <ThinkingIndicator avatarState={avatarState} currentStage={currentStage} />
                 )}
 
-                <div ref={messagesEndRef} style={{ height: '12px' }} />
+                <div ref={messagesEndRef} style={{ height: '16px', flexShrink: 0 }} />
               </div>
             </div>
+
+            {/* Floating "Scroll to bottom" button when user scrolled up during reading or streaming */}
+            {userScrolledUp && (
+              <button
+                type="button"
+                onClick={() => scrollToBottom(true)}
+                className="scroll-to-bottom-pill"
+                style={{
+                  position: 'absolute',
+                  bottom: '16px',
+                  right: '28px',
+                  zIndex: 20,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  backgroundColor: '#ffffff',
+                  color: THEME.burgundy,
+                  border: `1.5px solid ${THEME.burgundyBorder}`,
+                  boxShadow: '0 4px 14px rgba(122, 28, 48, 0.16)',
+                  fontSize: '12px',
+                  fontWeight: 650,
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease'
+                }}
+                title="Scroll down to latest response"
+              >
+                <ChevronDown size={14} />
+                <span>Scroll to bottom</span>
+              </button>
+            )}
 
             {/* Bottom Docked Composer */}
             <div style={{
@@ -1166,6 +1537,7 @@ export default function App() {
           <GoogleConnectModal
             isOpen={googleConnectOpen}
             onClose={() => setGoogleConnectOpen(false)}
+            currentThreadId={currentThreadId}
           />
         )}
       </React.Suspense>

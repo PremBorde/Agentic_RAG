@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, Check, Database, Globe, Brain, Mail, Calendar, CheckSquare } from 'lucide-react';
+import { Copy, Check, Database, Globe, Brain, Mail, Calendar, CheckSquare, Image as ImageIcon } from 'lucide-react';
 import { THEME } from '../../constants/theme';
 
 export function getDisplaySourceBadge(source?: string): {
@@ -77,6 +77,18 @@ export function getDisplaySourceBadge(source?: string): {
       color: '#7a1c30',
       bg: '#fbf0f2',
       border: '#f2cbd3'
+    };
+  }
+
+
+  // Web Image Search
+  if (s.includes('image') || s.includes('diagram') || s.includes('visual')) {
+    return {
+      label: 'Image Search',
+      icon: <ImageIcon size={11} />,
+      color: '#0369a1',
+      bg: '#f0f9ff',
+      border: '#bae6fd'
     };
   }
 
@@ -204,13 +216,15 @@ interface MarkdownContentProps {
   isUser: boolean;
   isStreaming?: boolean;
   onCitationClick?: (chunkIndex: number) => void;
+  maxCitationIndex?: number;
 }
 
 export function MarkdownContent({ 
   content, 
   isUser, 
   isStreaming,
-  onCitationClick 
+  onCitationClick,
+  maxCitationIndex
 }: MarkdownContentProps) {
   if (isUser) {
     return <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px', lineHeight: 1.55 }}>{content}</div>;
@@ -220,41 +234,52 @@ export function MarkdownContent({
     return React.Children.map(children, (child) => {
       if (typeof child !== 'string') return child;
 
+      // Normalize any malformed citation patterns from LLMs, e.g. "([2 [6263] -81])", "([2, 62-81])", or "([1])"
+      const normalizedChild = child
+        .replace(/\(\s*\[([0-9]{1,2})\b[^\)]*\]\s*\)/g, '[$1]')
+        .replace(/\(\s*\[([0-9]{1,2})\]\s*(?:\[\d+\][^\)]*|[^\)]*)\)/g, '[$1]')
+        .replace(/\(\s*\[([0-9]{1,2})\]\s*\)/g, '[$1]');
+
       const parts: React.ReactNode[] = [];
       const regex = /\[(\d+)\]/g;
       let lastIndex = 0;
       let match: RegExpExecArray | null;
 
-      while ((match = regex.exec(child)) !== null) {
+      while ((match = regex.exec(normalizedChild)) !== null) {
         if (match.index > lastIndex) {
-          parts.push(child.substring(lastIndex, match.index));
+          parts.push(normalizedChild.substring(lastIndex, match.index));
         }
 
         const num = parseInt(match[1], 10);
-        const chunkIndex = num - 1;
-
-        parts.push(
-          <button
-            key={`cit-${match.index}`}
-            type="button"
-            className="citation-badge"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onCitationClick?.(chunkIndex);
-            }}
-            title={`Jump to source chunk #${num}`}
-            aria-label={`Jump to source chunk ${num}`}
-          >
-            [{num}]
-          </button>
-        );
+        // Only render genuine chunk indices if verified chunks exist; preserve academic references (e.g. [12], [2024], [6263]) as literal text
+        const limit = maxCitationIndex !== undefined ? Math.min(maxCitationIndex, 20) : 20;
+        if (limit > 0 && num > 0 && num <= limit) {
+          const chunkIndex = num - 1;
+          parts.push(
+            <button
+              key={`cit-${match.index}-${num}`}
+              type="button"
+              className="citation-badge"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onCitationClick?.(chunkIndex);
+              }}
+              title={`Jump to source chunk #${num}`}
+              aria-label={`Jump to source chunk ${num}`}
+            >
+              [{num}]
+            </button>
+          );
+        } else {
+          parts.push(`[${match[1]}]`);
+        }
 
         lastIndex = regex.lastIndex;
       }
 
-      if (lastIndex < child.length) {
-        parts.push(child.substring(lastIndex));
+      if (lastIndex < normalizedChild.length) {
+        parts.push(normalizedChild.substring(lastIndex));
       }
 
       return parts.length > 0 ? parts : child;

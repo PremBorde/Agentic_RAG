@@ -63,7 +63,13 @@ export function RetrievedContext({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span style={{ fontWeight: 650, color: THEME.burgundy, display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <FileText size={12} />
-                  {doc.source}
+                  {doc.url ? (
+                    <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ color: THEME.burgundy, textDecoration: 'underline' }}>
+                      {doc.source}
+                    </a>
+                  ) : (
+                    doc.source
+                  )}
                 </span>
                 <span style={{ fontSize: '11px', color: THEME.slateMuted, backgroundColor: '#ece4d6', padding: '2px 7px', borderRadius: '6px' }}>
                   Chunk #{idx + 1}
