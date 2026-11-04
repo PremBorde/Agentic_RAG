@@ -1,0 +1,7 @@
+Global Oceanic Heat Transport and Overturning Circulation Dynamics
+
+Section 1: The Atlantic Meridional Overturning Circulation (AMOC)
+The Atlantic Meridional Overturning Circulation (AMOC) constitutes a crucial component of Earth's climate system, transporting approximately 1.25 Petawatts of warm upper-ocean water northward while returning cold, dense deep water southward. The driving mechanism of this thermohaline circulation depends on convection in the Greenland-Iceland-Norwegian (GIN) Seas and the Labrador Sea, where heat loss to the cold Arctic atmosphere increases water density.
+
+Section 2: Freshwater Fluxes and Deep Convection Vulnerability
+Accelerated melting of the Greenland Ice Sheet introduces anomalous freshwater runoff into surface layers of high-latitude North Atlantic. Because freshwater has a substantially lower salinity and density than sea water, it forms a buoyant surface lens that inhibits convective overturning. Climate models predict a potential weakening of AMOC by 24% to 39% by the year 2100 under high-emissions scenarios, altering storm tracks across Northwestern Europe and shifting tropical precipitation belts southward.

@@ -1,0 +1,28 @@
+{
+  "system_name": "Nebula Cloud Distributed Mesh",
+  "cluster_region": "us-east-central",
+  "gateway_layer": {
+    "component": "API Gateway Envoy Proxy",
+    "rate_limit_per_minute": 12000,
+    "tls_enforcement": "TLS 1.3 Strict",
+    "circuit_breaker": {
+      "max_connections": 1024,
+      "failure_threshold_percent": 50,
+      "evaluation_interval_seconds": 10,
+      "sleep_window_seconds": 30
+    }
+  },
+  "event_streaming": {
+    "broker": "Apache Kafka v3.7",
+    "default_partitions_per_topic": 12,
+    "replication_factor": 3,
+    "ack_mode": "all",
+    "retention_period_hours": 168
+  },
+  "caching_tier": {
+    "technology": "Redis Cluster 7.2",
+    "node_count": 6,
+    "eviction_policy": "volatile-lru",
+    "session_ttl_seconds": 3600
+  }
+}

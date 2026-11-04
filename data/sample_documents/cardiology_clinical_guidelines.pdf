@@ -1,0 +1,45 @@
+%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 6 0 R >> endobj
+4 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 7 0 R >> endobj
+5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+6 0 obj << /Length 380 >> stream
+BT /F1 12 Tf 50 720 Td 18 TL
+(Clinical Practice Guidelines: Acute Myocardial Infarction Management) '
+(Section 1.1: STEMI Emergency Revascularization Window) '
+(For patients presenting with ST-Elevation Myocardial Infarction STEMI) '
+(primary percutaneous coronary intervention PCI is the preferred strategy) '
+(when performed within 90 minutes of first medical contact FMC time.) '
+(If transfer to a PCI center exceeds 120 minutes intravenous fibrinolysis) '
+(must be initiated within 10 minutes of diagnosis.) '
+ET
+endstream
+endobj
+7 0 obj << /Length 420 >> stream
+BT /F1 12 Tf 50 720 Td 18 TL
+(Section 2.3: Antiplatelet Pharmacotherapy & Absolute Contraindications) '
+(All acute coronary syndrome patients should receive chewable Aspirin 162-325 mg) '
+(along with Ticagrelor 180 mg loading dose or Prasugrel 60 mg loading dose.) '
+(Absolute contraindications to fibrinolytic therapy include:) '
+(1. Any prior history of intracranial hemorrhage ICH.) '
+(2. Known structural cerebral vascular lesion.) '
+(3. Active internal bleeding excluding menses.) '
+(4. Ischemic stroke within preceding 3 months.) '
+ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000123 00000 n 
+0000000254 00000 n 
+0000000385 00000 n 
+0000000454 00000 n 
+0000000890 00000 n 
+trailer << /Size 8 /Root 1 0 R >>
+startxref
+1380
+%%EOF

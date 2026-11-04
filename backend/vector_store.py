@@ -3,7 +3,7 @@ import json
 import shutil
 import hashlib
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 import faiss
 from langchain_community.vectorstores import FAISS
@@ -16,7 +16,7 @@ VECTOR_STORE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dat
 FAISS_INDEX_DIR = os.path.join(VECTOR_STORE_DIR, "faiss_index")
 REGISTRY_FILE = os.path.join(VECTOR_STORE_DIR, "documents_registry.json")
 
-# In-memory document registry
+# In-memory document registry (single persistent reference)
 indexed_documents: List[Dict[str, Any]] = []
 
 def compute_content_hash(content: str) -> str:
@@ -52,7 +52,7 @@ def save_vector_store_to_disk() -> bool:
         logger.error(f"Failed to persist vector store to disk: {e}")
         return False
 
-def load_vector_store_from_disk() -> tuple[FAISS, List[Dict[str, Any]]]:
+def load_vector_store_from_disk() -> Tuple[FAISS, List[Dict[str, Any]]]:
     """
     Loads the persistent FAISS index and document registry from disk.
     Gracefully falls back to an empty vector store if files are missing or corrupted.
@@ -79,17 +79,29 @@ def load_vector_store_from_disk() -> tuple[FAISS, List[Dict[str, Any]]]:
                 allow_dangerous_deserialization=True
             )
             logger.info(f"Successfully loaded persistent FAISS index with {len(vs.index_to_docstore_id)} chunks.")
-            indexed_documents = loaded_docs
+            indexed_documents.clear()
+            indexed_documents.extend(loaded_docs)
             return vs, loaded_docs
         except Exception as e:
             logger.error(f"Failed to load FAISS index from {FAISS_INDEX_DIR}: {e}. Creating fresh vector store.")
     
-    indexed_documents = []
+    indexed_documents.clear()
     return create_empty_vector_store(), []
 
 # Initialize Vector Store on module load
-vector_store, indexed_documents = load_vector_store_from_disk()
-retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 4})
+vector_store, _ = load_vector_store_from_disk()
+
+class UniversalHybridRetrieverWrapper:
+    """LangChain-compatible wrapper that coordinates FAISS + BM25 + RRF hybrid retrieval."""
+    def invoke(self, query: str, **kwargs) -> List[Any]:
+        try:
+            from backend.services.hybrid_retriever import hybrid_retriever
+            return hybrid_retriever.invoke(query)
+        except Exception as e:
+            logger.warning(f"Hybrid retrieval fallback to raw FAISS: {e}")
+            return vector_store.similarity_search(query, k=4)
+
+retriever = UniversalHybridRetrieverWrapper()
 
 def clear_vector_store():
     """Clears both the in-memory vector store and the persistent files on disk."""
@@ -107,33 +119,94 @@ def clear_vector_store():
     except Exception as e:
         logger.error(f"Error removing vector store files: {e}")
 
+    # Synchronize BM25 hybrid retriever
+    try:
+        from backend.services.hybrid_retriever import hybrid_retriever
+        hybrid_retriever.clear()
+    except Exception as e:
+        logger.warning(f"Error clearing hybrid retriever: {e}")
+
+    # Synchronize OKF knowledge bundle store
+    try:
+        from backend.services.okf_service import clear_all_bundles
+        clear_all_bundles()
+    except Exception as e:
+        logger.warning(f"Error clearing OKF bundles: {e}")
+
+    # Synchronize BM25 hybrid retriever
+    try:
+        from backend.services.hybrid_retriever import hybrid_retriever
+        hybrid_retriever.clear()
+    except Exception as e:
+        logger.warning(f"Error clearing hybrid retriever: {e}")
+
+    # Synchronize OKF knowledge bundle store
+    try:
+        from backend.services.okf_service import clear_all_bundles
+        clear_all_bundles()
+    except Exception as e:
+        logger.warning(f"Error clearing OKF bundles: {e}")
+
 def delete_document(doc_id: str) -> bool:
     """
-    Deletes a specific document by doc_id from the registry and rebuilds
-    the persistent vector store without the deleted document.
+    Deletes a specific document by doc_id or title from the registry and rebuilds
+    the persistent vector store and BM25 index without the deleted document.
     """
     global vector_store, retriever, indexed_documents
-    initial_count = len(indexed_documents)
-    indexed_documents = [d for d in indexed_documents if d.get("id") != doc_id]
-    
-    if len(indexed_documents) == initial_count:
-        return False  # Document not found
+    norm_id = str(doc_id).strip().lower()
+    targets = [
+        d for d in indexed_documents 
+        if str(d.get("id", "")).strip().lower() == norm_id 
+        or str(d.get("title", "")).strip().lower() == norm_id
+    ]
+
+    if not targets:
+        return False
+
+    for target in targets:
+        t_id = target.get("id", doc_id)
+        try:
+            from backend.services.okf_service import delete_bundle_for_document
+            delete_bundle_for_document(t_id)
+        except Exception as e:
+            logger.warning(f"[OKF] Failed to clean up bundle for {t_id}: {e}")
+
+        try:
+            from backend.services.hybrid_retriever import hybrid_retriever
+            hybrid_retriever.remove_document(t_id)
+        except Exception as e:
+            logger.warning(f"Could not remove document from hybrid_retriever: {e}")
+
+    remaining = [d for d in indexed_documents if d not in targets]
+    indexed_documents.clear()
+    indexed_documents.extend(remaining)
 
     # Reconstruct vector store from remaining documents
     new_vs = create_empty_vector_store()
     for doc in indexed_documents:
         full_content = doc.get("full_content", "")
         if full_content:
-            chunks = splitter.split_text(full_content)
+            from backend.services.chunking import chunk_document_sections
+            sections = [{"heading": doc.get("title", "Document"), "text": full_content, "page_number": 1}]
+            chunks = chunk_document_sections(
+                sections=sections,
+                document_id=doc.get("id", "doc"),
+                document_name=doc.get("title", "Document"),
+                document_type=doc.get("document_type", "file"),
+                content_hash=doc.get("content_hash", ""),
+                chunk_size=500,
+                chunk_overlap=75
+            )
             if chunks:
                 new_vs.add_texts(
-                    chunks,
-                    metadatas=[{"source": doc.get("title", "Document"), "doc_id": doc.get("id")}] * len(chunks)
+                    [c["text"] for c in chunks],
+                    metadatas=[c["metadata"] for c in chunks]
                 )
 
     vector_store = new_vs
     retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 4})
     save_vector_store_to_disk()
+
     return True
 
 def find_duplicate_document(content: str, title: str) -> Optional[Dict[str, Any]]:
@@ -146,6 +219,29 @@ def find_duplicate_document(content: str, title: str) -> Optional[Dict[str, Any]
             return doc
     return None
 
-def format_docs(docs):
-    """Formats retrieved document chunks for prompt context."""
-    return "\n\n".join(safe_str(getattr(doc, "page_content", doc)) for doc in docs)
+def format_docs(docs: List[Any]) -> str:
+    """
+    Formats retrieved document chunks with clear source provenance, section headings,
+    page numbers, and chunk identifiers for unambiguous prompt grounding.
+    """
+    if not docs:
+        return ""
+    formatted_blocks = []
+    for idx, doc in enumerate(docs, start=1):
+        content = safe_str(getattr(doc, "page_content", doc)).strip()
+        meta = getattr(doc, "metadata", {}) or {}
+        src = meta.get("document_name") or meta.get("source") or "Document"
+        page = meta.get("page_number")
+        heading = meta.get("section_heading")
+        chunk_id = meta.get("chunk_id", f"chunk-{idx}")
+        
+        header_parts = [f"[Chunk {idx}]"]
+        header_parts.append(f"Source: {src}")
+        if page:
+            header_parts.append(f"Page: {page}")
+        if heading and heading != "General":
+            header_parts.append(f"Section: \"{heading}\"")
+            
+        header = " | ".join(header_parts)
+        formatted_blocks.append(f"{header}\n{content}")
+    return "\n\n".join(formatted_blocks)

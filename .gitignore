@@ -34,6 +34,8 @@ data/*.sqlite3
 data/google_tokens.json
 data/client_secret.json
 data/vector_store/
+data/okf_bundles/
+data/models/
 
 # Node / Frontend
 node_modules/

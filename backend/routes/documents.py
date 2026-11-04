@@ -43,14 +43,13 @@ def add_youtube_transcript(req: YouTubeDocRequest):
     return process_youtube_url(req.url, req.title)
 
 @router.delete("/clear")
+@router.post("/clear")
 def clear_documents():
     """Clears all indexed documents from the vector store."""
     clear_vector_store()
     return {"message": "All documents successfully removed."}
 
-@router.delete("/{doc_id}")
+@router.delete("/{doc_id:path}")
 def delete_document_by_id(doc_id: str):
-    """Deletes a specific document from the vector store by ID."""
+    """Deletes a specific document from the vector store by ID or title."""
     return remove_document(doc_id)
-
-
