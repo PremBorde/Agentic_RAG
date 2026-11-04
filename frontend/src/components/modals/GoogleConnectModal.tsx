@@ -6,12 +6,14 @@ interface GoogleConnectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onStatusChanged?: () => void;
+  currentThreadId?: string | null;
 }
 
 export const GoogleConnectModal: React.FC<GoogleConnectModalProps> = ({
   isOpen,
   onClose,
-  onStatusChanged
+  onStatusChanged,
+  currentThreadId
 }) => {
   const [status, setStatus] = useState<{ connected: boolean; email?: string | null }>({
     connected: false,
@@ -41,8 +43,20 @@ export const GoogleConnectModal: React.FC<GoogleConnectModalProps> = ({
 
   const handleSignInWithGoogle = () => {
     setLoading(true);
-    // Direct browser redirect to Google OAuth login endpoint
-    window.location.href = '/api/auth/google/login';
+    const params = new URLSearchParams();
+    if (currentThreadId) {
+      params.set('thread_id', currentThreadId);
+      params.set('return_to', `/?thread_id=${encodeURIComponent(currentThreadId)}`);
+      try {
+        sessionStorage.setItem('oauth_return_thread_id', currentThreadId);
+      } catch {}
+    } else {
+      try {
+        sessionStorage.removeItem('oauth_return_thread_id');
+      } catch {}
+    }
+    const qs = params.toString();
+    window.location.href = `/api/auth/google/login${qs ? `?${qs}` : ''}`;
   };
 
   const handleSignOut = async () => {
@@ -52,8 +66,12 @@ export const GoogleConnectModal: React.FC<GoogleConnectModalProps> = ({
       await fetchStatus();
       if (onStatusChanged) onStatusChanged();
       onClose();
-      // Reload page to reset current session state
-      window.location.href = '/?disconnected=true';
+      // Reload page to reset current session state while preserving conversation if present
+      if (currentThreadId) {
+        window.location.href = `/?disconnected=true&thread_id=${encodeURIComponent(currentThreadId)}`;
+      } else {
+        window.location.href = '/?disconnected=true';
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to sign out.');
     } finally {
