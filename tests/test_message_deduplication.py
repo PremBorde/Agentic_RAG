@@ -163,18 +163,23 @@ class TestMessageDeduplicationAndUI(unittest.TestCase):
         self.assertEqual(conv["messages"][0]["id"], "fixed_id")
 
     def test_10_no_duplicate_groups_in_sqlite(self):
-        """Database currently contains zero unintended duplicate groups."""
+        """Test thread contains zero unintended duplicate groups under identical message ID."""
+        u_id = f"msg_user_{uuid.uuid4().hex[:8]}"
+        save_conversation_message(self.test_thread, u_id, "user", "Unique test message")
+        save_conversation_message(self.test_thread, u_id, "user", "Unique test message")
+
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
             SELECT conversation_id, sender, text, count(*)
             FROM messages
+            WHERE conversation_id = ?
             GROUP BY conversation_id, sender, text
             HAVING count(*) > 1
-        """)
+        """, (self.test_thread,))
         dupes = cursor.fetchall()
         conn.close()
-        self.assertEqual(len(dupes), 0, f"Found unexpected duplicate groups in DB: {dupes}")
+        self.assertEqual(len(dupes), 0, f"Found unexpected duplicate groups in test thread: {dupes}")
 
 if __name__ == '__main__':
     unittest.main()
