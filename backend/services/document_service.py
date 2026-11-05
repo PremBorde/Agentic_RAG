@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import UploadFile, HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
 
+import backend.vector_store as vs_module
 from backend.vector_store import (
     vector_store,
     indexed_documents,
@@ -118,7 +119,7 @@ async def process_uploaded_file(file: UploadFile) -> dict:
     try:
         texts = [c["text"] for c in chunks]
         metadatas = [c["metadata"] for c in chunks]
-        vector_store.add_texts(texts, metadatas=metadatas)
+        vs_module.vector_store.add_texts(texts, metadatas=metadatas)
         hybrid_retriever.add_chunks(chunks)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to index document into vector store: {str(e)}")
@@ -192,7 +193,7 @@ def process_custom_text(title: str, content: str) -> dict:
     try:
         texts = [c["text"] for c in chunks]
         metadatas = [c["metadata"] for c in chunks]
-        vector_store.add_texts(texts, metadatas=metadatas)
+        vs_module.vector_store.add_texts(texts, metadatas=metadatas)
         hybrid_retriever.add_chunks(chunks)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to index note into vector store: {str(e)}")
@@ -275,7 +276,7 @@ def process_youtube_url(url: str, custom_title: str = "") -> dict:
     try:
         texts = [c["text"] for c in chunks]
         metadatas = [c["metadata"] for c in chunks]
-        vector_store.add_texts(texts, metadatas=metadatas)
+        vs_module.vector_store.add_texts(texts, metadatas=metadatas)
         hybrid_retriever.add_chunks(chunks)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to index YouTube transcript: {str(e)}")

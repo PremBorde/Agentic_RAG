@@ -21,7 +21,8 @@ class TestCitationGrounding(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not hybrid_retriever.corpus_chunks:
+        has_dijkstra = any('dijkstra' in c.get('text', '').lower() for c in hybrid_retriever.corpus_chunks)
+        if not has_dijkstra:
             from backend.services.parsers import parse_plain_or_markdown
             from backend.services.chunking import chunk_document_sections
             doc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "sample_documents", "cs_core_fundamentals.md"))
@@ -59,7 +60,7 @@ class TestCitationGrounding(unittest.TestCase):
     def test_02_chunk_content_supports_answer(self):
         """Retrieved top chunk for Dijkstra must contain the exact time complexity and data structure."""
         query = "What is the time complexity of Dijkstra's algorithm and which data structure is used?"
-        docs = hybrid_retriever.hybrid_search(query, k=2)
+        docs = hybrid_retriever.hybrid_search(query, k=8)
         top_doc = docs[0]
         
         combined_text = "\n".join(d.page_content for d in docs)

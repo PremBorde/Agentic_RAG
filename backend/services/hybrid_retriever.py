@@ -103,6 +103,11 @@ class HybridRetriever:
         else:
             self.bm25_index = None
 
+    def add_documents(self, documents: List[Document]) -> None:
+        """Adds LangChain Document objects to BM25 index."""
+        chunks = [{"text": doc.page_content, "metadata": doc.metadata} for doc in documents]
+        self.add_chunks(chunks)
+
     def add_chunks(self, chunks: List[Dict[str, Any]]) -> None:
         """Adds new chunks to the BM25 index."""
         self.corpus_chunks.extend(chunks)

@@ -192,44 +192,40 @@ class TestFullRegression(unittest.TestCase):
 
     def test_15_standalone_auth_live(self):
         """15. Standalone registration and login endpoints work over HTTP."""
+        from starlette.testclient import TestClient
+        from server import app
+        client = TestClient(app)
         unique_email = f"live_reg_{uuid.uuid4().hex[:6]}@example.com"
-        reg_payload = json.dumps({"email": unique_email, "password": "securepassword123", "display_name": "Live Tester"}).encode()
-        req = urllib.request.Request(f"{BASE_URL}/api/auth/register", data=reg_payload, headers={"Content-Type": "application/json"})
-        resp = urllib.request.urlopen(req)
-        data = json.loads(resp.read().decode())
+        reg_resp = client.post("/api/auth/register", json={"email": unique_email, "password": "securepassword123", "display_name": "Live Tester"})
+        self.assertEqual(reg_resp.status_code, 200)
+        data = reg_resp.json()
         self.assertTrue(data.get("success"))
         self.assertEqual(data["user"]["email"], unique_email)
 
-        login_payload = json.dumps({"email": unique_email, "password": "securepassword123"}).encode()
-        req_login = urllib.request.Request(f"{BASE_URL}/api/auth/login", data=login_payload, headers={"Content-Type": "application/json"})
-        resp_login = urllib.request.urlopen(req_login)
-        data_login = json.loads(resp_login.read().decode())
+        login_resp = client.post("/api/auth/login", json={"email": unique_email, "password": "securepassword123"})
+        self.assertEqual(login_resp.status_code, 200)
+        data_login = login_resp.json()
         self.assertTrue(data_login.get("success"))
 
     def test_16_upload_security_and_traversal(self):
         """16. Upload endpoint rejects unsupported extensions and path traversal."""
-        boundary = "----TestBoundaryRegression"
-        body = (
-            f"--{boundary}\r\n"
-            f'Content-Disposition: form-data; name="file"; filename="../../etc/passwd.sh"\r\n'
-            f"Content-Type: application/x-sh\r\n\r\n"
-            f"echo 'malicious'\r\n"
-            f"--{boundary}--\r\n"
-        ).encode()
-        req = urllib.request.Request(
-            f"{BASE_URL}/api/documents/upload",
-            data=body,
-            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"}
+        from starlette.testclient import TestClient
+        from server import app
+        client = TestClient(app)
+        resp = client.post(
+            "/api/documents/upload",
+            files={"file": ("../../etc/passwd.sh", b"echo 'malicious'", "application/x-sh")}
         )
-        with self.assertRaises(urllib.error.HTTPError) as ctx:
-            urllib.request.urlopen(req)
-        self.assertEqual(ctx.exception.code, 400)
+        self.assertEqual(resp.status_code, 400)
 
     def test_17_production_health_check(self):
         """17. Health check returns 200 with service status, checks, and zero secrets."""
-        resp = urllib.request.urlopen(f"{BASE_URL}/health")
-        self.assertEqual(resp.status, 200)
-        data = json.loads(resp.read().decode())
+        from starlette.testclient import TestClient
+        from server import app
+        client = TestClient(app)
+        resp = client.get("/health")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
         self.assertIn("status", data)
         self.assertIn("checks", data)
         self.assertEqual(data["checks"]["database"], "ok")

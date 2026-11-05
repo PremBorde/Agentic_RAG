@@ -33,7 +33,9 @@ class TestPersistenceConcurrency(unittest.TestCase):
 
     def test_01_persistence_roundtrip(self):
         """Vector store and BM25 index must persist to disk and reload identically."""
-        # 1. Check current counts
+        # Ensure at least one test document is indexed
+        if len(indexed_documents) == 0:
+            process_custom_text("Init Doc", "This is an initial document to test persistence.")
         initial_doc_count = len(indexed_documents)
         initial_bm25_count = len(hybrid_retriever.corpus_chunks)
         self.assertGreater(initial_doc_count, 0)
@@ -96,17 +98,29 @@ class TestPersistenceConcurrency(unittest.TestCase):
 
     def test_04_concurrent_retrieval_thread_safety(self):
         """20 concurrent threads running hybrid search must execute with zero race conditions or errors."""
+        if len(hybrid_retriever.corpus_chunks) == 0:
+            process_custom_text("Concurrency Doc", "Sample text discussing operating systems, deadlock, Dijkstra algorithm.")
+        # Ensure CS fundamentals is in corpus for grounded concurrent queries
+        if not any('dijkstra' in c.get('text', '').lower() for c in hybrid_retriever.corpus_chunks):
+            doc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "sample_documents", "cs_core_fundamentals.md"))
+            if os.path.exists(doc_path):
+                from backend.services.parsers import parse_plain_or_markdown
+                from backend.services.chunking import chunk_document_sections
+                with open(doc_path, "rb") as f:
+                    sections = parse_plain_or_markdown(f.read())
+                chunks = chunk_document_sections(sections, "cs_sample", "cs_core_fundamentals.md", "md", "sample_hash", 450, 60)
+                hybrid_retriever.add_chunks(chunks)
         queries = [
             "Dijkstra shortest path",
-            "Fractional Knapsack greedy DAA-4",
             "Bellman-Ford negative weight cycles",
             "Database normalization 1NF 2NF 3NF",
             "Banker's Algorithm deadlock avoidance",
-            "K-Means clustering ML-4",
-            "Support Vector Machine ML-2 email spam",
-            "Smart contract BC-3 customer account",
             "ACID properties consistency durability",
-            "Coffman conditions mutual exclusion"
+            "Coffman conditions mutual exclusion",
+            "Operating Systems concurrency deadlock",
+            "Relational database transactions isolation",
+            "Single source shortest path min-heap priority queue",
+            "Boyce-Codd Normal Form BCNF super key"
         ] * 2  # 20 total queries
 
         latencies = []

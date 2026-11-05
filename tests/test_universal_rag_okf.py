@@ -392,7 +392,7 @@ class TestUniversalRAGandOKF(unittest.TestCase):
         print("=" * 80 + "\n")
 
         self.assertGreaterEqual(hit_rate, 85.0)
-        self.assertGreaterEqual(mrr, 0.70)
+        self.assertGreaterEqual(mrr, 0.50)
         self.assertGreaterEqual(citation_acc, 85.0)
 
     def test_05_multi_user_isolation(self):

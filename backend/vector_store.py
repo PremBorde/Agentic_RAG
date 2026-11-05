@@ -86,7 +86,8 @@ def load_vector_store_from_disk() -> Tuple[FAISS, List[Dict[str, Any]]]:
             logger.error(f"Failed to load FAISS index from {FAISS_INDEX_DIR}: {e}. Creating fresh vector store.")
     
     indexed_documents.clear()
-    return create_empty_vector_store(), []
+    indexed_documents.extend(loaded_docs)
+    return create_empty_vector_store(), loaded_docs
 
 # Initialize Vector Store on module load
 vector_store, _ = load_vector_store_from_disk()
