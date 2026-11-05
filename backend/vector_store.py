@@ -12,7 +12,8 @@ from backend.embeddings import embeddings, safe_str, splitter
 
 logger = logging.getLogger("agentic_studio.vector_store")
 
-VECTOR_STORE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "vector_store")
+DATA_DIR = os.environ.get("DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__)), "data"))
+VECTOR_STORE_DIR = os.path.join(DATA_DIR, "vector_store")
 FAISS_INDEX_DIR = os.path.join(VECTOR_STORE_DIR, "faiss_index")
 REGISTRY_FILE = os.path.join(VECTOR_STORE_DIR, "documents_registry.json")
 

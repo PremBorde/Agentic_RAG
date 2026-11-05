@@ -7,7 +7,8 @@ import secrets
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "agent_studio.db")
+DATA_DIR = os.environ.get("DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data"))
+DB_PATH = os.path.join(DATA_DIR, "agent_studio.db")
 
 def get_db_connection() -> sqlite3.Connection:
     """Returns a SQLite connection with row factory enabled."""

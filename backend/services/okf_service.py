@@ -26,7 +26,8 @@ if not logger.handlers:
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-BASE_OKF_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "okf_bundles"))
+DATA_DIR = os.environ.get("DATA_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data")))
+BASE_OKF_DIR = os.path.join(DATA_DIR, "okf_bundles")
 
 
 def sanitize_identifier(text: str) -> str:
