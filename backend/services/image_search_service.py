@@ -19,18 +19,7 @@ HTTP_HEADERS = {
 }
 
 
-def clean_source_domain(url: str, default: str = "Web Source") -> str:
-    """Extracts a clean, readable hostname without www. prefix."""
-    if not url:
-        return default
-    try:
-        parsed = urllib.parse.urlparse(url)
-        netloc = parsed.netloc or ""
-        if netloc.startswith("www."):
-            netloc = netloc[4:]
-        return netloc or default
-    except Exception:
-        return default
+from backend.services.web_search_service import clean_source_domain
 
 
 def _search_ddgs(query: str, max_results: int = 6) -> List[Dict[str, Any]]:

@@ -36,7 +36,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application source code
 COPY backend/ ./backend/
 COPY server.py ./
-COPY rag.py ./
 
 # Copy built frontend assets into the expected distribution directory
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist

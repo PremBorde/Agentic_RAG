@@ -135,19 +135,7 @@ def clear_vector_store():
     except Exception as e:
         logger.warning(f"Error clearing OKF bundles: {e}")
 
-    # Synchronize BM25 hybrid retriever
-    try:
-        from backend.services.hybrid_retriever import hybrid_retriever
-        hybrid_retriever.clear()
-    except Exception as e:
-        logger.warning(f"Error clearing hybrid retriever: {e}")
 
-    # Synchronize OKF knowledge bundle store
-    try:
-        from backend.services.okf_service import clear_all_bundles
-        clear_all_bundles()
-    except Exception as e:
-        logger.warning(f"Error clearing OKF bundles: {e}")
 
 def delete_document(doc_id: str) -> bool:
     """

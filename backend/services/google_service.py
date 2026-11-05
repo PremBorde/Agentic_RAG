@@ -24,7 +24,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/calendar.events"
 ]
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
+DATA_DIR = os.environ.get("DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data"))
 TOKEN_FILE = os.path.join(DATA_DIR, "google_tokens.json")
 
 def get_client_config() -> Optional[Dict[str, Any]]:
