@@ -93,6 +93,9 @@ def build_redirect_url(
         existing_params.pop("thread_id", None)
 
     qs = urlencode(existing_params)
+    frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
+    if frontend_url:
+        return f"{frontend_url}{target_base}?{qs}" if qs else f"{frontend_url}{target_base}"
     return f"{target_base}?{qs}" if qs else target_base
 
 
