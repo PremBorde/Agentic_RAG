@@ -247,6 +247,13 @@ export default function App() {
 
   useEffect(() => {
     checkGoogleStatus();
+    const interval = setInterval(checkGoogleStatus, 8000);
+    const onFocus = () => checkGoogleStatus();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [googleConnectOpen]);
 
   // Jitter-free scroll pinning coordinator using requestAnimationFrame
@@ -1360,6 +1367,8 @@ export default function App() {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onOpenTaskManager={() => setTaskManagerOpen(true)}
           onOpenGoogleConnect={() => setGoogleConnectOpen(true)}
+          googleConnected={googleConnected}
+          googleEmail={googleEmail}
         />
 
         {/* Chat or Hero View */}

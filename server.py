@@ -86,8 +86,17 @@ def health_check():
     except Exception as e:
         db_status = f"unhealthy: {str(e)}"
 
+    from backend.vector_store import vector_store
+    vs_chunks = len(vector_store.index_to_docstore_id) if vector_store else 0
+    doc_count = len(indexed_documents)
+    vs_status = "ok"
+    if doc_count > 0 and vs_chunks == 0:
+        vs_status = f"degraded: 0 indexed chunks for {doc_count} registered documents"
+
+    overall_healthy = (db_status == "ok" and vs_status == "ok")
+
     return {
-        "status": "healthy" if db_status == "ok" else "degraded",
+        "status": "healthy" if overall_healthy else "degraded",
         "service": "Personal AI Agent Studio",
         "version": "3.0.0",
         "environment": env,
@@ -95,8 +104,9 @@ def health_check():
         "checks": {
             "database": db_status,
             "vector_store": {
-                "status": "ok",
-                "indexed_documents_count": len(indexed_documents)
+                "status": vs_status,
+                "indexed_documents_count": doc_count,
+                "chunks_count": vs_chunks
             },
             "google_oauth_configured": bool(get_client_config()),
             "llm_configured": bool(os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY"))

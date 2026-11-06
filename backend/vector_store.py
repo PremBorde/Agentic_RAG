@@ -53,10 +53,32 @@ def save_vector_store_to_disk() -> bool:
         logger.error(f"Failed to persist vector store to disk: {e}")
         return False
 
+def rebuild_vector_store_from_registry(loaded_docs: List[Dict[str, Any]]) -> Tuple[FAISS, int]:
+    """Reconstructs FAISS vector store from full_content preserved in registry entries."""
+    vs = create_empty_vector_store()
+    rebuilt_chunks = 0
+    from backend.services.chunking import chunk_document_sections
+    for doc in loaded_docs:
+        content = doc.get("full_content", "")
+        if not content:
+            continue
+        title = doc.get("title", "Document")
+        doc_id = doc.get("id", "doc")
+        doc_type = doc.get("document_type", "file")
+        content_hash = doc.get("content_hash", "")
+        sections = [{"heading": title, "text": content, "page_number": 1}]
+        chunks = chunk_document_sections(sections, doc_id, title, doc_type, content_hash, chunk_size=500, chunk_overlap=75)
+        if chunks:
+            texts = [c["text"] for c in chunks]
+            metadatas = [c["metadata"] for c in chunks]
+            vs.add_texts(texts, metadatas=metadatas)
+            rebuilt_chunks += len(chunks)
+    return vs, rebuilt_chunks
+
 def load_vector_store_from_disk() -> Tuple[FAISS, List[Dict[str, Any]]]:
     """
     Loads the persistent FAISS index and document registry from disk.
-    Gracefully falls back to an empty vector store if files are missing or corrupted.
+    Automatically rebuilds FAISS from registry if index files are missing or corrupted.
     """
     global indexed_documents
     loaded_docs: List[Dict[str, Any]] = []
@@ -71,7 +93,7 @@ def load_vector_store_from_disk() -> Tuple[FAISS, List[Dict[str, Any]]]:
             logger.warning(f"Corrupted registry file {REGISTRY_FILE}: {e}. Initializing empty registry.")
             loaded_docs = []
 
-    # 2. Load FAISS index
+    # 2. Load FAISS index if present
     if os.path.exists(FAISS_INDEX_DIR) and os.path.exists(os.path.join(FAISS_INDEX_DIR, "index.faiss")):
         try:
             vs = FAISS.load_local(
@@ -84,8 +106,34 @@ def load_vector_store_from_disk() -> Tuple[FAISS, List[Dict[str, Any]]]:
             indexed_documents.extend(loaded_docs)
             return vs, loaded_docs
         except Exception as e:
-            logger.error(f"Failed to load FAISS index from {FAISS_INDEX_DIR}: {e}. Creating fresh vector store.")
-    
+            logger.error(f"Failed to load FAISS index from {FAISS_INDEX_DIR}: {e}. Attempting auto-rebuild from registry...")
+
+    # 3. Automatic Recovery from Registry Source Content
+    docs_with_content = [d for d in loaded_docs if d.get("full_content")]
+    if docs_with_content:
+        try:
+            vs, rebuilt_chunks = rebuild_vector_store_from_registry(loaded_docs)
+            if rebuilt_chunks > 0:
+                logger.warning(
+                    f"[RECOVERY] Rebuilt FAISS index with {rebuilt_chunks} chunks from "
+                    f"{len(docs_with_content)} registry documents."
+                )
+                try:
+                    os.makedirs(VECTOR_STORE_DIR, exist_ok=True)
+                    vs.save_local(FAISS_INDEX_DIR)
+                except Exception as save_err:
+                    logger.error(f"[RECOVERY] Failed to persist rebuilt FAISS index: {save_err}")
+                indexed_documents.clear()
+                indexed_documents.extend(loaded_docs)
+                return vs, loaded_docs
+        except Exception as rebuild_err:
+            logger.error(f"[RECOVERY] Automatic index reconstruction failed: {rebuild_err}")
+    elif loaded_docs:
+        logger.error(
+            f"[RECOVERY FAILED] {len(loaded_docs)} documents found in registry but none contain source text. "
+            f"FAISS index remains empty. Manual re-upload required."
+        )
+
     indexed_documents.clear()
     indexed_documents.extend(loaded_docs)
     return create_empty_vector_store(), loaded_docs

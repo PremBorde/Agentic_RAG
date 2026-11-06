@@ -10,6 +10,8 @@ interface TopBarProps {
   onToggleSidebar: () => void;
   onOpenTaskManager?: () => void;
   onOpenGoogleConnect?: () => void;
+  googleConnected?: boolean;
+  googleEmail?: string | null;
 }
 
 export function TopBar({
@@ -18,19 +20,30 @@ export function TopBar({
   currentThreadId,
   onToggleSidebar,
   onOpenTaskManager,
-  onOpenGoogleConnect
+  onOpenGoogleConnect,
+  googleConnected,
+  googleEmail
 }: TopBarProps) {
   const [googleStatus, setGoogleStatus] = useState<{
     connected: boolean;
     email?: string | null;
     expires_at?: string | null;
   }>({
-    connected: false,
-    email: null,
+    connected: Boolean(googleConnected),
+    email: googleEmail || null,
     expires_at: null
   });
 
   useEffect(() => {
+    if (googleConnected !== undefined) {
+      setGoogleStatus((prev) => ({
+        ...prev,
+        connected: Boolean(googleConnected),
+        email: googleEmail ?? prev.email
+      }));
+      return;
+    }
+
     const checkGoogle = async () => {
       try {
         const res = await fetch('/api/auth/status');
@@ -45,7 +58,7 @@ export function TopBar({
     checkGoogle();
     const interval = setInterval(checkGoogle, 8000);
     return () => clearInterval(interval);
-  }, []);
+  }, [googleConnected, googleEmail]);
 
   return (
     <header style={{

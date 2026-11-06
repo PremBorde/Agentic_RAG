@@ -75,6 +75,25 @@ function ChatMessageComponent({
   isGoogleConnected,
   googleEmail
 }: ChatMessageProps) {
+  const isGoogleAuthPrompt = Boolean(
+    msg.requiresGoogleAuth || (msg.sender === 'assistant' && (
+      msg.text.includes("don't have access to your Gmail") ||
+      msg.text.includes("haven't connected it or authenticated your session") ||
+      msg.text.includes("Google Workspace is Not Connected") ||
+      msg.text.includes("Google account not connected") ||
+      msg.text.includes("set up the Gmail integration") ||
+      msg.text.includes("Connect Your Google Account") ||
+      msg.text.includes("Connect Google Calendar") ||
+      msg.text.includes("sign in with Google below") ||
+      msg.text.includes("connect your Google account") ||
+      msg.text.includes("connect your Gmail account")
+    ))
+  );
+
+  const displayContent = (isGoogleConnected && isGoogleAuthPrompt)
+    ? `### ✅ Google Workspace Connected\n\nYour account is connected and active as **${googleEmail || 'Google User'}**. Your AI Assistant has full access to search your Gmail inbox, summarize email threads, and manage Google Calendar events.`
+    : msg.text;
+
   // System Document Ingestion Notification Card
   if (msg.sender === 'system' && msg.source === 'Document Indexed') {
     return (
@@ -413,7 +432,7 @@ function ChatMessageComponent({
               </div>
             ) : (
               <MarkdownContent 
-                content={msg.text} 
+                content={displayContent} 
                 isUser={msg.sender === 'user'} 
                 isStreaming={streamingMsgId === msg.id}
                 maxCitationIndex={msg.retrievedDocs ? msg.retrievedDocs.length : 0}
@@ -433,18 +452,7 @@ function ChatMessageComponent({
             )}
 
             {/* Inline Google Workspace Connection Status or Sign In Button */}
-            {(msg.requiresGoogleAuth || (msg.sender === 'assistant' && (
-              msg.text.includes("don't have access to your Gmail") ||
-              msg.text.includes("haven't connected it or authenticated your session") ||
-              msg.text.includes("Google Workspace is Not Connected") ||
-              msg.text.includes("Google account not connected") ||
-              msg.text.includes("set up the Gmail integration") ||
-              msg.text.includes("Connect Your Google Account") ||
-              msg.text.includes("Connect Google Calendar") ||
-              msg.text.includes("sign in with Google below") ||
-              msg.text.includes("connect your Google account") ||
-              msg.text.includes("connect your Gmail account")
-            ))) && (
+            {isGoogleAuthPrompt && (
               <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {isGoogleConnected ? (
                   <div style={{

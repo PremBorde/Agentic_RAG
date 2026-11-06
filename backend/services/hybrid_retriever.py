@@ -95,11 +95,22 @@ class HybridRetriever:
                 meta = getattr(doc, "metadata", {})
                 chunks.append({"text": content, "metadata": meta})
         
+        # If FAISS was empty but registry has documents with source text, recover BM25 chunks directly
+        if not chunks:
+            for doc in getattr(vs_module, "indexed_documents", []):
+                content = doc.get("full_content", "")
+                if content:
+                    from backend.services.chunking import chunk_document_sections
+                    sections = [{"heading": doc.get("title", "Document"), "text": content, "page_number": 1}]
+                    doc_chunks = chunk_document_sections(sections, doc.get("id", "doc"), doc.get("title", "Document"), doc.get("document_type", "file"), doc.get("content_hash", ""), chunk_size=500, chunk_overlap=75)
+                    chunks.extend(doc_chunks)
+
         self.corpus_chunks = chunks
         if chunks:
             tokenized = [tokenize_for_bm25(c["text"]) for c in chunks]
             self.bm25_index = BM25Okapi(tokenized)
             self.save_bm25_corpus()
+            logger.info(f"[RECOVERY] BM25 corpus synchronized with {len(chunks)} chunks.")
         else:
             self.bm25_index = None
 
