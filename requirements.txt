@@ -2,6 +2,7 @@ fastapi>=0.115.0
 uvicorn>=0.30.0
 python-multipart>=0.0.9
 starlette>=0.38.0
+itsdangerous>=2.1.2
 pydantic>=2.8.0
 langchain-core>=0.3.0
 langchain-community>=0.3.0
