@@ -1,9 +1,16 @@
 import re
 from datetime import datetime
 from typing import Optional, Tuple, Dict, Any
-from langchain_community.tools import DuckDuckGoSearchRun
-
-web_search_tool = DuckDuckGoSearchRun()
+try:
+    from langchain_community.tools import DuckDuckGoSearchRun
+    web_search_tool = DuckDuckGoSearchRun()
+except Exception as _ddg_err:
+    class DummySearchTool:
+        def invoke(self, q):
+            return "Search service temporarily unavailable."
+        def run(self, q):
+            return "Search service temporarily unavailable."
+    web_search_tool = DummySearchTool()
 
 GREETING_PATTERNS = [
     r"^(hi|hello|hey|greetings|howdy|hola|namaste|yo|sup)(\s+.*)?$",
