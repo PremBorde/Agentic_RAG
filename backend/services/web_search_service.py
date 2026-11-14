@@ -75,38 +75,8 @@ def search_web_structured(
     results: List[Dict[str, Any]] = []
     tf_label = get_timeframe_label(timeframe)
 
-    # 1. Primary Strategy: DuckDuckGoSearchResults (via langchain_community or ddgs)
+    # 1. Primary Strategy: Direct DDGS client (fast, direct DuckDuckGo API)
     try:
-        from langchain_community.tools import DuckDuckGoSearchResults
-        ddg_tool = DuckDuckGoSearchResults(max_results=max_results)
-        
-        # If timeframe specified, append timeframe context to query if not already present
-        search_term = clean_q
-        if timeframe == "w" and not any(w in clean_q.lower() for w in ["week", "7 days"]):
-            search_term = f"{clean_q} this week"
-        elif timeframe == "d" and not any(w in clean_q.lower() for w in ["today", "24 hours"]):
-            search_term = f"{clean_q} today"
-
-        raw_output = ddg_tool.invoke(search_term)
-        if raw_output and isinstance(raw_output, str) and "snippet:" in raw_output:
-            pattern = re.compile(r'snippet:\s*(.*?),\s*title:\s*(.*?),\s*link:\s*(https?://[^\s,\]]+)', re.DOTALL)
-            for m in pattern.finditer(raw_output):
-                snip = m.group(1).strip()
-                t_str = m.group(2).strip()
-                link = m.group(3).strip()
-                domain = clean_source_domain(link)
-                results.append({
-                    "title": t_str,
-                    "snippet": snip,
-                    "url": link,
-                    "source": domain,
-                    "date": tf_label if tf_label else ""
-                })
-    except Exception as e:
-        logger.warning(f"[WEB_SEARCH] DuckDuckGoSearchResults encountered: {e}")
-
-    # 2. Secondary Strategy: DDGS news or text
-    if not results:
         try:
             from ddgs import DDGS
         except ImportError:
@@ -116,51 +86,83 @@ def search_web_structured(
                 DDGS = None
 
         if DDGS is not None:
-            try:
-                with DDGS(timeout=5) as ddgs_client:
-                    is_news = any(w in clean_q.lower() for w in ["news", "headline", "breaking", "update", "story"])
-                    if is_news:
+            with DDGS(timeout=5) as ddgs_client:
+                is_news = any(w in clean_q.lower() for w in ["news", "headline", "breaking", "update", "story"])
+                if is_news:
+                    raw_news = []
+                    try:
+                        if timeframe:
+                            raw_news = list(ddgs_client.news(clean_q, timelimit=timeframe, max_results=max_results))
+                        if not raw_news:
+                            raw_news = list(ddgs_client.news(clean_q, max_results=max_results))
+                    except Exception as ne:
+                        logger.debug(f"[WEB_SEARCH] DDGS news search note: {ne}")
                         raw_news = []
-                        try:
-                            if timeframe:
-                                raw_news = list(ddgs_client.news(clean_q, timelimit=timeframe, max_results=max_results))
-                            if not raw_news:
-                                raw_news = list(ddgs_client.news(clean_q, max_results=max_results))
-                        except Exception:
-                            raw_news = []
 
-                        for item in raw_news:
-                            d_str = item.get("date", "").split("T")[0] if item.get("date") else tf_label
-                            link = item.get("url") or item.get("link") or ""
-                            results.append({
-                                "title": item.get("title", "").strip(),
-                                "snippet": item.get("body", "").strip(),
-                                "url": link,
-                                "source": item.get("source") or clean_source_domain(link),
-                                "date": d_str
-                            })
+                    for item in raw_news:
+                        d_str = item.get("date", "").split("T")[0] if item.get("date") else tf_label
+                        link = item.get("url") or item.get("link") or ""
+                        results.append({
+                            "title": item.get("title", "").strip(),
+                            "snippet": item.get("body", "").strip(),
+                            "url": link,
+                            "source": item.get("source") or clean_source_domain(link),
+                            "date": d_str
+                        })
 
-                    if not results:
+                # If not a news query or news returned 0 results, use standard text search
+                if not results:
+                    raw_text = []
+                    try:
+                        if timeframe:
+                            raw_text = list(ddgs_client.text(clean_q, timelimit=timeframe, max_results=max_results))
+                        if not raw_text:
+                            raw_text = list(ddgs_client.text(clean_q, max_results=max_results))
+                    except Exception as te:
+                        logger.debug(f"[WEB_SEARCH] DDGS text search note: {te}")
                         raw_text = []
-                        try:
-                            if timeframe:
-                                raw_text = list(ddgs_client.text(clean_q, timelimit=timeframe, max_results=max_results))
-                            if not raw_text:
-                                raw_text = list(ddgs_client.text(clean_q, max_results=max_results))
-                        except Exception:
-                            raw_text = []
 
-                        for item in raw_text:
-                            link = item.get("href") or item.get("link") or ""
-                            results.append({
-                                "title": item.get("title", "").strip(),
-                                "snippet": item.get("body", "").strip(),
-                                "url": link,
-                                "source": clean_source_domain(link),
-                                "date": tf_label if tf_label else ""
-                            })
-            except Exception as e:
-                logger.warning(f"[WEB_SEARCH] DDGS direct client encountered: {e}")
+                    for item in raw_text:
+                        link = item.get("href") or item.get("link") or ""
+                        results.append({
+                            "title": item.get("title", "").strip(),
+                            "snippet": item.get("body", "").strip(),
+                            "url": link,
+                            "source": clean_source_domain(link),
+                            "date": tf_label if tf_label else ""
+                        })
+    except Exception as e:
+        logger.warning(f"[WEB_SEARCH] DDGS direct client encountered: {e}")
+
+    # 2. Secondary Strategy: DuckDuckGoSearchResults (via langchain_community)
+    if not results:
+        try:
+            from langchain_community.tools import DuckDuckGoSearchResults
+            ddg_tool = DuckDuckGoSearchResults(max_results=max_results)
+            
+            search_term = clean_q
+            if timeframe == "w" and not any(w in clean_q.lower() for w in ["week", "7 days"]):
+                search_term = f"{clean_q} this week"
+            elif timeframe == "d" and not any(w in clean_q.lower() for w in ["today", "24 hours"]):
+                search_term = f"{clean_q} today"
+
+            raw_output = ddg_tool.invoke(search_term)
+            if raw_output and isinstance(raw_output, str) and "snippet:" in raw_output:
+                pattern = re.compile(r'snippet:\s*(.*?),\s*title:\s*(.*?),\s*link:\s*(https?://[^\s,\]]+)', re.DOTALL)
+                for m in pattern.finditer(raw_output):
+                    snip = m.group(1).strip()
+                    t_str = m.group(2).strip()
+                    link = m.group(3).strip()
+                    domain = clean_source_domain(link)
+                    results.append({
+                        "title": t_str,
+                        "snippet": snip,
+                        "url": link,
+                        "source": domain,
+                        "date": tf_label if tf_label else ""
+                    })
+        except Exception as e:
+            logger.warning(f"[WEB_SEARCH] DuckDuckGoSearchResults fallback encountered: {e}")
 
     # 3. Tertiary Fallback: DuckDuckGoSearchRun (unstructured fallback)
     if not results:
@@ -207,7 +209,7 @@ async def search_web_structured_async(
     query: str, 
     timeframe: Optional[str] = None, 
     max_results: int = 5, 
-    timeout: float = 6.0
+    timeout: float = 10.0
 ) -> Dict[str, Any]:
     """Asynchronous wrapper for search_web_structured with non-blocking timeout handling."""
     try:

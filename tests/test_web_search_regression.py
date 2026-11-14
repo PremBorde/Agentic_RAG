@@ -89,14 +89,30 @@ class TestWebSearchRegression(unittest.TestCase):
 
     def test_04_successful_search_returns_actual_mocked_results(self):
         """4. Successful search returns actual mocked headlines, summaries, sources, dates, and URLs."""
-        mock_raw_output = (
-            "snippet: AI labs unveiled major reasoning models this week with breakthrough performance., "
-            "title: AI Breakthroughs Announced This Week, link: https://www.reuters.com/technology/ai-2026], ["
-            "snippet: Renewable energy investments hit an all-time high over the past seven days., "
-            "title: Global Green Energy Surge, link: https://apnews.com/article/green-energy-record]"
-        )
+        mock_ddgs_news = [
+            {
+                "title": "AI Breakthroughs Announced This Week",
+                "body": "AI labs unveiled major reasoning models this week with breakthrough performance.",
+                "url": "https://www.reuters.com/technology/ai-2026",
+                "source": "reuters.com",
+                "date": "2026-11-14"
+            },
+            {
+                "title": "Global Green Energy Surge",
+                "body": "Renewable energy investments hit an all-time high over the past seven days.",
+                "url": "https://apnews.com/article/green-energy-record",
+                "source": "apnews.com",
+                "date": "2026-11-14"
+            }
+        ]
 
-        with patch("langchain_community.tools.DuckDuckGoSearchResults.invoke", return_value=mock_raw_output):
+        mock_instance = MagicMock()
+        mock_instance.news.return_value = mock_ddgs_news
+        mock_instance.text.return_value = mock_ddgs_news
+        mock_instance.__enter__.return_value = mock_instance
+        mock_instance.__exit__.return_value = None
+
+        with patch("ddgs.DDGS", return_value=mock_instance):
             search_data = search_web_structured("latest tech news", timeframe="w", max_results=2)
             
             self.assertEqual(search_data["status"], "success")
@@ -106,7 +122,7 @@ class TestWebSearchRegression(unittest.TestCase):
             self.assertEqual(first["title"], "AI Breakthroughs Announced This Week")
             self.assertEqual(first["source"], "reuters.com")
             self.assertEqual(first["url"], "https://www.reuters.com/technology/ai-2026")
-            self.assertEqual(first["date"], "Last 7 days")
+            self.assertEqual(first["date"], "2026-11-14")
             self.assertIn("AI labs unveiled major reasoning models", first["snippet"])
 
             # Verify prompt context formatting

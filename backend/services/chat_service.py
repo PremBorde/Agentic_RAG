@@ -702,7 +702,7 @@ async def stream_chat_events(
                 search_query, 
                 timeframe=timeframe,
                 max_results=5,
-                timeout=6.0
+                timeout=10.0
             )
 
             if search_result.get("status") == "error" or not search_result.get("results"):
