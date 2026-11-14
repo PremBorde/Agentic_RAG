@@ -11,10 +11,13 @@ DATA_DIR = os.environ.get("DATA_DIR", os.path.join(os.path.dirname(os.path.dirna
 DB_PATH = os.path.join(DATA_DIR, "agent_studio.db")
 
 def get_db_connection() -> sqlite3.Connection:
-    """Returns a SQLite connection with row factory enabled."""
+    """Returns a SQLite connection with row factory, WAL mode, and busy timeout enabled."""
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
+    conn.execute("PRAGMA foreign_keys=ON;")
     return conn
 
 def init_db():
@@ -138,6 +141,12 @@ def init_db():
         cursor.execute("ALTER TABLE messages ADD COLUMN user_id TEXT")
     if "message_type" not in m_cols:
         cursor.execute("ALTER TABLE messages ADD COLUMN message_type TEXT DEFAULT 'text'")
+
+    # Migration: check and add missing user_id column to memories
+    cursor.execute("PRAGMA table_info(memories)")
+    mem_cols = [row[1] for row in cursor.fetchall()]
+    if "user_id" not in mem_cols:
+        cursor.execute("ALTER TABLE memories ADD COLUMN user_id TEXT")
 
     # ── INDEXES ────────────────────────────────────────────────────────────────
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)")
@@ -356,10 +365,13 @@ def update_task(
     due_date: Optional[str] = None,
     priority: Optional[str] = None,
     status: Optional[str] = None,
-    category: Optional[str] = None
+    category: Optional[str] = None,
+    user_id: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     task = get_task(task_id)
     if not task:
+        return None
+    if user_id and task.get("user_id") and task["user_id"] != user_id:
         return None
     
     now = datetime.utcnow().isoformat()
@@ -383,10 +395,15 @@ def update_task(
     conn.close()
     return get_task(task_id)
 
-def complete_task(task_id: str) -> Optional[Dict[str, Any]]:
-    return update_task(task_id, status="completed")
+def complete_task(task_id: str, user_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    return update_task(task_id, status="completed", user_id=user_id)
 
-def delete_task(task_id: str) -> bool:
+def delete_task(task_id: str, user_id: Optional[str] = None) -> bool:
+    task = get_task(task_id)
+    if not task:
+        return False
+    if user_id and task.get("user_id") and task["user_id"] != user_id:
+        return False
     conn = get_db_connection()
     cur = conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
     conn.commit()
@@ -394,17 +411,27 @@ def delete_task(task_id: str) -> bool:
     conn.close()
     return deleted
 
-def get_overdue_tasks() -> List[Dict[str, Any]]:
+def get_overdue_tasks(user_id: Optional[str] = None) -> List[Dict[str, Any]]:
     today = datetime.utcnow().strftime("%Y-%m-%d")
     conn = get_db_connection()
-    rows = conn.execute(
-        """
-        SELECT * FROM tasks
-        WHERE status != 'completed' AND due_date IS NOT NULL AND due_date < ?
-        ORDER BY due_date ASC
-        """,
-        (today,)
-    ).fetchall()
+    if user_id:
+        rows = conn.execute(
+            """
+            SELECT * FROM tasks
+            WHERE status != 'completed' AND due_date IS NOT NULL AND due_date < ? AND user_id = ?
+            ORDER BY due_date ASC
+            """,
+            (today, user_id)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT * FROM tasks
+            WHERE status != 'completed' AND due_date IS NOT NULL AND due_date < ?
+            ORDER BY due_date ASC
+            """,
+            (today,)
+        ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
@@ -412,38 +439,47 @@ def get_overdue_tasks() -> List[Dict[str, Any]]:
 # Long-Term Memory CRUD
 # ─────────────────────────────────────────────────────────────────────────────
 
-def add_memory(content: str, category: str = "preference") -> Dict[str, Any]:
+def add_memory(content: str, category: str = "preference", user_id: Optional[str] = None) -> Dict[str, Any]:
     mem_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
     conn = get_db_connection()
     conn.execute(
-        "INSERT INTO memories (id, category, content, created_at) VALUES (?, ?, ?, ?)",
-        (mem_id, category.lower(), content.strip(), now)
+        "INSERT INTO memories (id, category, content, user_id, created_at) VALUES (?, ?, ?, ?, ?)",
+        (mem_id, category.lower(), content.strip(), user_id, now)
     )
     conn.commit()
     conn.close()
-    return {"id": mem_id, "category": category, "content": content, "created_at": now}
+    return {"id": mem_id, "category": category, "content": content, "user_id": user_id, "created_at": now}
 
-def list_memories(category: Optional[str] = None) -> List[Dict[str, Any]]:
+def list_memories(category: Optional[str] = None, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_db_connection()
+    query = "SELECT * FROM memories WHERE 1=1"
+    params = []
     if category:
-        rows = conn.execute("SELECT * FROM memories WHERE category = ? ORDER BY created_at DESC", (category.lower(),)).fetchall()
-    else:
-        rows = conn.execute("SELECT * FROM memories ORDER BY created_at DESC").fetchall()
+        query += " AND category = ?"
+        params.append(category.lower())
+    if user_id:
+        query += " AND (user_id = ? OR user_id IS NULL)"
+        params.append(user_id)
+    query += " ORDER BY created_at DESC"
+    rows = conn.execute(query, tuple(params)).fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
-def delete_memory(memory_id: str) -> bool:
+def delete_memory(memory_id: str, user_id: Optional[str] = None) -> bool:
     conn = get_db_connection()
-    cur = conn.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
+    if user_id:
+        cur = conn.execute("DELETE FROM memories WHERE id = ? AND (user_id = ? OR user_id IS NULL)", (memory_id, user_id))
+    else:
+        cur = conn.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
     conn.commit()
     deleted = cur.rowcount > 0
     conn.close()
     return deleted
 
-def get_relevant_memories_text() -> str:
+def get_relevant_memories_text(user_id: Optional[str] = None) -> str:
     """Returns a consolidated summary of persistent user preferences for agent prompts."""
-    memories = list_memories()
+    memories = list_memories(user_id=user_id)
     if not memories:
         return "No persistent user memories saved."
     lines = [f"- [{m['category'].upper()}] {m['content']}" for m in memories[:15]]

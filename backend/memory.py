@@ -157,10 +157,21 @@ def get_thread_context_str(thread_id: Optional[str], max_turns: int = 6, max_ass
             lines.append(f"Assistant: {compact}")
     return "\n".join(lines) if lines else "No prior conversational context."
 
+MAX_CACHED_THREADS = 100
+MAX_TURNS_PER_CACHED_THREAD = 16
+
 def record_thread_turn(thread_id: Optional[str], role: str, content: str):
-    """Records turn into the thread's memory cache."""
+    """Records turn into the thread's memory cache with bounded memory limits."""
     if not thread_id:
         return
+    # Evict oldest thread if cache size exceeds limit
+    if thread_id not in thread_histories and len(thread_histories) >= MAX_CACHED_THREADS:
+        try:
+            oldest_key = next(iter(thread_histories))
+            del thread_histories[oldest_key]
+        except Exception:
+            pass
+
     if thread_id not in thread_histories:
         thread_histories[thread_id] = []
     thread_histories[thread_id].append({
@@ -168,6 +179,9 @@ def record_thread_turn(thread_id: Optional[str], role: str, content: str):
         "content": content,
         "timestamp": datetime.now().isoformat()
     })
+    # Keep only the most recent turns in active memory (older turns persisted in SQLite)
+    if len(thread_histories[thread_id]) > MAX_TURNS_PER_CACHED_THREAD:
+        thread_histories[thread_id] = thread_histories[thread_id][-MAX_TURNS_PER_CACHED_THREAD:]
 
 def get_last_user_query(thread_id: Optional[str]) -> str:
     """Returns the most recent user question prior to the current turn from thread history."""

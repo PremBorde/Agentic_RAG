@@ -37,15 +37,19 @@ def get_all_tasks(request: Request, status: Optional[str] = None, category: Opti
     return list_tasks(status=status, category=category, user_id=user_id)
 
 @router.get("/overdue")
-def get_overdue():
-    """Lists overdue tasks."""
-    return get_overdue_tasks()
+def get_overdue(request: Request):
+    """Lists overdue tasks for the authenticated user."""
+    user_id = get_current_user_id(request)
+    return get_overdue_tasks(user_id=user_id)
 
 @router.get("/{task_id}")
-def get_single_task(task_id: str):
+def get_single_task(task_id: str, request: Request):
+    user_id = get_current_user_id(request)
     task = get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    if user_id and task.get("user_id") and task["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
     return task
 
 @router.post("")
@@ -61,7 +65,8 @@ def add_new_task(req: TaskCreateRequest, request: Request):
     )
 
 @router.put("/{task_id}")
-def modify_task(task_id: str, req: TaskUpdateRequest):
+def modify_task(task_id: str, req: TaskUpdateRequest, request: Request):
+    user_id = get_current_user_id(request)
     task = update_task(
         task_id=task_id,
         title=req.title,
@@ -69,23 +74,26 @@ def modify_task(task_id: str, req: TaskUpdateRequest):
         due_date=req.due_date,
         priority=req.priority,
         status=req.status,
-        category=req.category
+        category=req.category,
+        user_id=user_id
     )
     if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404, detail="Task not found or access denied")
     return task
 
 @router.post("/{task_id}/complete")
-def finish_task(task_id: str):
-    task = complete_task(task_id)
+def finish_task(task_id: str, request: Request):
+    user_id = get_current_user_id(request)
+    task = complete_task(task_id, user_id=user_id)
     if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404, detail="Task not found or access denied")
     return task
 
 @router.delete("/{task_id}")
-def remove_task(task_id: str):
-    success = delete_task(task_id)
+def remove_task(task_id: str, request: Request):
+    user_id = get_current_user_id(request)
+    success = delete_task(task_id, user_id=user_id)
     if not success:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404, detail="Task not found or access denied")
     return {"success": True, "message": "Task deleted"}
 

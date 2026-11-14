@@ -84,49 +84,11 @@ def get_oauth_url(redirect_uri: Optional[str] = None) -> Dict[str, str]:
     return {"url": auth_url, "state": state, "code_verifier": getattr(flow, "code_verifier", None)}
 
 def handle_oauth_callback(code: str, redirect_uri: Optional[str] = None, code_verifier: Optional[str] = None) -> Dict[str, Any]:
-    """Exchanges auth code for access & refresh tokens, saves securely to disk."""
-    config = get_client_config()
-    if not config:
-        return {"success": False, "error": "Google OAuth configuration missing."}
-    
-    r_uri = redirect_uri or os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
-    try:
-        flow = Flow.from_client_config(
-            config,
-            scopes=SCOPES,
-            redirect_uri=r_uri
-        )
-        if code_verifier:
-            flow.code_verifier = code_verifier
-        flow.fetch_token(code=code, code_verifier=code_verifier)
-        creds = flow.credentials
-        
-        # Save credentials securely to disk
-        os.makedirs(DATA_DIR, exist_ok=True)
-        token_data = {
-            "token": creds.token,
-            "refresh_token": creds.refresh_token,
-            "token_uri": creds.token_uri,
-            "client_id": creds.client_id,
-            "client_secret": creds.client_secret,
-            "scopes": creds.scopes,
-            "expiry": creds.expiry.isoformat() if creds.expiry else None
-        }
-        with open(TOKEN_FILE, "w", encoding="utf-8") as f:
-            json.dump(token_data, f, indent=2)
-            
-        # Get user profile email
-        email_addr = "Connected"
-        try:
-            oauth2_service = build("oauth2", "v2", credentials=creds)
-            user_info = oauth2_service.userinfo().get().execute()
-            email_addr = user_info.get("email", "Connected")
-        except Exception:
-            pass
-
-        return {"success": True, "email": email_addr}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    """Exchanges auth code for encrypted per-user credentials in SQLite."""
+    res = exchange_code_for_user(code, redirect_uri=redirect_uri, code_verifier=code_verifier)
+    if res.get("success"):
+        return {"success": True, "email": res.get("email")}
+    return {"success": False, "error": res.get("error", "OAuth exchange failed")}
 
 def exchange_code_for_user(code: str, redirect_uri: Optional[str] = None, code_verifier: Optional[str] = None) -> Dict[str, Any]:
     """Exchanges OAuth authorization code, extracts user profile, encrypts tokens, and stores user in DB."""
@@ -177,19 +139,12 @@ def exchange_code_for_user(code: str, redirect_uri: Optional[str] = None, code_v
 
 def get_user_credentials(user_id: Optional[str] = None) -> Optional[Credentials]:
     """Retrieves and auto-refreshes decrypted Google credentials for a specific user."""
-    user = None
-    if user_id:
-        user = get_user_by_id(user_id)
-    else:
-        # Fallback: check if any user exists in database
-        conn = get_db_connection()
-        row = conn.execute("SELECT * FROM users ORDER BY created_at DESC LIMIT 1").fetchone()
-        conn.close()
-        if row:
-            user = dict(row)
-            
+    if not user_id:
+        return None
+        
+    user = get_user_by_id(user_id)
     if not user:
-        return get_google_credentials() # Legacy token file fallback
+        return None
         
     enc_access = user.get("google_access_token")
     enc_refresh = user.get("google_refresh_token")
