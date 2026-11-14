@@ -159,8 +159,15 @@ def format_friendly_error(exc: Exception) -> str:
 
     err_str = str(exc)
     err_lower = err_str.lower()
+    logger.error(f"[Error Handler] Captured exception: {exc}")
 
-    if any(k in err_lower for k in ["not found", "not_found", "no longer available", "not supported for generatecontent"]):
+    if any(k in err_lower for k in ["api_key", "api key", "apikey", "unauthenticated", "invalid api key"]):
+        return (
+            "🔑 **Invalid or Missing Gemini API Key**\n\n"
+            "Please check that your `GOOGLE_API_KEY` is set correctly in your Render Environment settings."
+        )
+
+    if (("model" in err_lower or "models/" in err_lower) and any(k in err_lower for k in ["not found", "not_found", "no longer available", "not supported for generatecontent"])):
         return (
             "⚠️ **AI Model Deprecated or Unavailable**\n\n"
             "The requested model is no longer active or is temporarily unavailable from Google. "
