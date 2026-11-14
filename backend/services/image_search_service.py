@@ -21,6 +21,39 @@ HTTP_HEADERS = {
 
 from backend.services.web_search_service import clean_source_domain
 
+COMMON_TECH_TYPOS = {
+    "antropic": "anthropic",
+    "nividia": "nvidia",
+    "nvidea": "nvidia",
+    "opena": "openai",
+    "gogle": "google",
+    "alphbet": "alphabet",
+    "macbbook": "macbook"
+}
+
+def normalize_image_query(q: str) -> str:
+    """Corrects common typos in entities and strips conversational noise."""
+    tokens = q.strip().split()
+    corrected = [COMMON_TECH_TYPOS.get(w.lower(), w) for w in tokens]
+    return " ".join(corrected)
+
+def is_image_result_relevant(title: str, url: str, query: str) -> bool:
+    """
+    Validates that an image search result contains at least one substantive keyword
+    from the user query, preventing completely unrelated index hits (e.g. GarageBand for CEO).
+    """
+    stop_words = {
+        "the", "and", "for", "with", "show", "image", "images", 
+        "photo", "photos", "picture", "pictures", "diagram", "diagrams",
+        "about", "from", "that", "this", "some"
+    }
+    tokens = [w for w in re.findall(r'[a-zA-Z0-9]+', query.lower()) if len(w) > 2 and w not in stop_words]
+    if not tokens:
+        return True
+    
+    haystack = f"{title.lower()} {url.lower()}"
+    return any(t in haystack for t in tokens)
+
 
 def _search_ddgs(query: str, max_results: int = 6) -> List[Dict[str, Any]]:
     """
@@ -43,7 +76,7 @@ def _search_ddgs(query: str, max_results: int = 6) -> List[Dict[str, Any]]:
                 query,
                 region="wt-wt",
                 safesearch="moderate",
-                max_results=max_results
+                max_results=max_results * 2  # fetch extra to allow for relevance filtering
             ))
 
         for item in raw_results:
@@ -56,6 +89,11 @@ def _search_ddgs(query: str, max_results: int = 6) -> List[Dict[str, Any]]:
             source_domain = item.get("source") or clean_source_domain(page_url)
             title = (item.get("title") or "Visual Reference").strip()
 
+            # Filter out completely unrelated search results
+            if not is_image_result_relevant(title, page_url, query):
+                logger.debug(f"[IMAGE_SEARCH] Dropping irrelevant hit: '{title}' for query '{query}'")
+                continue
+
             results.append({
                 "title": title,
                 "image": img_url,
@@ -67,6 +105,9 @@ def _search_ddgs(query: str, max_results: int = 6) -> List[Dict[str, Any]]:
                 "license": "Web Source",
                 "author": None
             })
+
+            if len(results) >= max_results:
+                break
     except Exception as e:
         logger.warning(f"[IMAGE_SEARCH] DDGS image search failed: {e}")
 
@@ -157,8 +198,8 @@ def search_web_images(
     if not clean_query:
         return {"query": "", "images": [], "provider": "none", "count": 0}
 
-    # Enhance query for diagram / schematic requests
-    search_term = clean_query
+    # Normalize entity typos (e.g. 'antropic' -> 'anthropic')
+    search_term = normalize_image_query(clean_query)
     if prefer_diagrams and not any(k in search_term.lower() for k in ["diagram", "schematic", "chart", "figure", "illustration"]):
         search_term = f"{search_term} diagram"
 
