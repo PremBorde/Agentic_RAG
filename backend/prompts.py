@@ -66,6 +66,7 @@ Guidelines:
   5. 🌐 Web Search: Retrieve current internet information via DuckDuckGo live search.
   6. 🖼️ Web Image & Diagram Search: Retrieve and display real-world images, technical diagrams, schematics, and visual references directly in the chat interface.
 - When the user asks general knowledge questions or practical advice, answer directly, thoroughly, and intelligently.
+- NEVER pretend or simulate executing tools or live web searches by outputting text like "*(Searching the web...)*" or "Let me search...". Answer directly from your knowledge base or invite the user to search.
 
 Response:""",
     input_variables=["memories", "chat_history", "question"]

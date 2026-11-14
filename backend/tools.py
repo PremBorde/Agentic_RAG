@@ -136,15 +136,17 @@ def is_web_search_continuation(text: str, chat_history_str: str = "") -> bool:
     if any(t == cmd or t.startswith(cmd) for cmd in direct_search_commands):
         return True
 
-    # Check confirmation when previous turn acknowledged or promised a web search
-    confirm_starters = ["yes", "sure", "go ahead", "confirm", "please do", "do it", "ok search", "okay search"]
-    is_confirm = any(t == cs or t.startswith(cs + " ") for cs in confirm_starters)
+    # Check confirmation when previous turn acknowledged or offered a web search
+    confirm_starters = ["yes", "yeah", "yep", "sure", "go ahead", "confirm", "please do", "do it", "ok", "okay", "ok search", "okay search"]
+    is_confirm = any(t == cs or t.startswith(cs + " ") or t.startswith(cs + ",") or t.startswith(cs + ".") for cs in confirm_starters)
     if is_confirm and chat_history_str:
         hist_lower = chat_history_str.lower()
         search_acknowledgement_cues = [
             "perform a web search", "search the web", "search online",
             "searching the web", "i'll search", "i will search", "web search to fetch",
-            "look that up on the web", "check the web"
+            "look that up on the web", "check the web", "run a live search", "run a quick live search",
+            "run a search", "live search", "search for", "would you like me to search",
+            "should i search", "like me to search", "like me to look up", "latest news"
         ]
         if any(cue in hist_lower for cue in search_acknowledgement_cues):
             return True
@@ -199,18 +201,28 @@ def extract_web_search_query_and_timeframe(query: str, chat_history_str: str = "
     if is_web_search_continuation(q_clean, chat_history_str=chat_history_str):
         if chat_history_str:
             lines = [l.strip() for l in chat_history_str.split('\n') if l.strip()]
+            # 1. Check if prior user query was an explicit web search
             for line in reversed(lines):
                 if line.startswith("User:"):
                     prev_user_q = line[5:].strip()
                     if is_explicit_web_search(prev_user_q):
                         return extract_web_search_query_and_timeframe(prev_user_q, chat_history_str="")
+            # 2. Check assistant cues with specific topic in line
             for line in reversed(lines):
                 if line.startswith("Assistant:") and ("search" in line.lower() or "news" in line.lower()):
-                    m_ack = re.search(r'(?:search\s+for|search\s+the\s+web\s+for|perform\s+a\s+web\s+search\s+to\s+fetch|fetch\s+the)\s+([^\.]+)', line, re.I)
+                    m_ack = re.search(r'(?:search\s+for|search\s+the\s+web\s+for|perform\s+a\s+web\s+search\s+to\s+fetch|fetch\s+the|involve|regarding|about)\s+([^\.\?]+)', line, re.I)
                     if m_ack:
                         ack_topic = m_ack.group(1).strip()
-                        tf = "w" if "week" in line.lower() else ("d" if "today" in line.lower() or "day" in line.lower() else None)
-                        return ack_topic, tf
+                        ack_topic = re.sub(r'\b(?:right\s+now|today|for\s+you|please)\b', '', ack_topic, flags=re.I).strip()
+                        tf = "w" if "week" in line.lower() else ("d" if "today" in line.lower() or "day" in line.lower() or "recent" in line.lower() else None)
+                        if ack_topic and len(ack_topic) > 2:
+                            return ack_topic, tf
+            # 3. Fallback: use previous substantive user query topic
+            for line in reversed(lines):
+                if line.startswith("User:"):
+                    prev_user_q = line[5:].strip()
+                    if prev_user_q and prev_user_q.lower() not in ["yes", "yeah", "sure", "ok", "okay", "yep", "do it"]:
+                        return f"{prev_user_q} latest news", "d"
 
     timeframe = None
     if re.search(r'\b(?:today|last\s+24\s*hours?|past\s+24\s*hours?|past\s+day|last\s+day|24h|recent\s+24\s*hours?)\b', q_low):
