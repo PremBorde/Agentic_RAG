@@ -23,8 +23,11 @@ app = FastAPI(
 
 # ── Production-Grade CORS Configuration ─────────────────────────────────────
 raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
 if raw_origins and raw_origins.strip() != "*":
     origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+    if frontend_url and frontend_url not in origins:
+        origins.append(frontend_url)
 elif raw_origins.strip() == "*":
     origins = ["*"]
 else:
@@ -34,6 +37,8 @@ else:
         "http://localhost:8000",
         "http://127.0.0.1:8000",
     ]
+    if frontend_url and frontend_url not in origins:
+        origins.append(frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,11 +50,14 @@ app.add_middleware(
 
 # ── Session Security ────────────────────────────────────────────────────────
 env = os.getenv("ENVIRONMENT", "development").lower()
-session_secret = os.getenv("SECRET_KEY")
+session_secret = os.getenv("SECRET_KEY") or os.getenv("SESSION_SECRET_KEY") or os.getenv("ENCRYPTION_KEY")
 if not session_secret:
-    if env == "production":
-        raise RuntimeError("CRITICAL: SECRET_KEY environment variable MUST be set in production mode.")
-    session_secret = "agentic-rag-studio-secure-session-key-dev-fallback"
+    import secrets
+    import logging
+    session_secret = secrets.token_hex(32)
+    logging.getLogger("server").warning(
+        "SECRET_KEY not set. Generated an ephemeral runtime key. Set SECRET_KEY in environment variables to persist sessions across restarts."
+    )
 
 app.add_middleware(
     SessionMiddleware,
