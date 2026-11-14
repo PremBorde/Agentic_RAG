@@ -22,19 +22,22 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Users (OAuth Multi-user management)
+    # 1. Users (OAuth Multi-user management)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
+        display_name TEXT,
+        password_hash TEXT,
         google_access_token TEXT,
         google_refresh_token TEXT,
         token_expires_at TEXT,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        updated_at TEXT
     )
     """)
 
-    # Tasks & Reminders (linked to user_id)
+    # 2. Tasks & Reminders (linked to user_id)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
@@ -50,6 +53,60 @@ def init_db():
     )
     """)
 
+    # 3. Long-Term Memories & User Preferences
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS memories (
+        id TEXT PRIMARY KEY,
+        category TEXT DEFAULT 'preference',
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    )
+    """)
+
+    # 4. Pending Sensitive Actions (Human-in-the-Loop approval)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS pending_actions (
+        id TEXT PRIMARY KEY,
+        action_type TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at TEXT NOT NULL,
+        executed_at TEXT
+    )
+    """)
+
+    # 5. Conversations (Chat Threads)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS conversations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        title TEXT NOT NULL,
+        model TEXT NOT NULL DEFAULT 'gemini-3.5-flash-lite',
+        last_message_at TEXT,
+        archived_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """)
+
+    # 6. Messages (Thread turns & metadata)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        user_id TEXT,
+        sender TEXT NOT NULL,
+        text TEXT NOT NULL,
+        source TEXT,
+        message_type TEXT DEFAULT 'text',
+        metadata_json TEXT DEFAULT '{}',
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+    )
+    """)
+
+    # ── MIGRATIONS FOR LEGACY SCHEMAS ──────────────────────────────────────────
     # Migration: check if user_id column exists on existing tasks table
     cursor.execute("PRAGMA table_info(tasks)")
     columns = [row[1] for row in cursor.fetchall()]
@@ -82,60 +139,11 @@ def init_db():
     if "message_type" not in m_cols:
         cursor.execute("ALTER TABLE messages ADD COLUMN message_type TEXT DEFAULT 'text'")
 
-    # Normalized indexes for performance & isolation
+    # ── INDEXES ────────────────────────────────────────────────────────────────
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_updated ON conversations(user_id, updated_at DESC)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON messages(conversation_id, created_at ASC)")
-
-    # Long-Term Memories & User Preferences
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS memories (
-        id TEXT PRIMARY KEY,
-        category TEXT DEFAULT 'preference',
-        content TEXT NOT NULL,
-        created_at TEXT NOT NULL
-    )
-    """)
-
-    # Pending Sensitive Actions (Human-in-the-Loop approval)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS pending_actions (
-        id TEXT PRIMARY KEY,
-        action_type TEXT NOT NULL,
-        summary TEXT NOT NULL,
-        payload_json TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',
-        created_at TEXT NOT NULL,
-        executed_at TEXT
-    )
-    """)
-
-    # Conversations (Chat Threads)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS conversations (
-        id TEXT PRIMARY KEY,
-        user_id TEXT,
-        title TEXT NOT NULL,
-        model TEXT NOT NULL DEFAULT 'gemini-3.5-flash-lite',
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-    )
-    """)
-
-    # Messages (Thread turns & metadata)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS messages (
-        id TEXT PRIMARY KEY,
-        conversation_id TEXT NOT NULL,
-        sender TEXT NOT NULL,
-        text TEXT NOT NULL,
-        source TEXT,
-        metadata_json TEXT DEFAULT '{}',
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-    )
-    """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON messages(conversation_id, created_at ASC)")
 
     conn.commit()
     conn.close()
