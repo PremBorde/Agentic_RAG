@@ -41,7 +41,7 @@ def _assert_ownership(thread_id: str, active_user_id: str):
 class SyncConversationRequest(BaseModel):
     thread_id: str
     title: str
-    model: str = "gemini-3.5-flash-lite"
+    model: str = "gemini-2.5-flash"
     messages: List[Dict[str, Any]] = []
     user_id: Optional[str] = None
 

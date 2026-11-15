@@ -264,7 +264,7 @@ def orchestrate_node(state: AgentState) -> dict:
         }
 
 def generate_node(state: AgentState) -> dict:
-    model_name = state.get("model_name") or "gemini-3.5-flash-lite"
+    model_name = state.get("model_name") or "gemini-2.5-flash"
     chat_hist = state.get("chat_history") or "No prior conversational context."
     memories = get_relevant_memories_text()
     try:
@@ -276,7 +276,7 @@ def generate_node(state: AgentState) -> dict:
             "question": state["question"]
         })
     except Exception:
-        fallback_llm = get_llm("gemini-3.5-flash-lite")
+        fallback_llm = get_llm("gemini-2.5-flash")
         answer = (gen_prompt | fallback_llm | StrOutputParser()).invoke({
             "memories": memories,
             "chat_history": chat_hist,

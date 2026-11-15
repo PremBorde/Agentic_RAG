@@ -27,7 +27,9 @@ def get_llm(model_name: Optional[str] = None):
         "gemini-1.5-flash": "gemini-2.5-flash",
         "gemini-2.0-flash": "gemini-2.5-flash",
         "gemini-3-flash-preview": "gemini-2.5-flash",
-        "gemini-flash-latest": "gemini-2.5-flash"
+        "gemini-flash-latest": "gemini-2.5-flash",
+        "gemini-3.5-flash-lite": "gemini-2.5-flash",
+        "gemini-2.5-flash-lite": "gemini-2.5-flash"
     }
     if model_name in alias_map:
         model_name = alias_map[model_name]

@@ -85,7 +85,7 @@ def init_db():
         id TEXT PRIMARY KEY,
         user_id TEXT,
         title TEXT NOT NULL,
-        model TEXT NOT NULL DEFAULT 'gemini-3.5-flash-lite',
+        model TEXT NOT NULL DEFAULT 'gemini-2.5-flash',
         last_message_at TEXT,
         archived_at TEXT,
         created_at TEXT NOT NULL,
@@ -530,7 +530,7 @@ def update_action_status(action_id: str, status: str) -> bool:
 def create_or_update_conversation(
     thread_id: str,
     title: str,
-    model: str = "gemini-3.5-flash-lite",
+    model: str = "gemini-2.5-flash",
     user_id: Optional[str] = None
 ) -> Dict[str, Any]:
     now = datetime.utcnow().isoformat()
@@ -613,7 +613,7 @@ def save_conversation_message(
     # Ensure conversation exists with proper user_id binding
     conn.execute(
         """INSERT INTO conversations (id, user_id, title, model, created_at, updated_at, last_message_at)
-           VALUES (?, ?, ?, 'gemini-3.5-flash-lite', ?, ?, ?)
+           VALUES (?, ?, ?, 'gemini-2.5-flash', ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              updated_at = excluded.updated_at,
              last_message_at = excluded.last_message_at,

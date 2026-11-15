@@ -104,13 +104,13 @@ async def astream_with_backoff(
             else:
                 break
 
-    # Resilient Automatic Failover to lowest-latency model if no tokens were yielded yet
+    # Resilient Automatic Failover to stable model if no tokens were yielded yet
     current_model = getattr(llm, "model", "")
-    if allow_fallback and not yielded_any and not is_quota_exhausted_error(last_exc) and current_model != "gemini-2.5-flash-lite":
+    if allow_fallback and not yielded_any and not is_quota_exhausted_error(last_exc) and current_model != "gemini-2.5-flash":
         try:
             from backend.config import get_llm
-            logger.warning(f"Primary model '{current_model}' encountered transient issue: {last_exc}. Resilient failover to gemini-2.5-flash-lite...")
-            fallback_llm = get_llm("gemini-2.5-flash-lite")
+            logger.warning(f"Primary model '{current_model}' encountered transient issue: {last_exc}. Resilient failover to gemini-2.5-flash...")
+            fallback_llm = get_llm("gemini-2.5-flash")
             async for chunk in fallback_llm.astream(prompt_val):
                 yield chunk
             return
