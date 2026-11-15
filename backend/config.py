@@ -5,9 +5,23 @@ from typing import Optional
 
 load_dotenv()
 
-# Ensure GOOGLE_API_KEY uses the authentic Gemini API key if set as GEMINI_API_KEY
-if os.getenv("GEMINI_API_KEY") and not (os.getenv("GOOGLE_API_KEY", "").startswith("AIzaSy")):
-    os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
+# Resolve the active Gemini API key — prefer the one that starts with AIzaSy
+# Priority: GEMINI_API_KEY (if valid) > GOOGLE_API_KEY (if valid)
+_candidate_keys = [
+    os.getenv("GEMINI_API_KEY", ""),
+    os.getenv("GOOGLE_API_KEY", ""),
+]
+_resolved_key = next((k for k in _candidate_keys if k.startswith("AIzaSy")), "")
+
+if _resolved_key:
+    os.environ["GOOGLE_API_KEY"] = _resolved_key
+    os.environ["GEMINI_API_KEY"] = _resolved_key
+else:
+    import logging as _log
+    _log.warning(
+        "[config] WARNING: No valid Gemini API key found (must start with 'AIzaSy'). "
+        "Set GEMINI_API_KEY or GOOGLE_API_KEY in your environment. All LLM calls will fail."
+    )
 
 # Multi-Model Cache for dynamic Gemini model selection
 _llm_cache = {}

@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import time
 import random
 import logging
@@ -161,17 +161,17 @@ def format_friendly_error(exc: Exception) -> str:
     err_lower = err_str.lower()
     logger.error(f"[Error Handler] Captured exception: {exc}")
 
-    if any(k in err_lower for k in ["api_key", "api key", "apikey", "unauthenticated", "invalid api key"]):
+    if any(k in err_lower for k in ["api_key", "api key", "apikey", "unauthenticated", "invalid api key", "401 unauthenticated"]):
         return (
             "🔑 **Invalid or Missing Gemini API Key**\n\n"
-            "Please check that your `GOOGLE_API_KEY` is set correctly in your Render Environment settings."
+            "Your `GEMINI_API_KEY` is missing or invalid. Get a free key from aistudio.google.com and set it as `GEMINI_API_KEY` in Render Environment Variables (must start with AIzaSy)."
         )
 
-    if (("model" in err_lower or "models/" in err_lower) and any(k in err_lower for k in ["not found", "not_found", "no longer available", "not supported for generatecontent"])):
+    if (("model" in err_lower or "models/" in err_lower) and any(k in err_lower for k in ["not found", "not_found", "no longer available", "not supported for generatecontent"])) or ("404" in err_lower and "not_found" in err_lower):
         return (
-            "⚠️ **AI Model Deprecated or Unavailable**\n\n"
-            "The requested model is no longer active or is temporarily unavailable from Google. "
-            "Please select **Gemini 2.5 Flash Lite (Fastest)** from the model selector in the composer."
+            "⚠️ **AI Model Not Found — Check Your API Key**\n\n"
+            "Gemini returned 404. This usually means your GEMINI_API_KEY is invalid/missing. Check Render Environment Variables — the key must start with AIzaSy."
+            ""
         )
 
     if any(k in err_lower for k in ["429", "resource_exhausted", "resourceexhausted", "quota"]):
