@@ -124,5 +124,30 @@ class TestDocumentDeletion(unittest.TestCase):
         matching_chunks = [c for c in hybrid_retriever.corpus_chunks if c.get("metadata", {}).get("document_id") == doc_id]
         self.assertEqual(len(matching_chunks), 0)
 
+    def test_multitenant_document_isolation(self):
+        from fastapi import HTTPException
+        doc_a = process_custom_text("User A Note", "User A Private Note Content", user_id="user_a")["document"]
+        doc_b = process_custom_text("User B Note", "User B Private Note Content", user_id="user_b")["document"]
+
+        self.assertEqual(len(indexed_documents), 2)
+
+        # User B attempting to delete User A's document must be rejected with 403
+        with self.assertRaises(HTTPException) as ctx:
+            remove_document(doc_a["id"], user_id="user_b")
+        self.assertEqual(ctx.exception.status_code, 403)
+
+        # User A deleting their own document must succeed
+        res_a = remove_document(doc_a["id"], user_id="user_a")
+        self.assertIn("successfully removed", res_a["message"])
+
+        # Remaining document is User B's
+        self.assertEqual(len(indexed_documents), 1)
+        self.assertEqual(indexed_documents[0]["id"], doc_b["id"])
+
+        # User B deleting their own document succeeds
+        res_b = remove_document(doc_b["id"], user_id="user_b")
+        self.assertIn("successfully removed", res_b["message"])
+        self.assertEqual(len(indexed_documents), 0)
+
 if __name__ == "__main__":
     unittest.main()

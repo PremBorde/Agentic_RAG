@@ -119,7 +119,7 @@ async def stream_chat_events(
     yield 'data: {"type":"stage","stage":"thinking"}\n\n'
 
     chat_hist = get_thread_context_str(thread_id)
-    memories = get_relevant_memories_text()
+    memories = get_relevant_memories_text(user_id=user_id)
     conn_info = get_connection_status(user_id)
     if conn_info.get("connected"):
         active_email = conn_info.get("email") or "User"

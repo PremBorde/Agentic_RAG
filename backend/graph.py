@@ -48,6 +48,7 @@ class AgentState(TypedDict):
     model_name: Optional[str]
     thread_id: Optional[str]
     chat_history: Optional[str]
+    user_id: Optional[str]
 
 def conversation_node(state: AgentState) -> dict:
     direct = get_direct_greeting_response(state["question"])
@@ -61,7 +62,7 @@ def conversation_node(state: AgentState) -> dict:
 
     model_name = state.get("model_name") or "gemini-2.5-flash"
     chat_hist = state.get("chat_history") or "No prior conversational context."
-    memories = get_relevant_memories_text()
+    memories = get_relevant_memories_text(user_id=state.get("user_id"))
     try:
         llm_inst = get_llm(model_name)
         reply = (conv_prompt | llm_inst | StrOutputParser()).invoke({
@@ -266,7 +267,7 @@ def orchestrate_node(state: AgentState) -> dict:
 def generate_node(state: AgentState) -> dict:
     model_name = state.get("model_name") or "gemini-2.5-flash"
     chat_hist = state.get("chat_history") or "No prior conversational context."
-    memories = get_relevant_memories_text()
+    memories = get_relevant_memories_text(user_id=state.get("user_id"))
     try:
         llm_inst = get_llm(model_name)
         answer = (gen_prompt | llm_inst | StrOutputParser()).invoke({

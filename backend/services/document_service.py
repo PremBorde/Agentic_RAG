@@ -2,6 +2,7 @@ import os
 import io
 import re
 import logging
+from typing import Optional
 from datetime import datetime
 from fastapi import UploadFile, HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -43,7 +44,7 @@ def extract_youtube_video_id(url_or_id: str) -> str:
             return match.group(1)
     return url_or_id.strip()
 
-async def process_uploaded_file(file: UploadFile) -> dict:
+async def process_uploaded_file(file: UploadFile, user_id: Optional[str] = None) -> dict:
     raw_name = file.filename or "uploaded_document"
     clean_base = os.path.basename(raw_name).strip()
     filename = re.sub(r'[^a-zA-Z0-9_.\-\s]', '', clean_base) or "uploaded_document"
@@ -133,7 +134,8 @@ async def process_uploaded_file(file: UploadFile) -> dict:
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "preview": full_content[:240] + ("..." if len(full_content) > 240 else ""),
         "full_content": full_content,
-        "content_hash": content_hash
+        "content_hash": content_hash,
+        "user_id": user_id
     }
         # Experimental Open Knowledge Format (OKF) v0.2 Knowledge Bundle generation
     try:
@@ -142,7 +144,7 @@ async def process_uploaded_file(file: UploadFile) -> dict:
             sections=sections,
             document_id=doc_id,
             document_name=title,
-            user_id="default_user"
+            user_id=user_id or "default_user"
         )
         doc_entry["okf_bundle_id"] = okf_res.get("bundle_id")
         doc_entry["okf_concepts_count"] = okf_res.get("concept_count", 0)
@@ -157,7 +159,7 @@ async def process_uploaded_file(file: UploadFile) -> dict:
         "document": doc_entry
     }
 
-def process_custom_text(title: str, content: str) -> dict:
+def process_custom_text(title: str, content: str, user_id: Optional[str] = None) -> dict:
     clean_title = title.strip() or "Untitled Note"
     clean_content = clean_text_artifacts(content.strip())
     
@@ -207,7 +209,8 @@ def process_custom_text(title: str, content: str) -> dict:
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "preview": clean_content[:240] + ("..." if len(clean_content) > 240 else ""),
         "full_content": clean_content,
-        "content_hash": content_hash
+        "content_hash": content_hash,
+        "user_id": user_id
     }
         # Experimental Open Knowledge Format (OKF) v0.2 Knowledge Bundle generation
     try:
@@ -216,7 +219,7 @@ def process_custom_text(title: str, content: str) -> dict:
             sections=sections,
             document_id=doc_id,
             document_name=title,
-            user_id="default_user"
+            user_id=user_id or "default_user"
         )
         doc_entry["okf_bundle_id"] = okf_res.get("bundle_id")
         doc_entry["okf_concepts_count"] = okf_res.get("concept_count", 0)
@@ -230,7 +233,7 @@ def process_custom_text(title: str, content: str) -> dict:
         "document": doc_entry
     }
 
-def process_youtube_url(url: str, custom_title: str = "") -> dict:
+def process_youtube_url(url: str, custom_title: str = "", user_id: Optional[str] = None) -> dict:
     video_id = extract_youtube_video_id(url)
     try:
         data = YouTubeTranscriptApi().get_transcript(video_id)
@@ -290,7 +293,8 @@ def process_youtube_url(url: str, custom_title: str = "") -> dict:
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "preview": clean_transcript[:240] + ("..." if len(clean_transcript) > 240 else ""),
         "full_content": clean_transcript,
-        "content_hash": content_hash
+        "content_hash": content_hash,
+        "user_id": user_id
     }
         # Experimental Open Knowledge Format (OKF) v0.2 Knowledge Bundle generation
     try:
@@ -299,7 +303,7 @@ def process_youtube_url(url: str, custom_title: str = "") -> dict:
             sections=sections,
             document_id=doc_id,
             document_name=title,
-            user_id="default_user"
+            user_id=user_id or "default_user"
         )
         doc_entry["okf_bundle_id"] = okf_res.get("bundle_id")
         doc_entry["okf_concepts_count"] = okf_res.get("concept_count", 0)
@@ -313,8 +317,21 @@ def process_youtube_url(url: str, custom_title: str = "") -> dict:
         "document": doc_entry
     }
 
-def remove_document(doc_id: str) -> dict:
+def remove_document(doc_id: str, user_id: Optional[str] = None) -> dict:
     """Removes a specific document by its ID and synchronizes both FAISS and BM25."""
+    norm_id = str(doc_id).strip().lower()
+    target = next((
+        d for d in indexed_documents 
+        if str(d.get("id", "")).strip().lower() == norm_id 
+        or str(d.get("title", "")).strip().lower() == norm_id
+    ), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Document not found.")
+
+    doc_owner = target.get("user_id")
+    if doc_owner and user_id and doc_owner != user_id:
+        raise HTTPException(status_code=403, detail="Access denied: You do not own this document.")
+
     success = delete_document(doc_id)
     if not success:
         raise HTTPException(status_code=404, detail="Document not found.")

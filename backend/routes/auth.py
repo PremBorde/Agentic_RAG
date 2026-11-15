@@ -231,8 +231,20 @@ def config_status():
 
 @router.post("/google/config")
 @router.post("/config")
-def save_config(req: GoogleConfigRequest):
+def save_config(req: GoogleConfigRequest, request: Request):
     """Saves Google OAuth Client ID and Secret with validation."""
+    if os.getenv("GOOGLE_CLIENT_ID") or os.getenv("GOOGLE_CLIENT_SECRET"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Google OAuth configuration is managed via environment variables and cannot be modified."
+        )
+    user_id = get_current_user_id(request)
+    from backend.services.database import get_db_connection
+    with get_db_connection() as conn:
+        user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    if user_count > 0 and not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required to modify Google OAuth configuration.")
+
     cid = req.client_id.strip()
     csec = req.client_secret.strip()
     
